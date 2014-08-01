@@ -1,0 +1,7 @@
+/.idea/
+/*.egg-info
+/*.egg
+/.vagrant/
+*.pyc
+/build/
+/dist/

@@ -1,0 +1,15 @@
+Source: pixelated-dispatcher
+Maintainer: Pixelated <fbernitt@thoughtworks.com>
+Section: mail
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 8), python (>= 2.7), python-setuptools, python-nose
+X-Python-Version: >= 2.7
+
+Package: pixelated-dispatcher
+Architecture: all
+Depends: ${python:Depends}, ${misc:Depends}, python-imaging (>= 1.1.7), python-tornado, python-bottle, python-requests, python-gnupg, gnupg (>= 1.4.12)
+#Recommends: gnupg
+Homepage: https://github.com/pixelated-project/
+Description: Server daemon to run multiple pixelated user agents instances.
+
