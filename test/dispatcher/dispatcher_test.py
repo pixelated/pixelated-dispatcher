@@ -15,14 +15,37 @@
 import Cookie
 import urllib
 
-from mock import MagicMock
+import tornado.httpserver
+
+from mock import MagicMock, patch
+import tornado
 from tornado.testing import AsyncHTTPTestCase
 
 from client.multipile import PixelatedHTTPError
-from dispatcher import Dispatcher
+from dispatcher import Dispatcher, MainHandler
 
 
 __author__ = 'fbernitt'
+
+
+class TestServer(object):
+    PORT = 8888
+
+    __slots__ = ('_request_handler', '_http_server')
+
+    def __init__(self, request_handler):
+        self._request_handler = request_handler
+        self._http_server = None
+
+    def __enter__(self):
+        self._http_server = tornado.httpserver.HTTPServer(self._request_handler)
+        self._http_server.listen(TestServer.PORT, '127.0.0.1')
+        #ioloop.IOLoop.instance().start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._http_server.stop()
+        pass
 
 
 class DispatcherTest(AsyncHTTPTestCase):
@@ -32,7 +55,9 @@ class DispatcherTest(AsyncHTTPTestCase):
         super(DispatcherTest, self).setUp()
 
     def get_app(self):
-        return Dispatcher(self.client).create_app()
+        self._dispatcher = Dispatcher(self.client)
+        self._dispatcher._ioloop = self.io_loop
+        return self._dispatcher.create_app()
 
     def _method(self, method, url, payload=None, auto_xsrf=True, **kwargs):
         if auto_xsrf and method == 'POST':
@@ -113,15 +138,41 @@ class DispatcherTest(AsyncHTTPTestCase):
 
         self.assertEqual(403, response.code)
 
-    def test_get_503_if_agent_not_running(self):
+    def _add_auth_cookie(self):
+        self.cookies[
+            'pixelated_user'] = '2|1:0|10:1407749446|14:pixelated_user|12:InRlc3RlciI=|5ddd4ea06420119d9487c04cb1e83fa6665a9f42644b5969157d93abb2a6ed87'  #;expires=Wed, 10 Sep 2014 09:30:46 GMT; Path=/'
+
+    def test_autostart_agent_if_not_running(self):
+        # given
+        self.client.get_agent_runtime.side_effect = [{'state': 'stopped'}, {'state': 'stopped'}, {'state': 'running', 'port': TestServer.PORT}]
+        self._add_auth_cookie()
+
+        def fake_handle_request(request):
+            message = "You requested %s\n" % request.uri
+            request.write("HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s" % (
+                         len(message), message))
+            request.finish()
+
+        # when
+        with TestServer(fake_handle_request):
+            response = self._get('/some/url')
+
+        # then
+        self.client.start.assert_called_once_with('tester')
+        self.assertEqual(200, response.code)
+        self.assertEqual('You requested /some/url\n', response.body)
+
+    def test_autostart_error_message_if_agent_fails_to_start(self):
+        # given
         self.client.get_agent_runtime.return_value = {'state': 'stopped'}
+        self._add_auth_cookie()
 
-        self.cookies['pixelated_user'] = '2|1:0|10:1407749446|14:pixelated_user|12:InRlc3RlciI=|5ddd4ea06420119d9487c04cb1e83fa6665a9f42644b5969157d93abb2a6ed87'#;expires=Wed, 10 Sep 2014 09:30:46 GMT; Path=/'
-
+        # when
         response = self._get('/some/url')
 
+        # then
+        self.client.start.assert_called_once_with('tester')
         self.assertEqual(503, response.code)
-        self.assertEqual('Sorry, your agent is down', response.body)
-
+        self.assertEqual('Could not connect to instance tester!\n', response.body)
 
 

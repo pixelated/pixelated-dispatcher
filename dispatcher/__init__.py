@@ -28,7 +28,9 @@ import os
 import tornado.ioloop
 import tornado.web
 import tornado.escape
+import time
 
+from tornado import gen
 
 COOKIE_NAME = 'pixelated_user'
 
@@ -50,15 +52,30 @@ class MainHandler(BaseHandler):
 
     @tornado.web.authenticated
     @tornado.web.asynchronous
+    @gen.engine
     def get(self):
         runtime = self._client.get_agent_runtime(self.current_user)
         if runtime['state'] == 'running':
             port = runtime['port']
             self.forward(port, '127.0.0.1')
         else:
-            self.set_status(503)
-            self.write('Sorry, your agent is down')
-            self.finish()
+            self._client.start(self.current_user)
+            # wait til agent is running
+            runtime = self._client.get_agent_runtime(self.current_user)
+            max_wait_seconds = 3
+            waited = 0
+            while runtime['state'] != 'running' and waited < max_wait_seconds:
+                yield gen.Task(tornado.ioloop.IOLoop.current().add_timeout, time.time() + 1)
+                runtime = self._client.get_agent_runtime(self.current_user)
+                waited += 1
+
+            if runtime['state'] == 'running':
+                port = runtime['port']
+                self.forward(port, '127.0.0.1')
+            else:
+                self.set_status(503)
+                self.write("Could not connect to instance %s!\n" % self.current_user)
+                self.finish()
 
     def handle_response(self, response):
         if response.error and not isinstance(response.error, tornado.httpclient.HTTPError):
