@@ -81,7 +81,7 @@ class DispatcherTest(AsyncHTTPTestCase):
         payload = {
             'username': 'invalid_agent',
             'password': 'test',
-        }
+            }
         response = self._post('/auth/login', payload=payload)
 
         self.assertEqual(302, response.code)
@@ -92,7 +92,7 @@ class DispatcherTest(AsyncHTTPTestCase):
         payload = {
             'username': 'tester',
             'password': 'test',
-        }
+            }
         response = self._post('/auth/login', payload=payload)
 
         self.assertEqual(302, response.code)
@@ -112,3 +112,16 @@ class DispatcherTest(AsyncHTTPTestCase):
         response = self._post('/auth/login', payload=payload, auto_xsrf=False)
 
         self.assertEqual(403, response.code)
+
+    def test_get_503_if_agent_not_running(self):
+        self.client.get_agent_runtime.return_value = {'state': 'stopped'}
+
+        self.cookies['pixelated_user'] = '2|1:0|10:1407749446|14:pixelated_user|12:InRlc3RlciI=|5ddd4ea06420119d9487c04cb1e83fa6665a9f42644b5969157d93abb2a6ed87'#;expires=Wed, 10 Sep 2014 09:30:46 GMT; Path=/'
+
+        response = self._get('/some/url')
+
+        self.assertEqual(503, response.code)
+        self.assertEqual('Sorry, your agent is down', response.body)
+
+
+
