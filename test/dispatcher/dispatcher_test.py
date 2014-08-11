@@ -40,7 +40,6 @@ class TestServer(object):
     def __enter__(self):
         self._http_server = tornado.httpserver.HTTPServer(self._request_handler)
         self._http_server.listen(TestServer.PORT, '127.0.0.1')
-        #ioloop.IOLoop.instance().start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -106,7 +105,7 @@ class DispatcherTest(AsyncHTTPTestCase):
         payload = {
             'username': 'invalid_agent',
             'password': 'test',
-            }
+        }
         response = self._post('/auth/login', payload=payload)
 
         self.assertEqual(302, response.code)
@@ -117,7 +116,7 @@ class DispatcherTest(AsyncHTTPTestCase):
         payload = {
             'username': 'tester',
             'password': 'test',
-            }
+        }
         response = self._post('/auth/login', payload=payload)
 
         self.assertEqual(302, response.code)
@@ -140,7 +139,7 @@ class DispatcherTest(AsyncHTTPTestCase):
 
     def _add_auth_cookie(self):
         self.cookies[
-            'pixelated_user'] = '2|1:0|10:1407749446|14:pixelated_user|12:InRlc3RlciI=|5ddd4ea06420119d9487c04cb1e83fa6665a9f42644b5969157d93abb2a6ed87'  #;expires=Wed, 10 Sep 2014 09:30:46 GMT; Path=/'
+            'pixelated_user'] = '2|1:0|10:1407749446|14:pixelated_user|12:InRlc3RlciI=|5ddd4ea06420119d9487c04cb1e83fa6665a9f42644b5969157d93abb2a6ed87'
 
     def test_autostart_agent_if_not_running(self):
         # given
@@ -150,7 +149,7 @@ class DispatcherTest(AsyncHTTPTestCase):
         def fake_handle_request(request):
             message = "You requested %s\n" % request.uri
             request.write("HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s" % (
-                         len(message), message))
+                len(message), message))
             request.finish()
 
         # when
@@ -174,5 +173,3 @@ class DispatcherTest(AsyncHTTPTestCase):
         self.client.start.assert_called_once_with('tester')
         self.assertEqual(503, response.code)
         self.assertEqual('Could not connect to instance tester!\n', response.body)
-
-
