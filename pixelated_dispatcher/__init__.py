@@ -17,7 +17,7 @@ import subprocess
 import sys
 
 from client.cli import Cli
-from client.multipile import PixelatedDispatcherClient
+from client.dispatcher_api_client import PixelatedDispatcherClient
 from dispatcher import Dispatcher
 from server import SSLConfig, PixelatedDispatcherServer
 

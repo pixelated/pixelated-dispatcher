@@ -19,7 +19,7 @@ from tornado import web
 from tornado.httpclient import AsyncHTTPClient
 from tornado.httpserver import HTTPServer
 
-from client.multipile import PixelatedHTTPError
+from client.dispatcher_api_client import PixelatedHTTPError
 
 
 __author__ = 'fbernitt'

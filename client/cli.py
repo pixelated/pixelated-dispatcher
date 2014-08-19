@@ -14,7 +14,7 @@
 # under the License.
 import getpass
 
-from client.multipile import PixelatedDispatcherClient, PixelatedHTTPError
+from client.dispatcher_api_client import PixelatedDispatcherClient, PixelatedHTTPError
 import server
 
 

@@ -17,7 +17,7 @@ import unittest
 from httmock import HTTMock, all_requests, urlmatch
 from mock import patch
 
-from client.multipile import PixelatedDispatcherClient, PixelatedHTTPError
+from client.dispatcher_api_client import PixelatedDispatcherClient, PixelatedHTTPError
 
 
 __author__ = 'fbernitt'

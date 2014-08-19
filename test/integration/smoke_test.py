@@ -21,7 +21,7 @@ import time
 import requests
 from tempdir import TempDir
 
-from client.multipile import PixelatedDispatcherClient
+from client.dispatcher_api_client import PixelatedDispatcherClient
 from dispatcher import Dispatcher
 from server import PixelatedDispatcherServer, SSLConfig, DEFAULT_PORT
 from test.util import EnforceTLSv1Adapter, cafile, certfile, keyfile

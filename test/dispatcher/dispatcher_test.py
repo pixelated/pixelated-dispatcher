@@ -21,7 +21,7 @@ from mock import MagicMock, patch
 import tornado
 from tornado.testing import AsyncHTTPTestCase
 
-from client.multipile import PixelatedHTTPError
+from client.dispatcher_api_client import PixelatedHTTPError
 from dispatcher import Dispatcher, MainHandler
 
 
