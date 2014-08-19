@@ -12,6 +12,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+from provider.base_provider import ProviderInitializingException
 from test.util import EnforceTLSv1Adapter
 
 __author__ = 'fbernitt'
@@ -50,6 +51,7 @@ class RESTfulServerTest(unittest.TestCase):
     def setUp(self):
         self.mock_provider = RESTfulServerTest.mock_provider
         self.mock_provider.reset_mock()
+        self.mock_provider.list.side_effect = None
 
         self.ssl_request = requests.Session()
         self.ssl_request.mount('https://', EnforceTLSv1Adapter())
@@ -231,3 +233,12 @@ class RESTfulServerTest(unittest.TestCase):
 
         # then
         wsgiRefServer_mock.assert_called_once_with(host='localhost', port=4443)
+
+    def test_handles_provider_initializing(self):
+
+        self.mock_provider.list.side_effect = ProviderInitializingException
+
+        r = self.get('https://localhost:4443/agents')
+
+        self.assertEqual(503, r.status_code)
+        self.assertEqual('Service Unavailable - Busy initializing Provider', r.reason)

@@ -13,6 +13,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import os
+import traceback
+from provider.base_provider import ProviderInitializingException
 
 from provider.docker import DockerProvider
 from provider.docker.twsmail_adapter import TwsmailDockerAdapter
@@ -40,6 +42,15 @@ class SSLConfig(object):
         self.ssl_ca_certs = ssl_ca_certs
 
 
+def catch_initializing_exception_wrapper(callback):
+    def wrapper(*args, **kwargs):
+        try:
+            return callback(*args, **kwargs)
+        except ProviderInitializingException, e:
+            response.status = '503 Service Unavailable - Busy initializing Provider'
+    return wrapper
+
+
 class RESTfulServer(object):
     __slots__ = ('_ssl_config', '_port', '_provider', '_server_adapter')
 
@@ -51,6 +62,7 @@ class RESTfulServer(object):
 
     def init_bottle_app(self):
         app = Bottle()
+        app.install(catch_initializing_exception_wrapper)
 
         app.route('/agents', method='GET', callback=self._list_agents)
         app.route('/agents', method='POST', callback=self._add_agent)
