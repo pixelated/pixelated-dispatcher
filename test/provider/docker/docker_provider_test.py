@@ -86,7 +86,7 @@ class DockerProviderTest(unittest.TestCase):
         self.assertTrue(provider.initializing)
 
         # when
-        t = Thread(target=provider.initialize) # move to thread so that initializing behaviour is observable
+        t = Thread(target=provider.initialize)  # move to thread so that initializing behaviour is observable
         t.start()
 
         # then

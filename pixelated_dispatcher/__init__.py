@@ -80,13 +80,13 @@ def run_server():
     mailpile_bin = args.mailpile_bin
 
     if args.auto_venv:
-        venv , mailpile_bin = prepare_venv(args.root_path)
+        venv, mailpile_bin = prepare_venv(args.root_path)
 
     if args.root_path is None or not os.path.isdir(args.root_path):
         raise ValueError('root path %s not found!' % args.root_path)
 
     server = PixelatedDispatcherServer(args.root_path, mailpile_bin, ssl_config,
-                             mailpile_virtualenv=venv, provider=args.backend)
+                                       mailpile_virtualenv=venv, provider=args.backend)
 
     server.serve_forever()
 
