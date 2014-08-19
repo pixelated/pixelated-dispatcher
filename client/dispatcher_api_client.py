@@ -40,6 +40,10 @@ class PixelatedHTTPError(IOError):
         return '%d: %s' % (self.status_code, self.message)
 
 
+class PixelatedNotAvailableHTTPError(PixelatedHTTPError):
+    pass
+
+
 class PixelatedDispatcherClient(object):
     __slots__ = ('_hostname', '_port', '_base_url', '_cacert', '_scheme')
 
@@ -84,6 +88,8 @@ class PixelatedDispatcherClient(object):
         return r.json() if r.content else None
 
     def _raise_error_for_status(self, status_code, reason):
+        if 503 == status_code:
+            raise PixelatedNotAvailableHTTPError(reason, status_code=503)
         if 400 <= status_code < 600:
             raise PixelatedHTTPError(reason, status_code=status_code)
 

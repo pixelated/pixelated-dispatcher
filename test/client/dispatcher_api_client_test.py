@@ -17,7 +17,7 @@ import unittest
 from httmock import HTTMock, all_requests, urlmatch
 from mock import patch
 
-from client.dispatcher_api_client import PixelatedDispatcherClient, PixelatedHTTPError
+from client.dispatcher_api_client import PixelatedDispatcherClient, PixelatedHTTPError, PixelatedNotAvailableHTTPError
 
 
 __author__ = 'fbernitt'
@@ -215,3 +215,13 @@ class MultipileClientTest(unittest.TestCase):
 
         with HTTMock(list_agents, not_found_handler):
             self.client.list()
+
+    def test_that_503_raises_an_not_available_error(self):
+        self.client = PixelatedDispatcherClient('localhost', 12345, ssl=False)
+
+        @urlmatch(path='/agents')
+        def list_agents(url, request):
+            return {'status_code': 503, 'reason': 'some reason'}
+
+        with HTTMock(list_agents, not_found_handler):
+            self.assertRaises(PixelatedNotAvailableHTTPError, self.client.list)

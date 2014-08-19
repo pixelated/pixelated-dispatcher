@@ -21,7 +21,7 @@ from mock import MagicMock, patch
 import tornado
 from tornado.testing import AsyncHTTPTestCase
 
-from client.dispatcher_api_client import PixelatedHTTPError
+from client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
 from dispatcher import Dispatcher, MainHandler
 
 
@@ -173,3 +173,19 @@ class DispatcherTest(AsyncHTTPTestCase):
         self.client.start.assert_called_once_with('tester')
         self.assertEqual(503, response.code)
         self.assertEqual('Could not connect to instance tester!\n', response.body)
+
+    def test_pixelated_not_available_error_raised_on_503(self):
+        # given
+        self.client.get_agent.side_effect = PixelatedNotAvailableHTTPError
+
+        payload = {
+            'username': 'tester',
+            'password': 'test',
+        }
+
+        # when
+        response = self._post('/auth/login', payload=payload)
+
+        # then
+        self.assertEqual(302, response.code)
+        self.assertEqual('/auth/login?error=Service+currently+not+available', response.headers['Location'])

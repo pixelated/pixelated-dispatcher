@@ -19,7 +19,7 @@ from tornado import web
 from tornado.httpclient import AsyncHTTPClient
 from tornado.httpserver import HTTPServer
 
-from client.dispatcher_api_client import PixelatedHTTPError
+from client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
 
 
 __author__ = 'fbernitt'
@@ -132,6 +132,8 @@ class AuthLoginHandler(tornado.web.RequestHandler):
             self._client.authenticate(username, password)
             self.set_current_user(username)
             self.redirect(u'/')
+        except PixelatedNotAvailableHTTPError:
+            self.redirect(u'/auth/login?error=%s' % tornado.escape.url_escape('Service currently not available'))
         except PixelatedHTTPError:
             self.redirect(u'/auth/login?error=%s' % tornado.escape.url_escape('Invalid credentials'))
 
