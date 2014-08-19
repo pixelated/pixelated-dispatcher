@@ -101,9 +101,17 @@ class DockerProviderTest(unittest.TestCase):
 
         # when/then
         self.assertRaises(ProviderInitializingException, provider.start, 'test')
+        self.assertRaises(ProviderInitializingException, provider.add, 'test', 'password')
+        self.assertRaises(ProviderInitializingException, provider.remove, 'test')
+        self.assertRaises(ProviderInitializingException, provider.list)
+        self.assertRaises(ProviderInitializingException, provider.list_running)
+        self.assertRaises(ProviderInitializingException, provider.stop, 'test')
+        self.assertRaises(ProviderInitializingException, provider.status, 'test')
+        self.assertRaises(ProviderInitializingException, provider.authenticate, 'test', 'password')
+        self.assertRaises(ProviderInitializingException, provider.memory_usage)
 
     def test_add(self):
-        DockerProvider(self.root_path, self._adapter, 'some docker url').add('test', 'password')
+        self._create_initialized_provider(self.root_path, self._adapter, 'some docker url').add('test', 'password')
 
         instance_path = join(self.root_path, 'test')
         data_dir = join(instance_path, 'data')
@@ -157,7 +165,7 @@ class DockerProviderTest(unittest.TestCase):
     def test_running_containers_empty_if_none_started(self, docker_mock):
         client = docker_mock.return_value
         client.containers.return_value = []
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
 
         running = provider.list_running()
 
@@ -235,7 +243,7 @@ class DockerProviderTest(unittest.TestCase):
 
     @patch('provider.docker.docker.Client')
     def test_status_stopped(self, docker_mock):
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
 
         self.assertEqual({'state': 'stopped'}, provider.status('test'))
@@ -253,11 +261,11 @@ class DockerProviderTest(unittest.TestCase):
         self.assertEqual({'state': 'running', 'port': 5000}, provider.status('test'))
 
     def test_empty_list(self):
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         self.assertEqual([], provider.list())
 
     def test_list(self):
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
         self.assertEqual(['test'], provider.list())
 
@@ -274,7 +282,7 @@ class DockerProviderTest(unittest.TestCase):
         psutil_mock = process_mock.return_value
         psutil_mock.memory_info.return_value = pmem(1024, 2048)
 
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
 
         # when
@@ -291,19 +299,19 @@ class DockerProviderTest(unittest.TestCase):
         agent = os.path.join(self.root_path, 'test')
         os.mkdir(agent)
 
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
 
         self.assertEqual(['test'], provider.list())
 
     def test_authenticate(self):
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
 
         self.assertTrue(provider.authenticate('test', 'password'))
         self.assertFalse(provider.authenticate('test', 'something else'))
 
     def test_remove_error_if_not_exist(self):
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
 
         self.assertRaises(ValueError, provider.remove, 'does_not_exist')
 
@@ -312,7 +320,7 @@ class DockerProviderTest(unittest.TestCase):
         # given
         client = docker_mock.return_value
         client.containers.return_value = []
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
 
         # when

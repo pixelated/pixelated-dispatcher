@@ -122,6 +122,8 @@ class BaseProvider(Provider):
             self._agents.append(dir)
 
     def add(self, name, password):
+        self._ensure_initialized()
+
         if name in self._agents:
             raise Exception('Instance %s already exists!' % name)
         self._agents.append(name)
@@ -134,7 +136,13 @@ class BaseProvider(Provider):
     def _instance_path(self, name):
         return path.join(self._root_path, name)
 
+    def _ensure_initialized(self):
+        if self.initializing:
+            raise ProviderInitializingException()
+
     def remove(self, name):
+        self._ensure_initialized()
+
         if name in self.list_running():
             raise ValueError('Container %s is currently running. Please stop before removal!' % name)
 
@@ -142,9 +150,12 @@ class BaseProvider(Provider):
         shutil.rmtree(path.join(self._root_path, name))
 
     def list(self):
+        self._ensure_initialized()
         return self._agents
 
     def authenticate(self, name, password):
+        self._ensure_initialized()
+
         cfg = self._load_config(name)
 
         hashed_password = binascii.hexlify(scrypt.hash(str_password(password), cfg.salt))

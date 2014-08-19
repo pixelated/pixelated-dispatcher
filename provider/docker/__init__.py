@@ -11,7 +11,7 @@ import requests
 from psutil import Process
 from tempdir import TempDir
 
-from provider.base_provider import BaseProvider, ProviderInitializingException
+from provider.base_provider import BaseProvider
 from provider.docker.mailpile_adapter import MailpileDockerAdapter
 
 
@@ -63,8 +63,7 @@ class DockerProvider(BaseProvider):
             print l
 
     def start(self, name):
-        if self.initializing:
-            raise ProviderInitializingException()
+        self._ensure_initialized()
 
         self._start(name)
 
@@ -95,6 +94,8 @@ class DockerProvider(BaseProvider):
             raise Exception('Failed to initialize mailbox: %d!' % s)
 
     def list_running(self):
+        self._ensure_initialized()
+
         running = []
 
         for name in self._map_container_by_name().keys():
@@ -151,6 +152,8 @@ class DockerProvider(BaseProvider):
         return self._ports
 
     def memory_usage(self):
+        self._ensure_initialized()
+
         usage = 0
         agents = []
 

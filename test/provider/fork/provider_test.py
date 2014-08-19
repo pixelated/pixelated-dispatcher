@@ -45,6 +45,7 @@ class ForkProviderTest(unittest.TestCase):
         self.root_path = self._tmpdir.name
         self.runner = MagicMock(spec=Adapter)
         self.provider = ForkProvider(self.root_path, self.runner)
+        self.provider.initialize()
 
     def tearDown(self):
         self._tmpdir.dissolve()
@@ -158,6 +159,7 @@ class ForkProviderTest(unittest.TestCase):
         os.mkdir(agent)
 
         self.provider = ForkProvider(self.root_path, self.runner)
+        self.provider.initialize()
 
         self.assertEqual(['test'], self.provider.list())
 
