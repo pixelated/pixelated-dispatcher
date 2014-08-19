@@ -13,6 +13,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import os
+from threading import Thread
 import traceback
 from provider.base_provider import ProviderInitializingException
 
@@ -212,7 +213,8 @@ class PixelatedDispatcherServer(object):
 
     def serve_forever(self):
         provider = self._create_provider()
-        provider.initialize()
+
+        Thread(target=provider.initialize).run()
 
         # 'server.key', ssl_ca_certs='clientCA.crt')
         self._server = RESTfulServer(self._ssl_config, provider, port=DEFAULT_PORT)

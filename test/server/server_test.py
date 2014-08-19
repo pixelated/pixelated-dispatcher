@@ -22,7 +22,7 @@ import json
 import requests
 from mock import MagicMock, patch
 from provider import Provider
-from server import RESTfulServer, SSLConfig
+from server import RESTfulServer, SSLConfig, PixelatedDispatcherServer
 from test.util import certfile, keyfile, cafile
 
 
@@ -242,3 +242,18 @@ class RESTfulServerTest(unittest.TestCase):
 
         self.assertEqual(503, r.status_code)
         self.assertEqual('Service Unavailable - Busy initializing Provider', r.reason)
+
+    @patch('server.DockerProvider')
+    @patch('server.RESTfulServer')
+    @patch('server.Thread')
+    def test_that_initialize_happens_in_background_thread(self, thread_mock, server_mock, docker_provider_mock):
+        # given
+        docker_provider_mock.return_value = self.mock_provider
+        server = PixelatedDispatcherServer(None, None, None, None, provider='docker')
+
+        # when
+        server.serve_forever()
+
+        # then
+        thread_mock.assert_called_with(target=self.mock_provider.initialize)
+        self.assertFalse(self.mock_provider.initialize.called)
