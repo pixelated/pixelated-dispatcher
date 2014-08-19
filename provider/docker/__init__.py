@@ -11,7 +11,7 @@ import requests
 from psutil import Process
 from tempdir import TempDir
 
-from provider.base_provider import BaseProvider
+from provider.base_provider import BaseProvider, ProviderInitializingException
 from provider.docker.mailpile_adapter import MailpileDockerAdapter
 
 
@@ -55,6 +55,7 @@ class DockerProvider(BaseProvider):
                 fileobj = io.StringIO(self._dockerfile())
                 path = None
                 self._build_image(path, fileobj)
+        self._initializing = False
 
     def _build_image(self, path, fileobj):
         r = self._docker.build(path=path, fileobj=fileobj, tag='%s:latest' % self._adapter.app_name())
@@ -62,6 +63,9 @@ class DockerProvider(BaseProvider):
             print l
 
     def start(self, name):
+        if self.initializing:
+            raise ProviderInitializingException()
+
         self._start(name)
 
         cm = self._map_container_by_name(all=True)

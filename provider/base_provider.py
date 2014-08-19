@@ -27,6 +27,10 @@ from provider import Provider, NotEnoughFreeMemory
 __author__ = 'fbernitt'
 
 
+class ProviderInitializingException(Exception):
+    pass
+
+
 class AgentConfig(object):
     __slots__ = ('name', 'hashed_password', 'salt')
 
@@ -80,7 +84,7 @@ def str_password(password):
 class BaseProvider(Provider):
     CFG_FILE_NAME = 'agent.cfg'
 
-    __slots__ = ('_root_path', '_agents')
+    __slots__ = ('_root_path', '_agents', '_initializing')
 
     def __init__(self, root_path):
         self._root_path = root_path
@@ -91,6 +95,14 @@ class BaseProvider(Provider):
 
         self._agents = []
         self._autodiscover()
+        self._initializing = True
+
+    def initialize(self):
+        self._initializing = False
+
+    @property
+    def initializing(self):
+        return self._initializing
 
     def _cfg_file_name(self, name):
         return path.join(self._root_path, name, BaseProvider.CFG_FILE_NAME)

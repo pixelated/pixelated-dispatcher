@@ -15,14 +15,14 @@
 import os
 from os.path import join, isdir, isfile, exists
 from tempfile import NamedTemporaryFile
-
+from time import sleep
 from mock import patch, MagicMock
 import pkg_resources
 import requests
 from tempdir import TempDir
 from psutil._common import pmem
-
-from provider.base_provider import BaseProvider
+from threading import Thread
+from provider.base_provider import BaseProvider, ProviderInitializingException
 from provider.docker import DockerProvider, MailpileDockerAdapter
 from test.util import StringIOMatcher
 
@@ -70,6 +70,38 @@ class DockerProviderTest(unittest.TestCase):
         # then
         self.assertFalse(client.build.called)
 
+    @patch('provider.docker.docker.Client')
+    def test_reports_initializing_while_initialize_is_running(self, docker_mock):
+        # given
+        client = docker_mock.return_value
+        client.images.return_value = []
+
+        def build(path, fileobj, tag):
+            sleep(0.2)
+            return []
+
+        client.build.side_effect = build
+        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+
+        self.assertTrue(provider.initializing)
+
+        # when
+        t = Thread(target=provider.initialize) # move to thread so that initializing behaviour is observable
+        t.start()
+
+        # then
+        sleep(0.1)
+        self.assertTrue(provider.initializing)
+        t.join()
+        self.assertFalse(provider.initializing)
+
+    def test_throws_initializing_exception_while_initializing(self):
+        # given
+        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+
+        # when/then
+        self.assertRaises(ProviderInitializingException, provider.start, 'test')
+
     def test_add(self):
         DockerProvider(self.root_path, self._adapter, 'some docker url').add('test', 'password')
 
@@ -83,14 +115,14 @@ class DockerProviderTest(unittest.TestCase):
 
     @patch('provider.docker.docker.Client')
     def test_that_non_existing_instance_cannot_be_started(self, docker_mock):
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
 
         self.assertRaises(ValueError, provider.start, 'test')
 
     @patch('provider.docker.docker.Client')
     def test_that_instance_can_be_started(self, docker_mock):
         client = docker_mock.return_value
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         prepare_mailpile_container = MagicMock()
         container = MagicMock()
         client.create_container.side_effect = [prepare_mailpile_container, container]
@@ -111,7 +143,7 @@ class DockerProviderTest(unittest.TestCase):
     def test_that_existing_container_gets_reused(self, docker_mock):
         client = docker_mock.return_value
         client.containers.side_effect = [[], [{u'Status': u'Exited (-1) About an hour ago', u'Created': 1405332375, u'Image': u'mailpile:latest', u'Ports': [], u'Command': u'/Mailpile.git/mp --www', u'Names': [u'/test'], u'Id': u'adfd4633fc42734665d7d98076b19b5f439648678b3b76db891f9d5072af50b6'}]]
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         container = MagicMock()
         client.create_container.return_value = container
 
@@ -136,7 +168,7 @@ class DockerProviderTest(unittest.TestCase):
         client = docker_mock.return_value
         client.containers.side_effect = [[], [], [{u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}]]
         client.wait.return_value = 0
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
         provider.start('test')
 
@@ -149,7 +181,7 @@ class DockerProviderTest(unittest.TestCase):
         client = docker_mock.return_value
         client.containers.side_effect = [[], [], [{u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}]]
         client.wait.return_value = 0
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
         provider.start('test')
 
@@ -159,7 +191,7 @@ class DockerProviderTest(unittest.TestCase):
     def test_stopping_not_running_container_raises_value_error(self, docker_mock):
         client = docker_mock.return_value
         client.containers.return_value = []
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
 
         self.assertRaises(ValueError, provider.stop, 'test')
@@ -171,7 +203,7 @@ class DockerProviderTest(unittest.TestCase):
         container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33411}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
         client.containers.side_effect = [[], [], [container], [container], [container]]
         client.wait.return_value = 0
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
         provider.start('test')
         # when
@@ -190,7 +222,7 @@ class DockerProviderTest(unittest.TestCase):
         client.wait.return_value = 0
         client.stop.side_effect = requests.exceptions.Timeout
 
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
         provider.start('test')
 
@@ -214,7 +246,7 @@ class DockerProviderTest(unittest.TestCase):
         container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33144}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
         client.containers.side_effect = [[], [], [container], [container]]
         client.wait.return_value = 0
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
         provider.start('test')
 
@@ -298,7 +330,7 @@ class DockerProviderTest(unittest.TestCase):
         client.containers.side_effect = [[], [], [container]]
         client.wait.return_value = 0
 
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
         provider.start('test')
 
@@ -333,3 +365,8 @@ class DockerProviderTest(unittest.TestCase):
                 docker_mock.return_value.build.assert_called_once_with(path=tempBuildDir_name, tag='mailpile:latest', fileobj=None)
         finally:
             tempBuildDir.dissolve()
+
+    def _create_initialized_provider(self, root_path, adapter, docker_url=DockerProvider.DEFAULT_DOCKER_URL):
+        provider = DockerProvider(root_path, adapter, docker_url)
+        provider._initializing = False
+        return provider
