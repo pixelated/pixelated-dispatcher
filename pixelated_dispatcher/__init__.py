@@ -15,12 +15,13 @@
 import os
 import subprocess
 import sys
+import logging
 
 from client.cli import Cli
 from client.dispatcher_api_client import PixelatedDispatcherClient
 from dispatcher import Dispatcher
 from server import SSLConfig, PixelatedDispatcherServer
-
+from common import init_logging
 
 __author__ = 'fbernitt'
 
@@ -64,6 +65,8 @@ def run_server():
     parser.add_argument('-b', '--backend', help='the backend to use (fork|docker)', default='fork')
     parser.add_argument('--sslcert', help='The SSL certficate to use', default=None)
     parser.add_argument('--sslkey', help='The SSL key to use', default=None)
+    parser.add_argument('--debug', help='Set log level to debug', default=False, action='store_true')
+    parser.add_argument('--log-config', help='Provide a python logging config file', default=None)
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--mailpile-virtualenv', help='Use specified virtual env for mailpile', default=None)
     group.add_argument('--auto-mailpile-virtualenv', dest='auto_venv', help='Boostrap virtualenv for mailpile', default=False, action='store_true')
@@ -85,6 +88,10 @@ def run_server():
     if args.root_path is None or not os.path.isdir(args.root_path):
         raise ValueError('root path %s not found!' % args.root_path)
 
+    log_level = logging.DEBUG if args.debug else logging.INFO
+    log_config = args.log_config
+    init_logging('server', level=log_level, config_file=log_config)
+
     server = PixelatedDispatcherServer(args.root_path, mailpile_bin, ssl_config,
                                        mailpile_virtualenv=venv, provider=args.backend)
 
@@ -98,12 +105,18 @@ def run_dispatcher():
     parser.add_argument('--bind', help="bind to interface. Default 127.0.0.1", default='127.0.0.1')
     parser.add_argument('--sslcert', help='The SSL certficate to use', default=None)
     parser.add_argument('--sslkey', help='The SSL key to use', default=None)
+    parser.add_argument('--debug', help='Set log level to debug', default=False, action='store_true')
+    parser.add_argument('--log-config', help='Provide a python logging config file', default=None)
 
     args = parser.parse_args(args=filter_args())
 
     server_hostname, server_port = args.server.split(':')
     certfile = args.sslcert if args.sslcert else None
     keyfile = args.sslkey if args.sslcert else None
+
+    log_level = logging.DEBUG if args.debug else logging.INFO
+    log_config = args.log_config
+    init_logging('dipatcher', level=log_level, config_file=log_config)
 
     dispatcher = Dispatcher(PixelatedDispatcherClient(server_hostname, server_port, cacert=certfile), bindaddr=args.bind, keyfile=keyfile,
                             certfile=certfile)

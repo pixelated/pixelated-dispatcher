@@ -16,7 +16,7 @@ import os
 from threading import Thread
 import traceback
 from provider.base_provider import ProviderInitializingException
-
+from common import logger
 from provider.docker import DockerProvider
 from provider.docker.twsmail_adapter import TwsmailDockerAdapter
 
@@ -114,6 +114,7 @@ class RESTfulServer(object):
         password = request.json['password']
         try:
             self._provider.add(name, password)
+            logger.info('Added agent for user %s' % name)
             response.status = '201 Created'
             response.headers['Location'] = self._agent_uri(name)
             return self._agent_to_json(name)
@@ -130,6 +131,7 @@ class RESTfulServer(object):
     def _delete_agent(self, name):
         try:
             self._provider.remove(name)
+            logger.info('Removed agent of user %s' % name)
             response.status = "200 OK"
         except ValueError:
             response.status = "404 Not Found"
@@ -147,14 +149,18 @@ class RESTfulServer(object):
         if state == 'running':
             try:
                 self._provider.start(name)
+                logger.info('Started agent for user %s' % name)
                 return self._get_agent_state(name)
             except ValueError:
+                logger.warn('Agent for user %s already running' % name)
                 response.status = '409 Conflict - agent %s already running' % name
         else:
             try:
                 self._provider.stop(name)
+                logger.info('Stopped agent for user %s' % name)
                 return self._get_agent_state(name)
             except ValueError:
+                logger.warn('Agent for user %s not running' % name)
                 response.status = '409 Conflict - agent named %s not running' % name
 
     def _get_agent_runtime(self, name):
@@ -166,7 +172,12 @@ class RESTfulServer(object):
     def _authenticate_agent(self, name):
         password = request.json['password']
         result = self._provider.authenticate(name, password)
-        response.status = '200 Ok' if result else '403 Forbidden'
+        if result:
+            response.status = '200 Ok'
+            logger.info('User %s logged in successfully' % name)
+        else:
+            response.status = '403 Forbidden'
+            logger.warn('Authentication failed for user %s!' % name)
         return {}
 
     def _memory_usage(self):
@@ -214,16 +225,23 @@ class PixelatedDispatcherServer(object):
     def serve_forever(self):
         provider = self._create_provider()
 
-        Thread(target=provider.initialize).run()
+        Thread(target=provider.initialize).start()
 
         # 'server.key', ssl_ca_certs='clientCA.crt')
+        logger.info('Starting REST api')
         self._server = RESTfulServer(self._ssl_config, provider, port=DEFAULT_PORT)
+        if self._ssl_config:
+            logger.info('Using SSL certfile %s and keyfile %s' % (self._ssl_config.ssl_certfile, self._ssl_config.ssl_keyfile))
+        else:
+            logger.warn('No SSL configured')
+        logger.info('Listening on %s:%d' % ('localhost', DEFAULT_PORT))
         self._server.serve_forever()
 
     def shutdown(self):
         if self._server:
             self._server.shutdown()
             self._server = None
+            logger.info('Stopped server')
 
     def _create_provider(self):
         if self._provider == 'docker':

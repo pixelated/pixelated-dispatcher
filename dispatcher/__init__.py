@@ -20,7 +20,7 @@ from tornado.httpclient import AsyncHTTPClient
 from tornado.httpserver import HTTPServer
 
 from client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
-
+from common import logger
 
 __author__ = 'fbernitt'
 
@@ -59,6 +59,7 @@ class MainHandler(BaseHandler):
             port = runtime['port']
             self.forward(port, '127.0.0.1')
         else:
+            logger.info('Starting agent for %s' % self.current_user)
             self._client.start(self.current_user)
             # wait til agent is running
             runtime = self._client.get_agent_runtime(self.current_user)
@@ -73,12 +74,14 @@ class MainHandler(BaseHandler):
                 port = runtime['port']
                 self.forward(port, '127.0.0.1')
             else:
+                logger.error('Failed to start agent for %s' % self.current_user)
                 self.set_status(503)
                 self.write("Could not connect to instance %s!\n" % self.current_user)
                 self.finish()
 
     def handle_response(self, response):
         if response.error and not isinstance(response.error, tornado.httpclient.HTTPError):
+            logger.error('Got error %s from user %s agent: %s' % (self.current_user, response.error))
             self.set_status(500)
             self.write("Internal server error:\n" + str(response.error))
             self.finish()
@@ -93,11 +96,12 @@ class MainHandler(BaseHandler):
             self.finish()
 
     def forward(self, port=None, host=None):
+        url = "%s://%s:%s%s" % (
+            'http', host or "127.0.0.1", port or 80, self.request.uri)
         try:
             tornado.httpclient.AsyncHTTPClient().fetch(
                 tornado.httpclient.HTTPRequest(
-                    url="%s://%s:%s%s" % (
-                        'http', host or "127.0.0.1", port or 80, self.request.uri),
+                    url=url,
                     method=self.request.method,
                     body=None if not self.request.body else self.request.body,
                     headers=self.request.headers,
@@ -107,7 +111,8 @@ class MainHandler(BaseHandler):
         except tornado.httpclient.HTTPError, x:
             if hasattr(x, 'response') and x.response:
                 self.handle_response(x.response)
-        except:
+        except e:
+            logger.error('Error forwarding request %s: %s' % (url, e.message))
             self.set_status(500)
             self.write("Internal server error:\n" + ''.join(traceback.format_exception(*sys.exc_info())))
             self.finish()
@@ -128,13 +133,16 @@ class AuthLoginHandler(tornado.web.RequestHandler):
         try:
             agent = self._client.get_agent(username)
 
-            # no authenticate with server...
+            # now authenticate with server...
             self._client.authenticate(username, password)
             self.set_current_user(username)
             self.redirect(u'/')
+            logger.info('Successful login of user %s' % username)
         except PixelatedNotAvailableHTTPError:
+            logger.error('Login attempt while service not available by user: %s' % username)
             self.redirect(u'/auth/login?error=%s' % tornado.escape.url_escape('Service currently not available'))
         except PixelatedHTTPError:
+            logger.warn('Login attempt with invalid credentials by user %s' % username)
             self.redirect(u'/auth/login?error=%s' % tornado.escape.url_escape('Invalid credentials'))
 
     def set_current_user(self, username):
@@ -146,6 +154,7 @@ class AuthLoginHandler(tornado.web.RequestHandler):
 
 class AuthLogoutHandler(tornado.web.RequestHandler):
     def get(self):
+        logger.info('User %s logged out' % self.current_user)
         self.clear_cookie(COOKIE_NAME)
         self.write("You are now logged out")
 
@@ -183,8 +192,8 @@ class Dispatcher(object):
     def ssl_options(self):
         if self._certfile:
             return {
-                "certfile": os.path.join(self._certfile),
-                "keyfile": os.path.join(self._keyfile),
+                'certfile': os.path.join(self._certfile),
+                'keyfile': os.path.join(self._keyfile),
             }
         else:
             return None
@@ -192,6 +201,11 @@ class Dispatcher(object):
     def serve_forever(self):
         app = self.create_app()
         # app.listen(port=self._port, address=self._bindaddr, ssl_options=self.ssl_options)
+        if self.ssl_options:
+            logger.info('Using SSL certfile %s and keyfile %s' % (self.ssl_options['certfile'], self.ssl_options['keyfile']))
+        else:
+            logger.warn('No SSL configured!')
+        logger.info('Listening on %s:%d' % (self._bindaddr, self._port))
         self._server = HTTPServer(app, ssl_options=self.ssl_options)
         self._server.listen(port=self._port, address=self._bindaddr)
         self._ioloop = tornado.ioloop.IOLoop.instance()
@@ -202,3 +216,4 @@ class Dispatcher(object):
         if self._ioloop:
             self._server.stop()
             self._ioloop.stop()
+            logger.info('Stopped dispatcher')

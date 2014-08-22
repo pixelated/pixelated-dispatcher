@@ -3,6 +3,7 @@ import os
 from os.path import join
 import stat
 import subprocess
+import time
 
 import pkg_resources
 import docker
@@ -14,6 +15,7 @@ from tempdir import TempDir
 from provider.base_provider import BaseProvider
 from provider.docker.mailpile_adapter import MailpileDockerAdapter
 
+from common import logger
 
 __author__ = 'fbernitt'
 
@@ -39,6 +41,8 @@ class DockerProvider(BaseProvider):
 
         if not found:
             # build the image
+            start = time.time()
+            logger.info('No docker image for %s found! Triggering build.' % self._adapter.app_name())
             if pkg_resources.resource_exists('resources', 'init-%s-docker-context.sh' % self._adapter.app_name()):
                 fileobj = None
                 content = pkg_resources.resource_string('resources', 'init-%s-docker-context.sh' % self._adapter.app_name())
@@ -55,12 +59,13 @@ class DockerProvider(BaseProvider):
                 fileobj = io.StringIO(self._dockerfile())
                 path = None
                 self._build_image(path, fileobj)
+            logger.info('Finished image %s build in %d seconds' % ('%s:latest' % self._adapter.app_name(), time.time() - start))
         self._initializing = False
 
     def _build_image(self, path, fileobj):
         r = self._docker.build(path=path, fileobj=fileobj, tag='%s:latest' % self._adapter.app_name())
         for l in r:
-            print l
+            logger.debug(l)
 
     def start(self, name):
         self._ensure_initialized()
