@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger('pixelated.startup')
 
+
 def init_logging(name, level=logging.INFO, config_file=None):
     global logger
     logger_name = 'pixelated.%s' % name
@@ -17,4 +18,3 @@ def init_logging(name, level=logging.INFO, config_file=None):
 
     logger.name = logger_name
     logger.info('Initialized logging')
-
