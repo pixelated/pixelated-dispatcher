@@ -10,6 +10,11 @@ hence the name pixelated-dispatcher.
 Aside from managing the different instances it also provides a login form to restrict access to individual agents.
 
 
+**The Pixelated Dispatcher is still in early development state!**
+
+    Hence the setup is sometimes still less straight forward then expected.
+    You will find more details as you go through this README.
+
 # Try it!
 
 **Attention:** Currently only works with open VPN tunnel to hypervisor.wazokazi.is as access to the git repos for
