@@ -16,7 +16,7 @@
 from mock import MagicMock, patch
 from psutil._common import pmem
 
-from provider.fork.adapter import ForkedProcess
+from pixelated.provider.fork.adapter import ForkedProcess
 
 
 __author__ = 'fbernitt'
@@ -48,7 +48,7 @@ class ForkedProcessTest(unittest.TestCase):
         p = ForkedProcess(process, port)
         process.pid = pid
 
-        with patch('provider.fork.adapter.Process') as psutil_process_mock:
+        with patch('pixelated.provider.fork.adapter.Process') as psutil_process_mock:
             psutil_mock = psutil_process_mock.return_value
             psutil_mock.memory_info.return_value = pmem(1024, 2048)
 

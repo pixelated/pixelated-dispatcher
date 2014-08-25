@@ -14,8 +14,8 @@
 # under the License.
 import getpass
 
-from client.dispatcher_api_client import PixelatedDispatcherClient, PixelatedHTTPError
-import server
+from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient, PixelatedHTTPError
+import pixelated.server
 
 
 __author__ = 'fbernitt'
@@ -27,7 +27,7 @@ import argparse
 class Cli(object):
     __slots__ = ('_args', '_out')
 
-    DEFAULT_SERVER_PORT = server.DEFAULT_PORT
+    DEFAULT_SERVER_PORT = pixelated.server.DEFAULT_PORT
 
     def __init__(self, args, out=sys.stdout):
         self._args = args

@@ -16,7 +16,7 @@
 
 __author__ = 'fbernitt'
 
-from pixelated_dispatcher import main
+from pixelated.pixelated_dispatcher import main
 
 if __name__ == '__main__':
     main()

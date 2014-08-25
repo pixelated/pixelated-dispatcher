@@ -19,8 +19,8 @@ from tornado import web
 from tornado.httpclient import AsyncHTTPClient
 from tornado.httpserver import HTTPServer
 
-from client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
-from common import logger
+from pixelated.client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
+from pixelated.common import logger
 
 __author__ = 'fbernitt'
 

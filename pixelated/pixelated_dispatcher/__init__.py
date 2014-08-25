@@ -17,11 +17,11 @@ import subprocess
 import sys
 import logging
 
-from client.cli import Cli
-from client.dispatcher_api_client import PixelatedDispatcherClient
-from dispatcher import Dispatcher
-from server import SSLConfig, PixelatedDispatcherServer
-from common import init_logging
+from pixelated.client.cli import Cli
+from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
+from pixelated.dispatcher import Dispatcher
+from pixelated.server import SSLConfig, PixelatedDispatcherServer
+from pixelated.common import init_logging
 
 __author__ = 'fbernitt'
 

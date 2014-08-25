@@ -22,9 +22,9 @@ import requests
 from tempdir import TempDir
 from psutil._common import pmem
 from threading import Thread
-from provider.base_provider import BaseProvider, ProviderInitializingException
-from provider.docker import DockerProvider, MailpileDockerAdapter
-from test.util import StringIOMatcher
+from pixelated.provider.base_provider import BaseProvider, ProviderInitializingException
+from pixelated.provider.docker import DockerProvider, MailpileDockerAdapter
+from pixelated.test.util import StringIOMatcher
 
 
 __author__ = 'fbernitt'
@@ -44,7 +44,7 @@ class DockerProviderTest(unittest.TestCase):
     def test_constructor_expects_docker_url(self):
         DockerProvider(self.root_path, self._adapter, 'some docker url')
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_initialize_builds_docker_image(self, docker_mock):
         # given
         client = docker_mock.return_value
@@ -58,7 +58,7 @@ class DockerProviderTest(unittest.TestCase):
         docker_mock.assert_called_once_with(base_url="some docker url")
         client.build.assert_called_once_with(path=None, fileobj=StringIOMatcher(dockerfile), tag='mailpile:latest')
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_initialize_skips_image_build_if_available(self, docker_mock):
         # given
         client = docker_mock.return_value
@@ -70,7 +70,7 @@ class DockerProviderTest(unittest.TestCase):
         # then
         self.assertFalse(client.build.called)
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_reports_initializing_while_initialize_is_running(self, docker_mock):
         # given
         client = docker_mock.return_value
@@ -121,13 +121,13 @@ class DockerProviderTest(unittest.TestCase):
         self.assertTrue(isdir(data_dir), 'No folder for mailpile has been created')
         self.assertTrue(isfile(cfg_file), 'No config file had been created')
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_that_non_existing_instance_cannot_be_started(self, docker_mock):
         provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
 
         self.assertRaises(ValueError, provider.start, 'test')
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_that_instance_can_be_started(self, docker_mock):
         client = docker_mock.return_value
         provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
@@ -147,7 +147,7 @@ class DockerProviderTest(unittest.TestCase):
         client.start.assert_any_call(container, binds={data_path: {'bind': '/mnt/user', 'ro': False}}, port_bindings={33411: 5000})
         client.start.assert_any_call(prepare_mailpile_container, binds={data_path: {'bind': '/mnt/user', 'ro': False}})
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_that_existing_container_gets_reused(self, docker_mock):
         client = docker_mock.return_value
         client.containers.side_effect = [[], [{u'Status': u'Exited (-1) About an hour ago', u'Created': 1405332375, u'Image': u'mailpile:latest', u'Ports': [], u'Command': u'/Mailpile.git/mp --www', u'Names': [u'/test'], u'Id': u'adfd4633fc42734665d7d98076b19b5f439648678b3b76db891f9d5072af50b6'}]]
@@ -161,7 +161,7 @@ class DockerProviderTest(unittest.TestCase):
         client.containers.assert_called_with(all=True)
         self.assertFalse(client.build.called)
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_running_containers_empty_if_none_started(self, docker_mock):
         client = docker_mock.return_value
         client.containers.return_value = []
@@ -171,7 +171,7 @@ class DockerProviderTest(unittest.TestCase):
 
         self.assertEqual([], running)
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_running_returns_running_container(self, docker_mock):
         client = docker_mock.return_value
         client.containers.side_effect = [[], [], [{u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}]]
@@ -184,7 +184,7 @@ class DockerProviderTest(unittest.TestCase):
 
         self.assertEqual(['test'], running)
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_a_container_cannot_be_started_twice(self, docker_mock):
         client = docker_mock.return_value
         client.containers.side_effect = [[], [], [{u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}]]
@@ -195,7 +195,7 @@ class DockerProviderTest(unittest.TestCase):
 
         self.assertRaises(ValueError, provider.start, 'test')
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_stopping_not_running_container_raises_value_error(self, docker_mock):
         client = docker_mock.return_value
         client.containers.return_value = []
@@ -204,7 +204,7 @@ class DockerProviderTest(unittest.TestCase):
 
         self.assertRaises(ValueError, provider.stop, 'test')
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_stop_running_container(self, docker_mock):
         # given
         client = docker_mock.return_value
@@ -221,7 +221,7 @@ class DockerProviderTest(unittest.TestCase):
         client.stop.assert_called_once_with(container, timeout=10)
         self.assertFalse(5000 in provider._used_ports())
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_stop_running_container_calls_kill_if_stop_times_out(self, docker_mock):
         # given
         client = docker_mock.return_value
@@ -241,14 +241,14 @@ class DockerProviderTest(unittest.TestCase):
         client.stop.assert_called_once_with(container, timeout=10)
         client.kill.assert_called_once_with(container)
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_status_stopped(self, docker_mock):
         provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
 
         self.assertEqual({'state': 'stopped'}, provider.status('test'))
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_status_running(self, docker_mock):
         client = docker_mock.return_value
         container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33144}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
@@ -269,8 +269,8 @@ class DockerProviderTest(unittest.TestCase):
         provider.add('test', 'password')
         self.assertEqual(['test'], provider.list())
 
-    @patch('provider.docker.Process')
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.Process')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_memory_usage(self, docker_mock, process_mock):
         # given
         container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33144}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
@@ -315,7 +315,7 @@ class DockerProviderTest(unittest.TestCase):
 
         self.assertRaises(ValueError, provider.remove, 'does_not_exist')
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_remove(self, docker_mock):
         # given
         client = docker_mock.return_value
@@ -330,7 +330,7 @@ class DockerProviderTest(unittest.TestCase):
         self.assertFalse(exists(join(self.root_path, 'test')))
         self.assertFalse('test' in provider.list())
 
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_cannot_remove_while_running(self, docker_mock):
         # given
         client = docker_mock.return_value
@@ -345,9 +345,9 @@ class DockerProviderTest(unittest.TestCase):
         # when/then
         self.assertRaises(ValueError, provider.remove, 'test')
 
-    @patch('provider.docker.TempDir')
-    @patch('provider.docker.pkg_resources')
-    @patch('provider.docker.docker.Client')
+    @patch('pixelated.provider.docker.TempDir')
+    @patch('pixelated.provider.docker.pkg_resources')
+    @patch('pixelated.provider.docker.docker.Client')
     def test_use_build_script_instead_of_docker_file_if_available(self, docker_mock, res_mock, tempDir_mock):
         # given
         provider = DockerProvider(self.root_path, self._adapter, 'some docker url')

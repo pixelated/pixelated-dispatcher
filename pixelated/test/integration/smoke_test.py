@@ -21,10 +21,10 @@ import time
 import requests
 from tempdir import TempDir
 
-from client.dispatcher_api_client import PixelatedDispatcherClient
-from dispatcher import Dispatcher
-from server import PixelatedDispatcherServer, SSLConfig, DEFAULT_PORT
-from test.util import EnforceTLSv1Adapter, cafile, certfile, keyfile
+from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
+from pixelated.dispatcher import Dispatcher
+from pixelated.server import PixelatedDispatcherServer, SSLConfig, DEFAULT_PORT
+from pixelated.test.util import EnforceTLSv1Adapter, cafile, certfile, keyfile
 
 
 __author__ = 'fbernitt'

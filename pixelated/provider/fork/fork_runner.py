@@ -17,7 +17,7 @@ import os
 __author__ = 'fbernitt'
 
 import subprocess
-from provider.fork.adapter import ForkedProcess, Adapter
+from pixelated.provider.fork.adapter import ForkedProcess, Adapter
 
 
 class ForkRunner(Adapter):

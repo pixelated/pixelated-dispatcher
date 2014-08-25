@@ -22,8 +22,8 @@ from tempfile import NamedTemporaryFile
 from tempdir import TempDir
 from mock import patch, MagicMock
 
-from provider.fork.fork_runner import ForkedProcess, ForkRunner
-from provider.fork.mailpile_adapter import MailpileAdapter
+from pixelated.provider.fork.fork_runner import ForkedProcess, ForkRunner
+from pixelated.provider.fork.mailpile_adapter import MailpileAdapter
 
 
 class ForkRunnerConstructorTest(unittest.TestCase):

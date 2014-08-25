@@ -12,8 +12,8 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-from provider.base_provider import ProviderInitializingException
-from test.util import EnforceTLSv1Adapter
+from pixelated.provider.base_provider import ProviderInitializingException
+from pixelated.test.util import EnforceTLSv1Adapter
 
 __author__ = 'fbernitt'
 import unittest
@@ -21,9 +21,9 @@ import time
 import json
 import requests
 from mock import MagicMock, patch
-from provider import Provider
-from server import RESTfulServer, SSLConfig, PixelatedDispatcherServer
-from test.util import certfile, keyfile, cafile
+from pixelated.provider import Provider
+from pixelated.server import RESTfulServer, SSLConfig, PixelatedDispatcherServer
+from pixelated.test.util import certfile, keyfile, cafile
 
 
 class RESTfulServerTest(unittest.TestCase):
@@ -222,8 +222,8 @@ class RESTfulServerTest(unittest.TestCase):
 
         self.assertSuccessJson(expected, r)
 
-    @patch('server.WSGIRefServer')
-    @patch('server.run')    # mock run call to avoid actually startng the server
+    @patch('pixelated.server.WSGIRefServer')
+    @patch('pixelated.server.run')    # mock run call to avoid actually startng the server
     def test_that_serve_forever_runs_without_ssl_context(self, run_mock, wsgiRefServer_mock):
         # given
         server = RESTfulServer(None, RESTfulServerTest.mock_provider)
@@ -243,9 +243,9 @@ class RESTfulServerTest(unittest.TestCase):
         self.assertEqual(503, r.status_code)
         self.assertEqual('Service Unavailable - Busy initializing Provider', r.reason)
 
-    @patch('server.DockerProvider')
-    @patch('server.RESTfulServer')
-    @patch('server.Thread')
+    @patch('pixelated.server.DockerProvider')
+    @patch('pixelated.server.RESTfulServer')
+    @patch('pixelated.server.Thread')
     def test_that_initialize_happens_in_background_thread(self, thread_mock, server_mock, docker_provider_mock):
         # given
         docker_provider_mock.return_value = self.mock_provider

@@ -21,8 +21,8 @@ from mock import MagicMock, patch
 import tornado
 from tornado.testing import AsyncHTTPTestCase
 
-from client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
-from dispatcher import Dispatcher, MainHandler
+from pixelated.client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
+from pixelated.dispatcher import Dispatcher, MainHandler
 
 
 __author__ = 'fbernitt'

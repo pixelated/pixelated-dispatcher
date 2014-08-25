@@ -16,8 +16,8 @@ import StringIO
 
 from mock import MagicMock, patch
 
-from client.cli import Cli
-from client.dispatcher_api_client import PixelatedDispatcherClient
+from pixelated.client.cli import Cli
+from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
 
 
 __author__ = 'fbernitt'

@@ -16,7 +16,7 @@ import os.path as path
 
 import psutil
 
-from provider.base_provider import BaseProvider, _mkdir_if_not_exists
+from pixelated.provider.base_provider import BaseProvider, _mkdir_if_not_exists
 
 
 class ForkProvider(BaseProvider):

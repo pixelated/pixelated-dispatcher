@@ -22,10 +22,10 @@ from tempfile import NamedTemporaryFile
 from tempdir import TempDir
 from mock import MagicMock, patch
 
-from provider import NotEnoughFreeMemory
-from provider.fork import ForkProvider
-from provider.fork.adapter import Adapter
-from provider.fork.fork_runner import ForkedProcess
+from pixelated.provider import NotEnoughFreeMemory
+from pixelated.provider.fork import ForkProvider
+from pixelated.provider.fork.adapter import Adapter
+from pixelated.provider.fork.fork_runner import ForkedProcess
 
 
 class ForkProviderConstructorTest(unittest.TestCase):
@@ -212,7 +212,7 @@ class ForkProviderTest(unittest.TestCase):
                               {'name': 'test', 'memory_usage': 1024}
                           ]}, usage)
 
-    @patch('provider.fork.psutil.virtual_memory')
+    @patch('pixelated.provider.fork.psutil.virtual_memory')
     def test_that_instance_cannot_be_started_with_too_little_memory_left(self, vm_mock):
         # given
         svmem = namedtuple('svmem', ['free'])

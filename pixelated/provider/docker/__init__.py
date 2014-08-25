@@ -12,10 +12,10 @@ import requests
 from psutil import Process
 from tempdir import TempDir
 
-from provider.base_provider import BaseProvider
-from provider.docker.mailpile_adapter import MailpileDockerAdapter
+from pixelated.provider.base_provider import BaseProvider
+from pixelated.provider.docker.mailpile_adapter import MailpileDockerAdapter
 
-from common import logger
+from pixelated.common import logger
 
 __author__ = 'fbernitt'
 

@@ -14,7 +14,7 @@
 # under the License.
 import os
 
-from provider.fork.gpg import GnuPGInitializer
+from pixelated.provider.fork.gpg import GnuPGInitializer
 
 
 class MailpileAdapter(object):

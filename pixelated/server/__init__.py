@@ -15,10 +15,10 @@
 import os
 from threading import Thread
 import traceback
-from provider.base_provider import ProviderInitializingException
-from common import logger
-from provider.docker import DockerProvider
-from provider.docker.twsmail_adapter import TwsmailDockerAdapter
+from pixelated.provider.base_provider import ProviderInitializingException
+from pixelated.common import logger
+from pixelated.provider.docker import DockerProvider
+from pixelated.provider.docker.twsmail_adapter import TwsmailDockerAdapter
 
 
 __author__ = 'fbernitt'
@@ -27,10 +27,10 @@ import ssl
 
 from bottle import run, Bottle, request, response, WSGIRefServer
 
-from server.bottle_adapter import SSLWSGIRefServerAdapter
-from provider.fork import ForkProvider
-from provider.fork.fork_runner import ForkRunner
-from provider.fork.mailpile_adapter import MailpileAdapter
+from pixelated.server.bottle_adapter import SSLWSGIRefServerAdapter
+from pixelated.provider.fork import ForkProvider
+from pixelated.provider.fork.fork_runner import ForkRunner
+from pixelated.provider.fork.mailpile_adapter import MailpileAdapter
 
 DEFAULT_PORT = 4443
 

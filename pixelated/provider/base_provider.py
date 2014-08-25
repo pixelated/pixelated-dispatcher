@@ -21,7 +21,7 @@ import binascii
 
 import scrypt
 
-from provider import Provider, NotEnoughFreeMemory
+from pixelated.provider import Provider, NotEnoughFreeMemory
 
 
 __author__ = 'fbernitt'
