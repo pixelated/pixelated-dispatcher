@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 #
 # Copyright (c) 2014 ThoughtWorks Deutschland GmbH
 #
