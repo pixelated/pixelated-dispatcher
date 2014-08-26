@@ -12,7 +12,7 @@ Aside from managing the different instances it also provides a login form to res
 
 **The Pixelated Dispatcher is still in early development state!**
 
-    Hence the setup is sometimes still less straight forward then expected.
+    Hence the setup is sometimes still less straight forward than expected.
     You will find more details as you go through this README.
 
 # Try it!
