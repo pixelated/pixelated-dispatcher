@@ -1,0 +1,6 @@
+include README.md
+recursive-include pixelated/files *.*
+include resources/*
+include scripts/*
+include debian/*
+

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+adduser --system pixelated --home /var/lib/pixelated --disabled-password --shell /bin/sh --ingroup nogroup
+usermod -a -G docker pixelated
+
+mkdir -p /var/lib/pixelated/dispatcher
+
+chown pixelated:nogroup -R /var/lib/pixelated
+

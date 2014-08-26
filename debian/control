@@ -1,15 +1,33 @@
 Source: pixelated-dispatcher
-Maintainer: Pixelated <fbernitt@thoughtworks.com>
-Section: mail
+Maintainer: Folker Bernitt <fbernitt@thoughtworks.com>
+Section: python
 Priority: optional
-Standards-Version: 3.9.2
-Build-Depends: debhelper (>= 8), python (>= 2.7), python-setuptools, python-nose
+Build-Depends: python-setuptools (>= 0.6b3), python-all (>= 2.6.6-3), debhelper (>= 7.4.3)
+Standards-Version: 3.9.1
 X-Python-Version: >= 2.7
 
-Package: pixelated-dispatcher
+Package: python-pixelated-dispatcher
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, python-imaging (>= 1.1.7), python-tornado, python-bottle, python-requests, python-gnupg, gnupg (>= 1.4.12)
-#Recommends: gnupg
-Homepage: https://github.com/pixelated-project/
-Description: Server daemon to run multiple pixelated user agents instances.
-
+#Depends: ${misc:Depends}, ${python:Depends}
+Depends: python (>= 2.7), python (<< 2.8), python-gnupg, python-bottle, python-tornado, python-requests, python-scrypt, python-psutil, python-docker
+Description: Pixelated-dispatcher dispatches between multiple pixelated u
+ pixelated-dispatcher
+ ====================
+ .
+ # Run multiple single user web apps on a server
+ .
+ pixelated-dispatcher allows you to run multiple instances of an application that had been designed for a single user.
+ One example is to run multiple [twsmail](https://github.com/twsmail) or [Mailpile](http://github.com/pagekite/Mailpile.git) instances (agents) on a server,
+ hence the name pixelated-dispatcher.
+ .
+ Aside from managing the different instances it also provides a login form to restrict access to individual agents.
+ .
+ .
+ **The Pixelated Dispatcher is still in early development state!**
+ .
+     Hence the setup is sometimes still less straight forward then expected.
+     You will find more details as you go through this README.
+ .
+ # Try it!
+ .
+ **Attention:** Currently only works with open VPN tunnel to hypervisor.wazokazi.is as access to the git repos for

@@ -1,5 +1,5 @@
-pixelated-dispatcher (0.0.1) squeezy; urgency=low
+pixelated-dispatcher (0.1-1) unstable; urgency=low
 
-  Some description of the change
+  * source package automatically created by stdeb 0.6.0+git
 
- -- Folker Bernitt <fbernitt@thoughtworks.com>  Sat,  6 Sep 2003 17:15:03 -0500
+ -- Folker Bernitt <fbernitt@thoughtworks.com>  Tue, 26 Aug 2014 12:32:44 +0000
