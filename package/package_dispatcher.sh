@@ -19,7 +19,7 @@ mkdir -p $BUILD_PATH
 cp -rf ./ $PIXELATED_LIB_PATH
 
 # build virtualenv
-virtualenv --always-copy $PIXELATED_VIRTUALENV_PATH
+virtualenv $PIXELATED_VIRTUALENV_PATH
 . $PIXELATED_VIRTUALENV_PATH/bin/activate
 pip install --upgrade pip
 pip install --upgrade setuptools
