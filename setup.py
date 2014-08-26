@@ -55,7 +55,7 @@ setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-            'pixelated-dispatcher = pixelated_dispatcher:main'
+            'pixelated-dispatcher = pixelated.pixelated_dispatcher:main'
         ]
     }
 )

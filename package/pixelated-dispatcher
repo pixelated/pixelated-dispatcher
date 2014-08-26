@@ -1,0 +1,7 @@
+#!/bin/bash
+
+PIXELATED_PATH=/var/lib/pixelated
+. $PIXELATED_PATH/virtualenv/bin/activate
+cd $PIXELATED_PATH/
+
+
