@@ -57,5 +57,9 @@ setup(
         'console_scripts': [
             'pixelated-dispatcher = pixelated.pixelated_dispatcher:main'
         ]
-    }
+    },
+    package_data={
+        'pixelated': [ 'resources/*.*', 'files/*.*']
+    },
+    include_package_data=True
 )
