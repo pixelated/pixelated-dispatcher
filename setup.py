@@ -59,7 +59,7 @@ setup(
         ]
     },
     package_data={
-        'pixelated': [ 'resources/*.*', 'files/*.*']
+        'pixelated': ['resources/*.*', 'files/*.*']
     },
     include_package_data=True
 )
