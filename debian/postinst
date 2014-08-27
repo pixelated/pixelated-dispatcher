@@ -2,6 +2,7 @@
 
 adduser --system pixelated --home /var/lib/pixelated --disabled-password --shell /bin/sh --ingroup nogroup
 usermod -a -G docker pixelated
+usermod -a -G ssl-cert pixelated
 
 mkdir -p /var/lib/pixelated/dispatcher
 

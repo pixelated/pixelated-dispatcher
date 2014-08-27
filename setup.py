@@ -44,14 +44,14 @@ setup(
         'requests',
         'scrypt',
         'psutil',
-        'tempdir',
         'docker-py'
     ],
     test_suite='nose.collector',
     tests_require=[
         'nose',
         'mock',
-        'httmock'],
+        'httmock',
+        'tempdir'],
     zip_safe=False,
     entry_points={
         'console_scripts': [

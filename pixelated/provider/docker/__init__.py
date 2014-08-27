@@ -26,6 +26,7 @@ import docker
 import psutil
 import requests
 from psutil import Process
+import shutil
 
 from pixelated.provider.base_provider import BaseProvider
 from pixelated.provider.docker.mailpile_adapter import MailpileDockerAdapter
