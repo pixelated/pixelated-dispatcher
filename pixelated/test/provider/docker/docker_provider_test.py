@@ -50,7 +50,7 @@ class DockerProviderTest(unittest.TestCase):
         # given
         client = docker_mock.return_value
         client.images.return_value = []
-        dockerfile = pkg_resources.resource_string('resources', 'Dockerfile.mailpile')
+        dockerfile = pkg_resources.resource_string('pixelated.resources', 'Dockerfile.mailpile')
 
         # when
         DockerProvider(self.root_path, self._adapter, 'some docker url').initialize()
@@ -365,8 +365,8 @@ class DockerProviderTest(unittest.TestCase):
                 provider.initialize()
 
                 # then
-                res_mock.resource_exists.assert_called_with('resources', 'init-mailpile-docker-context.sh')
-                res_mock.resource_string.assert_called_with('resources', 'init-mailpile-docker-context.sh')
+                res_mock.resource_exists.assert_called_with('pixelated.resources', 'init-mailpile-docker-context.sh')
+                res_mock.resource_string.assert_called_with('pixelated.resources', 'init-mailpile-docker-context.sh')
                 with open(file.name, "r") as input:
                     data = input.read().replace('\n', '')
                     self.assertEqual('%s %s' % (file.name, os.path.realpath(tempBuildDir_name)), data)

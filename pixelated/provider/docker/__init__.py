@@ -90,9 +90,9 @@ class DockerProvider(BaseProvider):
             # build the image
             start = time.time()
             logger.info('No docker image for %s found! Triggering build.' % self._adapter.app_name())
-            if pkg_resources.resource_exists('resources', 'init-%s-docker-context.sh' % self._adapter.app_name()):
+            if pkg_resources.resource_exists('pixelated.resources', 'init-%s-docker-context.sh' % self._adapter.app_name()):
                 fileobj = None
-                content = pkg_resources.resource_string('resources', 'init-%s-docker-context.sh' % self._adapter.app_name())
+                content = pkg_resources.resource_string('pixelated.resources', 'init-%s-docker-context.sh' % self._adapter.app_name())
                 with TempDir() as dir:
                     filename = join(dir, 'run.sh')
                     with open(filename, 'w') as fd:
@@ -182,7 +182,7 @@ class DockerProvider(BaseProvider):
         return self._docker_container_port(name)
 
     def _dockerfile(self):
-        return unicode(pkg_resources.resource_string('resources', 'Dockerfile.%s' % self._adapter.app_name()))
+        return unicode(pkg_resources.resource_string('pixelated.resources', 'Dockerfile.%s' % self._adapter.app_name()))
 
     def _docker_container_by_name(self, name):
         return self._map_container_by_name()[name]
