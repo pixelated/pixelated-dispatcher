@@ -10,3 +10,6 @@ mkdir -p /var/lib/pixelated/dispatcher
 
 chown pixelated:nogroup -R /var/lib/pixelated
 
+/etc/init.d/pixelated-manager restart
+/etc/init.d/pixelated-proxy restart
+
