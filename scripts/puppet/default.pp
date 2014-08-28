@@ -61,8 +61,8 @@ node default {
     mode => '0755'
   }
 
-  $server_cmd = "/usr/bin/python /vagrant/pixelated-dispatcher.py server -b docker"
-  $ssl_options = "--sslcert /vagrant/test/util/server.crt --sslkey /vagrant/test/util/server.key"
+  $server_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py server -b docker"
+  $ssl_options = "--sslcert /vagrant/pixelated/test/util/server.crt --sslkey /vagrant/pixelated/test/util/server.key"
 
   service { 'dispatcher-server':
     ensure => running,
@@ -75,7 +75,7 @@ node default {
     require => [Service['docker.io'], File[$dispatcher_path]]
   }
 
-  $dispatcher_cmd = "/usr/bin/python /vagrant/pixelated-dispatcher.py dispatcher"
+  $dispatcher_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py dispatcher"
 
   service { 'pixelated-dispatcher':
     ensure => running,
