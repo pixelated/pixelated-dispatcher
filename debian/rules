@@ -4,6 +4,14 @@
 # Tue, 26 Aug 2014 12:32:44 +0000
 
 %:
-	dh $@ --with python2 --buildsystem=python_distutils
+	#dh $@ --with python2 --buildsystem=python_distutils
+	dh $@ --with python2
+
+override_dh_auto_install:
+	python setup.py install --root=debian/python-pixelated-dispatcher --install-layout=deb
+	mkdir -p debian/python-pixelated-dispatcher/etc/init.d
+	cp debian/etc/init.d/* debian/python-pixelated-dispatcher/etc/init.d
+
+override_dh_auto_build:
 
 

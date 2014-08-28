@@ -1,0 +1,55 @@
+#!/bin/sh
+# Start/stop the pixelated-dispatcher proxy daemon.
+#
+### BEGIN INIT INFO
+# Provides:          pixelated-proxy
+# Required-Start:    $remote_fs $syslog $time
+# Required-Stop:     $remote_fs $syslog $time
+# Should-Start:      $network $named slapd autofs ypbind nscd nslcd
+# Should-Stop:       $network $named slapd autofs ypbind nscd nslcd
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Manager part of the pixelated-dispatcher
+# Description:       TBD
+### END INIT INFO
+
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+DESC="pixelated-dispatcher proxy daemon"
+NAME=pixelated-proxy
+DAEMON=/usr/bin/pixelated-dispatcher
+PIDFILE=/var/run/pixelated-dispatcher-proxy.pid
+SCRIPTNAME=/etc/init.d/"$NAME"
+
+test -f $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+[ -r /etc/default/python-pixelated-dispatcher ] && . /etc/default/python-pixelated-dispatcher
+
+EXTRA_OPTS="dispatcher --server $PIXELATED_MANAGER --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_PROXY_EXTRA_OPTS"
+
+case "$1" in
+start)	log_daemon_msg "Starting pixelated-dispatcher proxy" "pixelated-proxy"
+        start-stop-daemon --start --quiet --oknodo -b -m -c $PIXELATED_USER --pidfile $PIDFILE --exec $DAEMON -- $EXTRA_OPTS
+        log_end_msg $?
+	;;
+stop)	log_daemon_msg "Stopping pixelated-dispatcher proxy" "pixelated-proxy"
+        killproc -p $PIDFILE $DAEMON
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && [ -e "$PIDFILE" ] && rm -f $PIDFILE
+        log_end_msg $RETVAL
+        ;;
+restart) log_daemon_msg "Restarting pixelated-dispatcher proxy" "pixelated-proxy"
+        $0 stop
+        $0 start
+        ;;
+status)
+        status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
+        ;;
+*)	log_action_msg "Usage: $SCRIPTNAME {start|stop|status|restart}"
+        exit 2
+        ;;
+esac
+exit 0
+

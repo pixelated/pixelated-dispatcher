@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
 
+set -e
+
 python setup.py sdist
 
 TEMP_DIR=$(mktemp -d)
@@ -25,7 +27,13 @@ pushd $TEMP_DIR
 cp pixelated-dispatcher-0.1.tar.gz pixelated-dispatcher_0.1.orig.tar.gz
 tar -xzf pixelated-dispatcher-0.1.tar.gz
 cd pixelated*
+
 dpkg-buildpackage -rfakeroot -uc -us
+
+# manual build
+#mkdir pkg-root
+#python setup.py install --root=pkg-root --install-layout=deb
+#fakeroot dpkg --build pkg-root ../python-pixelated-dispatcher_0.1-1_all.deb
 
 cp $TEMP_DIR/python-pixelated-dispatcher_0.1-1_all.deb /tmp/
 
