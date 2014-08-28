@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ -f /etc/init.d/pixelated-proxy ] ; then
+    /etc/init.d/pixelated-proxy stop
+fi
+
+if [ -f /etc/init.d/pixelated-manager ] ; then
+    /etc/init.d/pixelated-manager stop
+fi
+
