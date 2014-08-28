@@ -35,7 +35,7 @@ setup(
     author_email="fbernitt@thoughtworks.com",
     description="Pixelated-dispatcher dispatches between multiple pixelated user agent instances",
     long_description=read('README.md'),
-    license="ALv2",
+    license="AGPL",
     keywords=['pixelated', 'email'],
     install_requires=[
         'python-gnupg',
