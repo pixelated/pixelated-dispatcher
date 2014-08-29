@@ -4,21 +4,13 @@ pixelated-dispatcher
 # Run multiple single user web apps on a server
 
 pixelated-dispatcher allows you to run multiple instances of an application that had been designed for a single user.
-One example is to run multiple [twsmail](https://github.com/twsmail) or [Mailpile](http://github.com/pagekite/Mailpile.git) instances (agents) on a server,
-hence the name pixelated-dispatcher.
 
 Aside from managing the different instances it also provides a login form to restrict access to individual agents.
 
 
-**The Pixelated Dispatcher is still in early development state!**
-
-    Hence the setup is sometimes still less straight forward than expected.
-    You will find more details as you go through this README.
+**The Pixelated Dispatcher is still in early development state! Hence the setup is sometimes still less straight forward than expected. You will find more details as you go through this README.**
 
 # Try it!
-
-**Attention:** Currently only works with open VPN tunnel to hypervisor.wazokazi.is as access to the git repos for
-fake-smail-back and smail-front is required (and the original repos on github are currently private)
 
 This repository contains a Vagrantfile that sets up a running pixelated-dispatcher installation within a virtual machine.
 
