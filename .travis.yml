@@ -1,8 +1,13 @@
 language: python
 python:
 - "2.7"
-install:
+before_install:
     - sudo apt-get install -y rng-tools
+    - sudo rm -f /dev/random
+    - sudo mknod -m 0666 /dev/random c 1 9
+    - echo HRNGDEVICE=/dev/urandom | sudo tee /etc/default/rng-tools
+    - sudo /etc/init.d/rng-tools restart
+install:
     - pip install -r requirements.txt --use-mirrors
 before_script:
     - sudo /usr/sbin/rngd -r /dev/urandom
