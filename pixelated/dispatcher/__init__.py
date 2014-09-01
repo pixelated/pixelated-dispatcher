@@ -60,25 +60,47 @@ class MainHandler(BaseHandler):
             port = runtime['port']
             self.forward(port, '127.0.0.1')
         else:
-            logger.info('Starting agent for %s' % self.current_user)
-            self._client.start(self.current_user)
-            # wait til agent is running
-            runtime = self._client.get_agent_runtime(self.current_user)
-            max_wait_seconds = 3
-            waited = 0
-            while runtime['state'] != 'running' and waited < max_wait_seconds:
-                yield gen.Task(tornado.ioloop.IOLoop.current().add_timeout, time.time() + 1)
+            try:
+                logger.info('Starting agent for %s' % self.current_user)
+                self._client.start(self.current_user)
+                # wait til agent is running
                 runtime = self._client.get_agent_runtime(self.current_user)
-                waited += 1
+                max_wait_seconds = 3
+                waited = 0
+                while runtime['state'] != 'running' and waited < max_wait_seconds:
+                    yield gen.Task(tornado.ioloop.IOLoop.current().add_timeout, time.time() + 1)
+                    runtime = self._client.get_agent_runtime(self.current_user)
+                    waited += 1
 
-            if runtime['state'] == 'running':
-                port = runtime['port']
-                self.forward(port, '127.0.0.1')
-            else:
-                logger.error('Failed to start agent for %s' % self.current_user)
-                self.set_status(503)
-                self.write("Could not connect to instance %s!\n" % self.current_user)
-                self.finish()
+                if runtime['state'] == 'running':
+                    yield gen.Task(self._wait_til_agent_is_up, runtime)
+                    port = runtime['port']
+                    self.forward(port, '127.0.0.1')
+                else:
+                    logger.error('Failed to start agent for %s' % self.current_user)
+                    self.set_status(503)
+                    self.write("Could not connect to instance %s!\n" % self.current_user)
+                    self.finish()
+            except Exception, e:
+                logger.error('Got some exception.... %s' % e)
+                raise
+
+    @gen.engine
+    def _wait_til_agent_is_up(self, agent_runtime, callback):
+        max_wait = 10
+        waited = 0
+        while waited < max_wait:
+            try:
+                port = agent_runtime['port']
+                yield tornado.httpclient.AsyncHTTPClient().fetch(
+                    tornado.httpclient.HTTPRequest(
+                        url='http://127.0.0.1:%d/' % port,
+                        headers=self.request.headers))
+                waited = max_wait
+            except tornado.httpclient.HTTPError, e:
+                yield gen.Task(tornado.ioloop.IOLoop.current().add_timeout, time.time() + 1)
+            waited += 1
+        callback()
 
     def handle_response(self, response):
         if response.error and not isinstance(response.error, tornado.httpclient.HTTPError):
@@ -107,7 +129,7 @@ class MainHandler(BaseHandler):
                     body=None if not self.request.body else self.request.body,
                     headers=self.request.headers,
                     follow_redirects=False,
-                    request_timeout=1),
+                    request_timeout=10),
                 self.handle_response)
         except tornado.httpclient.HTTPError, x:
             if hasattr(x, 'response') and x.response:
@@ -153,7 +175,7 @@ class AuthLoginHandler(tornado.web.RequestHandler):
             self.clear_cookie(COOKIE_NAME)
 
 
-class AuthLogoutHandler(tornado.web.RequestHandler):
+class AuthLogoutHandler(BaseHandler):
     def get(self):
         logger.info('User %s logged out' % self.current_user)
         self.clear_cookie(COOKIE_NAME)

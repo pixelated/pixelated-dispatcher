@@ -53,6 +53,16 @@ def catch_initializing_exception_wrapper(callback):
     return wrapper
 
 
+def log_all_exceptions(callback):
+    def wrapper(*args, **kwargs):
+        try:
+            return callback(*args, **kwargs)
+        except Exception, e:
+            logger.error('Error during request: %s' % e.message)
+            raise
+    return wrapper
+
+
 class RESTfulServer(object):
     __slots__ = ('_ssl_config', '_port', '_provider', '_server_adapter')
 
@@ -65,6 +75,7 @@ class RESTfulServer(object):
     def init_bottle_app(self):
         app = Bottle()
         app.install(catch_initializing_exception_wrapper)
+        app.install(log_all_exceptions)
 
         app.route('/agents', method='GET', callback=self._list_agents)
         app.route('/agents', method='POST', callback=self._add_agent)
