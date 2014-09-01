@@ -126,7 +126,7 @@ class BaseProvider(Provider):
         self._ensure_initialized()
 
         if name in self._agents:
-            raise Exception('Instance %s already exists!' % name)
+            raise ValueError('Instance %s already exists!' % name)
         self._agents.append(name)
 
         _mkdir_if_not_exists(self._instance_path(name))

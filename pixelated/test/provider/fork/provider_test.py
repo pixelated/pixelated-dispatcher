@@ -96,7 +96,7 @@ class ForkProviderTest(unittest.TestCase):
     def test_instances_can_not_be_added_twice(self):
         self.provider.add('test', 'password')
 
-        self.assertRaises(Exception, self.provider.add, 'test')
+        self.assertRaises(ValueError, self.provider.add, 'test', 'password')
 
     def test_remove_raises_exception_if_instance_does_not_exist(self):
         self.assertRaises(ValueError, self.provider.remove, 'test')
