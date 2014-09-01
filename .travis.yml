@@ -2,7 +2,10 @@ language: python
 python:
 - "2.7"
 install:
+    sudo apt-get install -y rng-tools
     pip install -r requirements.txt --use-mirrors
+before_script:
+    sudo /usr/sbin/rngd -r /dev/urandom
 script:
     - nosetests
 
