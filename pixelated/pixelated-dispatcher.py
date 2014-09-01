@@ -14,10 +14,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+import os.path
 
 __author__ = 'fbernitt'
+
+sys.path.append('%s/..' % os.path.dirname(os.path.realpath(__file__)))
 
 from pixelated.pixelated_dispatcher import main
 
 if __name__ == '__main__':
+
     main()
