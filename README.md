@@ -28,21 +28,21 @@ This repository contains a Vagrantfile that sets up a running pixelated-dispatch
 It provides a CLI interface to manage agents:
 
     # add a new user
-    python pixelated-dispatcher.py -k add <username>
+    python pixelated/pixelated-dispatcher.py -k add <username>
 
     # list all users
-    python pixelated-dispatcher.py -k list
+    python pixelated/pixelated-dispatcher.py -k list
     
     # your instance is created but not yet running:
-    python pixelated-dispatcher.py -k running
+    python pixelated/pixelated-dispatcher.py -k running
     
     # start the agent for <username>
-    python pixelated-dispatcher.py -k start <username>
+    python pixelated/pixelated-dispatcher.py -k start <username>
     
     # Call running again to see that it is now up and running
     
     # To see all possible commands or the meaning of parameters call
-    python pixelated-dispatcher.py --help
+    python pixelated/pixelated-dispatcher.py --help
 
 Now you can [access the agent using a browser](https://localhost:8080/). To logout of a agent just call
 [https://localhost:8080/auth/logout](https://localhost:8080/auth/logout) (currently there is no logout link
@@ -60,9 +60,9 @@ all unnecessary privileges as soon as possible.
 
 The entire user agent management is delegated to:
 
-## pixelated-dispatcher server
+## pixelated-dispatcher manager
 
-The server is not accessible from the web and is responsible for managing the lifecycle of the instances.
+The manager is not accessible from the web and is responsible for managing the lifecycle of the instances.
 It provides a RESTful API to create/start/stop/delete/... agents. It uses [docker](https://github.com/dotcloud/docker)
 to isolate the agents from each other and to provide the necessary runtime environment.
 
