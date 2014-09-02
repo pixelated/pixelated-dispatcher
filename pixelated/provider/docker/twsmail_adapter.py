@@ -30,7 +30,7 @@ class TwsmailDockerAdapter(DockerAdapter):
         return 'twsmail'
 
     def run_command(self):
-        return '/bin/bash -l -c "cd /fake-smail-back && ./go"'
+        return '/bin/bash -l -c "cd /pixelated-user-agent/py-fake-service && ./go"'
 
     def setup_command(self):
         return '/bin/true'
