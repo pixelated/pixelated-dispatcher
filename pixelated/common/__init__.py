@@ -1,4 +1,5 @@
 import logging
+from logging.handlers import SysLogHandler
 
 logger = logging.getLogger('pixelated.startup')
 
@@ -12,7 +13,7 @@ def init_logging(name, level=logging.INFO, config_file=None):
         logging.config.fileConfig(config_file)
     else:
         formatter = logging.Formatter('%(asctime)s %(name)s: %(levelname)s %(message)s', '%b %e %H:%M:%S')
-        syslog = logging.handlers.SysLogHandler(address='/dev/log', facility=logging.handlers.SysLogHandler.LOG_DAEMON)
+        syslog = SysLogHandler(address='/dev/log', facility=SysLogHandler.LOG_DAEMON)
         syslog.setFormatter(formatter)
         logger.addHandler(syslog)
 
