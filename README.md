@@ -84,3 +84,12 @@ To setup a dev environment, call:
     pip install -r requirements.txt
     
     python setup.py test
+
+# Packages
+
+You can build a debian package from sources by running
+
+	./package/debian-package.sh
+
+For that to work you need to have the python-setuptools (>= 0.6b3), python-all (>= 2.6.6-3), debhelper (>= 7.4.3) installed.
+
