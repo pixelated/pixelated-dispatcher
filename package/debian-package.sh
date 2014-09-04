@@ -17,7 +17,14 @@
 
 set -e
 
-git-dch -a -S
+if [ -n "$GO_PIPELINE_COUNTER" ]; then
+	echo "USING COUNTER NUMBER: $GO_PIPELINE_COUNTER"
+	git-dch -a -S --snapshot-number=$GO_PIPELINE_COUNTER
+else
+	echo "NO COUNTER NUMBER PRESENT"
+	git-dch -a -S 
+fi
+
 python setup.py sdist
 
 TEMP_DIR=$(mktemp -d)
