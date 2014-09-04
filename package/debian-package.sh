@@ -17,6 +17,7 @@
 
 set -e
 
+git-dch -a -S
 python setup.py sdist
 
 TEMP_DIR=$(mktemp -d)
