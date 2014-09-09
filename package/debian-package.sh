@@ -19,10 +19,10 @@ set -e
 
 if [ -n "$GO_PIPELINE_COUNTER" ]; then
 	echo "USING COUNTER NUMBER: $GO_PIPELINE_COUNTER"
-	git-dch -a -S --snapshot-number=$GO_PIPELINE_COUNTER
+	git-dch -a -S --distribution=wheezy --snapshot-number=$GO_PIPELINE_COUNTER
 else
 	echo "NO COUNTER NUMBER PRESENT"
-	git-dch -a -S 
+	git-dch -a -S --distribution=wheezy
 fi
 
 dpkg-buildpackage -rfakeroot -uc -us
