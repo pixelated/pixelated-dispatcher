@@ -9,24 +9,52 @@ X-Python-Version: >= 2.7
 Package: pixelated-dispatcher
 Architecture: all
 #Depends: ${misc:Depends}, ${python:Depends}
-Depends: python (>= 2.7), python (<< 2.8), python-gnupg, python-bottle, python-tornado, python-requests, python-urllib3, python-scrypt, python-psutil, python-docker, python-setuptools
-Description: Pixelated-dispatcher dispatches between multiple pixelated u
- pixelated-dispatcher
- ====================
- .
- # Run multiple single user web apps on a server
+Depends: pixelated-dispatcher-proxy, pixelated-dispatcher-manager
+Description: Pixelated-dispatcher dispatches between multiple pixelated user-agents
+ Run multiple single user web apps on a server
  .
  pixelated-dispatcher allows you to run multiple instances of an application that had been designed for a single user.
  One example is to run multiple [pixelated-user-agents](https://github.com/pixelated-project/pixelated-user-agent) or [Mailpile](http://github.com/pagekite/Mailpile.git) instances (agents) on a server,
  hence the name pixelated-dispatcher.
- .
  Aside from managing the different instances it also provides a login form to restrict access to individual agents.
  .
+ The Pixelated Dispatcher is still in early development state!**
  .
- **The Pixelated Dispatcher is still in early development state!**
+ Hence the setup is sometimes still less straight forward then expected.
+ You will find more details as you go through this README.
+
+Package: pixelated-dispatcher-proxy
+Architecture: all
+#Depends: ${misc:Depends}, ${python:Depends}
+Depends: python (>= 2.7), python (<< 2.8), python-gnupg, python-tornado, python-requests, python-urllib3, python-scrypt, python-setuptools,pixelated-dispatcher-common
+Description: Pixelated-dispatcher dispatches between multiple pixelated user-agents
+ Run multiple single user web apps on a server
  .
-     Hence the setup is sometimes still less straight forward then expected.
-     You will find more details as you go through this README.
+ pixelated-dispatcher allows you to run multiple instances of an application that had been designed for a single user.
+ One example is to run multiple [pixelated-user-agents](https://github.com/pixelated-project/pixelated-user-agent) or [Mailpile](http://github.com/pagekite/Mailpile.git) instances (agents) on a server,
+ hence the name pixelated-dispatcher.
+ This package provides the proxy facing the internet
+
+Package: pixelated-dispatcher-manager
+Architecture: all
+#Depends: ${misc:Depends}, ${python:Depends}
+Depends: python (>= 2.7), python (<< 2.8), python-gnupg, python-bottle, python-requests, python-urllib3, python-scrypt, python-psutil, python-docker, python-setuptools,pixelated-dispatcher-common
+Description: Pixelated-dispatcher dispatches between multiple pixelated user-agents
+ Run multiple single user web apps on a server
  .
- # Try it!
+ pixelated-dispatcher allows you to run multiple instances of an application that had been designed for a single user.
+ One example is to run multiple [pixelated-user-agents](https://github.com/pixelated-project/pixelated-user-agent) or [Mailpile](http://github.com/pagekite/Mailpile.git) instances (agents) on a server,
+ hence the name pixelated-dispatcher.
+ This package provides the server responsible for starting the instances
+
+Package: pixelated-dispatcher-common
+Architecture: all
+#Depends: ${misc:Depends}, ${python:Depends}
+Depends: python (>= 2.7), python (<< 2.8), python-gnupg, python-bottle, python-requests, python-urllib3, python-scrypt, python-psutil, python-docker, python-setuptools, ssl-cert
+Description: Pixelated-dispatcher dispatches between multiple pixelated user-agents
+ Run multiple single user web apps on a server
  .
+ pixelated-dispatcher allows you to run multiple instances of an application that had been designed for a single user.
+ One example is to run multiple [pixelated-user-agents](https://github.com/pixelated-project/pixelated-user-agent) or [Mailpile](http://github.com/pagekite/Mailpile.git) instances (agents) on a server,
+ hence the name pixelated-dispatcher.
+ This package provides the server binary

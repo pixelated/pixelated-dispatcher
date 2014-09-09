@@ -5,7 +5,5 @@ PIXELATED_PROVIDER=docker
 PIXELATED_SSLCERT=/etc/ssl/certs/ssl-cert-snakeoil-localhost.crt
 PIXELATED_SSLKEY=/etc/ssl/private/ssl-cert-snakeoil-localhost.key
 PIXELATED_MANAGER_EXTRA_OPTS=
-PIXELATED_PROXY_EXTRA_OPTS="--bind `hostname -f`"
 PIXELATED_ROOT=/var/lib/pixelated/dispatcher
-PIXELATED_MANAGER=localhost:4443
 
