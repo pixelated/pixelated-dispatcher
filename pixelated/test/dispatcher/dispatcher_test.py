@@ -138,14 +138,26 @@ class DispatcherTest(AsyncHTTPTestCase):
 
         self.assertEqual(403, response.code)
 
-    def _add_auth_cookie(self):
-        self.cookies[
-            'pixelated_user'] = '2|1:0|10:1407749446|14:pixelated_user|12:InRlc3RlciI=|5ddd4ea06420119d9487c04cb1e83fa6665a9f42644b5969157d93abb2a6ed87'
+    def _fetch_auth_cookie(self):
+        payload = {
+            'username': 'tester',
+            'password': 'test',
+        }
+        response = self._post('/auth/login', payload=payload)
+
+        self.assertEqual(302, response.code)
+        self.assertEqual('/', response.headers['Location'])
+        login_cookies = Cookie.SimpleCookie()
+        login_cookies.load(response.headers['Set-Cookie'])
+        self.assertTrue('pixelated_user' in login_cookies)
+
+        self.cookies = Cookie.SimpleCookie()
+        self.cookies['pixelated_user'] = login_cookies['pixelated_user'].value.strip()
 
     def test_autostart_agent_if_not_running(self):
         # given
         self.client.get_agent_runtime.side_effect = [{'state': 'stopped'}, {'state': 'stopped'}, {'state': 'running', 'port': TestServer.PORT}]
-        self._add_auth_cookie()
+        self._fetch_auth_cookie()
 
         def fake_handle_request(request):
             message = "You requested %s\n" % request.uri
@@ -165,7 +177,7 @@ class DispatcherTest(AsyncHTTPTestCase):
     def test_autostart_error_message_if_agent_fails_to_start(self):
         # given
         self.client.get_agent_runtime.return_value = {'state': 'stopped'}
-        self._add_auth_cookie()
+        self._fetch_auth_cookie()
 
         # when
         response = self._get('/some/url')
