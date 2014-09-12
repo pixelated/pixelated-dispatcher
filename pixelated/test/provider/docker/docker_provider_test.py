@@ -26,7 +26,7 @@ from threading import Thread
 from pixelated.provider.base_provider import BaseProvider, ProviderInitializingException
 from pixelated.provider.docker import DockerProvider, MailpileDockerAdapter
 from pixelated.test.util import StringIOMatcher
-
+from pixelated.exceptions import *
 
 __author__ = 'fbernitt'
 
@@ -126,7 +126,7 @@ class DockerProviderTest(unittest.TestCase):
     def test_that_non_existing_instance_cannot_be_started(self, docker_mock):
         provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
 
-        self.assertRaises(ValueError, provider.start, 'test')
+        self.assertRaises(InstanceNotFoundError, provider.start, 'test')
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_that_instance_can_be_started(self, docker_mock):
@@ -194,7 +194,7 @@ class DockerProviderTest(unittest.TestCase):
         provider.add('test', 'password')
         provider.start('test')
 
-        self.assertRaises(ValueError, provider.start, 'test')
+        self.assertRaises(InstanceAlreadyRunningError, provider.start, 'test')
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_stopping_not_running_container_raises_value_error(self, docker_mock):
@@ -203,7 +203,7 @@ class DockerProviderTest(unittest.TestCase):
         provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
 
-        self.assertRaises(ValueError, provider.stop, 'test')
+        self.assertRaises(InstanceNotRunningError, provider.stop, 'test')
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_stop_running_container(self, docker_mock):

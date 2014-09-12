@@ -20,6 +20,9 @@ from pixelated.provider.base_provider import ProviderInitializingException
 from pixelated.common import logger
 from pixelated.provider.docker import DockerProvider
 from pixelated.provider.docker.twsmail_adapter import TwsmailDockerAdapter
+from pixelated.exceptions import InstanceNotFoundError
+from pixelated.exceptions import InstanceNotRunningError
+from pixelated.exceptions import InstanceAlreadyRunningError
 
 
 __author__ = 'fbernitt'
@@ -130,30 +133,34 @@ class RESTfulServer(object):
             response.status = '201 Created'
             response.headers['Location'] = self._agent_uri(name)
             return self._agent_to_json(name)
-        except ValueError:
-            response.status = '409 Conflict'
+        except InstanceAlreadyRunningError as error:
+                logger.warn(error.message)
+                response.status = '409 Conflict - %s' % error.message
 
     def _get_agent(self, name):
         try:
             self._provider.status(name)
             return self._agent_to_json(name)
-        except ValueError:
-            response.status = '404 Not Found'
+        except InstanceNotFoundError as error:
+                logger.warn(error.message)
+                response.status = '404 Not Found - %s' % error.message
 
     def _delete_agent(self, name):
         try:
             self._provider.remove(name)
             logger.info('Removed agent of user %s' % name)
             response.status = "200 OK"
-        except ValueError:
-            response.status = "404 Not Found"
+        except InstanceNotFoundError as error:
+                logger.warn(error.message)
+                response.status = '404 Not Found - %s' % error.message
 
     def _get_agent_state(self, name):
         try:
             state = self._provider.status(name)['state']
             return {'state': state}
-        except ValueError:
-            response.status = "404 Not Found"
+        except InstanceNotFoundError as error:
+                logger.warn(error.message)
+                response.status = '404 Not Found - %s' % error.message
 
     def _put_agent_state(self, name):
         state = request.json['state']
@@ -163,24 +170,28 @@ class RESTfulServer(object):
                 self._provider.start(name)
                 logger.info('Started agent for user %s' % name)
                 return self._get_agent_state(name)
-            except ValueError:
-                logger.warn('Agent for user %s already running' % name)
-                response.status = '409 Conflict - agent %s already running' % name
+            except InstanceNotFoundError as error:
+                logger.warn(error.message)
+                response.status = '404 Not Found - %s' % error.message
+            except InstanceAlreadyRunningError as error:
+                logger.warn(error.message)
+                response.status = '409 Conflict - %s' % error.message
         else:
             try:
                 self._provider.stop(name)
                 logger.info('Stopped agent for user %s' % name)
                 return self._get_agent_state(name)
-            except ValueError:
-                logger.warn('Agent for user %s not running' % name)
-                response.status = '409 Conflict - agent named %s not running' % name
+            except InstanceNotRunningError as error:
+                logger.warn(error.message)
+                response.status = '409 Conflict - %s' % error.message
 
     def _get_agent_runtime(self, name):
         try:
             return self._provider.status(name)
-        except ValueError:
-            response.status = '404 Not Found'
-
+        except InstanceNotFoundError as error:
+            logger.warn(error.message)
+            response.status = '404 Not Found - %s' % error.message
+    
     def _authenticate_agent(self, name):
         password = request.json['password']
         result = self._provider.authenticate(name, password)

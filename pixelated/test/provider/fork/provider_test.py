@@ -23,6 +23,7 @@ from tempfile import NamedTemporaryFile
 from tempdir import TempDir
 from mock import MagicMock, patch
 
+from pixelated.exceptions import *
 from pixelated.provider import NotEnoughFreeMemory
 from pixelated.provider.fork import ForkProvider
 from pixelated.provider.fork.adapter import Adapter
@@ -96,7 +97,7 @@ class ForkProviderTest(unittest.TestCase):
     def test_instances_can_not_be_added_twice(self):
         self.provider.add('test', 'password')
 
-        self.assertRaises(ValueError, self.provider.add, 'test', 'password')
+        self.assertRaises(InstanceAlreadyRunningError, self.provider.add, 'test', 'password')
 
     def test_remove_raises_exception_if_instance_does_not_exist(self):
         self.assertRaises(ValueError, self.provider.remove, 'test')
@@ -106,7 +107,7 @@ class ForkProviderTest(unittest.TestCase):
         self.provider.remove('test')
 
     def test_that_non_existing_instance_cannot_be_started(self):
-        self.assertRaises(ValueError, self.provider.start, 'test')
+        self.assertRaises(InstanceNotFoundError, self.provider.start, 'test')
 
     def test_that_instance_can_be_started_and_gets_initialized(self):
         self.provider.add('test', 'password')
@@ -119,7 +120,7 @@ class ForkProviderTest(unittest.TestCase):
         self.provider.add('test', 'password')
         self.provider.start('test')
 
-        self.assertRaises(ValueError, self.provider.start, 'test')
+        self.assertRaises(InstanceAlreadyRunningError, self.provider.start, 'test')
 
     def test_that_running_instances_are_in_runnig_list(self):
         self._init_runner_memory_usage()
@@ -132,12 +133,12 @@ class ForkProviderTest(unittest.TestCase):
         self.assertEqual({'one', 'two', 'three'}, set(self.provider.list_running()))
 
     def test_that_non_existing_instance_cannot_be_stopped(self):
-        self.assertRaises(ValueError, self.provider.stop, 'test')
+        self.assertRaises(InstanceNotRunningError, self.provider.stop, 'test')
 
     def test_that_non_started_instance_cannot_be_stopped(self):
         self.provider.add('test', 'password')
 
-        self.assertRaises(ValueError, self.provider.stop, 'test')
+        self.assertRaises(InstanceNotRunningError, self.provider.stop, 'test')
 
     def test_that_running_instance_can_be_stopped(self):
         process = MagicMock(spec=ForkedProcess)
@@ -153,7 +154,7 @@ class ForkProviderTest(unittest.TestCase):
         self.provider.start('test')
         self.provider.stop('test')
 
-        self.assertRaises(ValueError, self.provider.stop, 'test')
+        self.assertRaises(InstanceNotRunningError, self.provider.stop, 'test')
 
     def test_that_existing_agents_are_autodiscovered(self):
         agent = os.path.join(self.root_path, 'test')

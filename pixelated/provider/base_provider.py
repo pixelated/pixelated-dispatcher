@@ -23,6 +23,10 @@ import binascii
 import scrypt
 
 from pixelated.provider import Provider, NotEnoughFreeMemory
+from pixelated.exceptions import InstanceNotFoundError
+from pixelated.exceptions import InstanceNotRunningError
+from pixelated.exceptions import InstanceAlreadyRunningError
+
 
 
 __author__ = 'fbernitt'
@@ -126,7 +130,7 @@ class BaseProvider(Provider):
         self._ensure_initialized()
 
         if name in self._agents:
-            raise ValueError('Instance %s already exists!' % name)
+            raise InstanceAlreadyRunningError('Instance %s already exists!' % name)
         self._agents.append(name)
 
         _mkdir_if_not_exists(self._instance_path(name))
@@ -165,9 +169,9 @@ class BaseProvider(Provider):
 
     def _start(self, name):
         if name not in self._agents:
-            raise ValueError('No instance named %s' % name)
+            raise InstanceNotFoundError('No instance named %s' % name)
         if name in self.list_running():
-            raise ValueError('instance  %s already running' % name)
+            raise InstanceAlreadyRunningError('instance %s already running' % name)
 
         if not self._check_enough_free_memory():
                 raise NotEnoughFreeMemory('Not enough memory to start instance %s!' % name)
@@ -177,7 +181,7 @@ class BaseProvider(Provider):
 
     def _stop(self, name):
         if name not in self.list_running():
-            raise ValueError('No running instance named %s' % name)
+            raise InstanceNotRunningError('No running instance named %s' % name)
 
     def status(self, name):
         if name in self.list_running():

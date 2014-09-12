@@ -25,6 +25,7 @@ from mock import MagicMock, patch
 from pixelated.provider import Provider
 from pixelated.server import RESTfulServer, SSLConfig, PixelatedDispatcherServer
 from pixelated.test.util import certfile, keyfile, cafile
+from pixelated.exceptions import *
 
 
 class RESTfulServerTest(unittest.TestCase):
@@ -160,7 +161,7 @@ class RESTfulServerTest(unittest.TestCase):
 
     def test_start_agent_twice_returns_conflict(self):
         # given
-        self.mock_provider.start.side_effect = ValueError
+        self.mock_provider.start.side_effect = InstanceAlreadyRunningError
         payload = {'state': 'running'}
 
         # when
