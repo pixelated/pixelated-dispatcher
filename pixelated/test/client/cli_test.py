@@ -76,13 +76,21 @@ class CliTest(unittest.TestCase):
 
         self.apimock.stop.assert_called_once_with('first')
 
-    def test_supports_runtime(self):
-        self.apimock.get_agent_runtime.return_value = {'port': 1234}
+    def test_supports_info_running(self):
+        self.apimock.get_agent_runtime.return_value = {'state': 'running', 'port': 1234}
 
         Cli(['info', 'first'], out=self.buffer).run()
 
         self.apimock.get_agent_runtime.assert_called_once_with('first')
         self.assertEqual('port:\t1234\n', self.buffer.getvalue())
+
+    def test_supports_info_not_running(self):
+        self.apimock.get_agent_runtime.return_value = {'state': 'stopped'}
+
+        Cli(['info', 'first'], out=self.buffer).run()
+        
+        self.apimock.get_agent_runtime.assert_called_once_with('first')
+        self.assertEqual('Not running\n', self.buffer.getvalue())
 
     def test_memory_usage(self):
         self.apimock.memory_usage.return_value = {'total_usage': 1234, 'average_usage': 1234, 'agents': [{'name': 'testagent', 'memory_usage': 1234}]}

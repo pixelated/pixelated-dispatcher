@@ -84,7 +84,8 @@ class Cli(object):
             elif 'info' == args.cmd:
                 name = args.name
                 info = cli.get_agent_runtime(name)
-                self._out.write('port:\t%s\n' % info['port'])
+                message = 'Not running\n' if info['state'] == 'stopped' else 'port:\t%s\n' % info['port']
+                self._out.write(message)
             elif 'memory_usage' == args.cmd:
                 usage = cli.memory_usage()
                 self._out.write('memory usage:\t%d\n' % usage['total_usage'])
