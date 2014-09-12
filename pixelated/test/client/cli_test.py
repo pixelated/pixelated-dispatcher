@@ -88,7 +88,7 @@ class CliTest(unittest.TestCase):
         self.apimock.get_agent_runtime.return_value = {'state': 'stopped'}
 
         Cli(['info', 'first'], out=self.buffer).run()
-        
+
         self.apimock.get_agent_runtime.assert_called_once_with('first')
         self.assertEqual('Not running\n', self.buffer.getvalue())
 

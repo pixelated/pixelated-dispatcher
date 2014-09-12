@@ -28,7 +28,6 @@ from pixelated.exceptions import InstanceNotRunningError
 from pixelated.exceptions import InstanceAlreadyRunningError
 
 
-
 __author__ = 'fbernitt'
 
 

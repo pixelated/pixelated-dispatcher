@@ -191,7 +191,7 @@ class RESTfulServer(object):
         except InstanceNotFoundError as error:
             logger.warn(error.message)
             response.status = '404 Not Found - %s' % error.message
-    
+
     def _authenticate_agent(self, name):
         password = request.json['password']
         result = self._provider.authenticate(name, password)
