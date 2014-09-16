@@ -146,7 +146,11 @@ class AuthLoginHandler(tornado.web.RequestHandler):
         self._client = client
 
     def get(self):
-        self.render('login.html')
+        error = None
+        try: error = self.get_query_argument('error')
+        except: pass
+
+        self.render('login.html', error=error)
 
     def post(self):
 
