@@ -3,22 +3,35 @@
 <head>
     <title>Login</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <link rel="stylesheet" type="text/css" href="/dispatcher_static/default.css">
+    <link rel="stylesheet" type="text/css" href="/dispatcher_static/normalize.min.css">
+    <link rel="stylesheet" type="text/css" href="/dispatcher_static/pixelated.css">
     <!--<link rel="shortcut icon" href="/dispatcher_static/img/favicon.png" />-->
 
 <body class="sub-navigation">
-<hr/>
-<h1 icon style="padding: 10px">Please Login</h1>
-<br/>
 
-<form class="standard" id="login_form" action="/auth/login" method="post" style="padding: 10px">
-    <label for="email" class="label">Email Address</label><br/>
-    <input type="text" name="username" style="width:99%" id="email" class="text-field"><br>
-    <label for="password" class="label">Password</label><br/>
-    <input type="password" name="password" style="width:99%" id="password" class="text-field"><br/>
-    <input type="submit" id="loginbtn" name="login" value="LOGIN" class="post-button"><br/>
-    {% raw xsrf_form_html() %}
-</form>
+
+<div class="header">
+    <h1 style="padding: 10px">Pixelated Login</h1>
+</div>
+
+<div class="login">
+
+    {% if error is not None %}
+        <p class="error">
+            {% raw error %}
+        </p>
+    {% end %}
+    
+    <form class="standard" id="login_form" action="/auth/login" method="post" style="padding: 10px">
+        <label for="email" class="label">Email</label>
+        <input type="text" name="username" id="email" class="text-field">
+        <label for="password" class="label">Password</label>
+        <input type="password" name="password" id="password" class="text-field">
+
+        <input type="submit" name="login" value="Login" class="post-button">
+        {% raw xsrf_form_html() %}
+    </form>
+</div>
 
 
 </body>

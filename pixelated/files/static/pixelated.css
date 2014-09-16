@@ -1,0 +1,30 @@
+body {
+    background-color: #EAEAEA;
+}
+
+.error {
+    background-color: #D72A25;
+    color: #FFF;
+}
+
+.header {
+    margin: 0 auto;
+    text-align: center;
+}
+
+.login {
+    background-color: #FFF;
+    width: 40%;
+    margin: 0 auto;
+    padding: 40px;
+    border-radius: 5px;
+}
+
+input {
+    display: block;
+    margin: 10px 0;
+}
+
+input[type="submit"] {
+    margin-top: 20px;
+}
