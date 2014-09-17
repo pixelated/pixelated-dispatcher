@@ -5,17 +5,13 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <link rel="stylesheet" type="text/css" href="/dispatcher_static/normalize.min.css">
     <link rel="stylesheet" type="text/css" href="/dispatcher_static/pixelated.css">
+    <link rel="stylesheet" type="text/css" href="/dispatcher_static/opensans.css">
     <!--<link rel="shortcut icon" href="/dispatcher_static/img/favicon.png" />-->
 
 <body class="sub-navigation">
-
-
-<div class="header">
-    <h1 style="padding: 10px">Pixelated Login</h1>
-</div>
-
 <div class="login">
 
+    <div class="title">Pixelated Login</div>
     {% if error is not None %}
         <p class="error">
             {% raw error %}
@@ -23,10 +19,8 @@
     {% end %}
     
     <form class="standard" id="login_form" action="/auth/login" method="post" style="padding: 10px">
-        <label for="email" class="label">Email</label>
-        <input type="text" name="username" id="email" class="text-field">
-        <label for="password" class="label">Password</label>
-        <input type="password" name="password" id="password" class="text-field">
+        <input type="text" name="username" id="email" class="text-field" placeholder="username">
+        <input type="password" name="password" id="password" class="text-field" placeholder="password">
 
         <input type="submit" name="login" value="Login" class="post-button">
         {% raw xsrf_form_html() %}

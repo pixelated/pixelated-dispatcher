@@ -1,5 +1,8 @@
 body {
+    font-family: "Open Sans", "Microsoft YaHei", "Hiragino Sans GB", "Hiragino Sans GB W3", "微软雅黑", "Helvetica Neue", Arial, sans-serif;
     background-color: #EAEAEA;
+    height: 100vh;
+    color: #3E3A37;
 }
 
 .error {
@@ -13,11 +16,23 @@ body {
 }
 
 .login {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+    padding: 45px 40px;
     background-color: #FFF;
-    width: 40%;
-    margin: 0 auto;
-    padding: 40px;
-    border-radius: 5px;
+}
+
+div.title {
+    font-weight: 300;
+    font-size: 1.7rem;
+    border-left: 20px solid #FF9C00;
+
+    margin-left: -40px;
+    padding-left: 20px;
+    height: 40px;
 }
 
 input {
