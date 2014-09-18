@@ -19,15 +19,15 @@ from pixelated.provider.docker.adapter import DockerAdapter
 __author__ = 'fbernitt'
 
 
-class TwsmailDockerAdapter(DockerAdapter):
+class PixelatedDockerAdapter(DockerAdapter):
 
-    TWSMAIL_PORT = 4567
+    PIXELATED_PORT = 4567
 
     def __init__(self):
         pass
 
     def app_name(self):
-        return 'twsmail'
+        return 'pixelated'
 
     def run_command(self):
         return '/bin/bash -l -c "cd /pixelated-user-agent/py-fake-service && ./go"'
@@ -36,7 +36,7 @@ class TwsmailDockerAdapter(DockerAdapter):
         return '/bin/true'
 
     def port(self):
-        return TwsmailDockerAdapter.TWSMAIL_PORT
+        return self.PIXELATED_PORT
 
     def environment(self, data_path):
         return {}

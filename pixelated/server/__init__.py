@@ -19,7 +19,7 @@ import traceback
 from pixelated.provider.base_provider import ProviderInitializingException
 from pixelated.common import logger
 from pixelated.provider.docker import DockerProvider
-from pixelated.provider.docker.twsmail_adapter import TwsmailDockerAdapter
+from pixelated.provider.docker.pixelated_adapter import PixelatedDockerAdapter
 from pixelated.exceptions import InstanceNotFoundError
 from pixelated.exceptions import InstanceNotRunningError
 from pixelated.exceptions import InstanceAlreadyRunningError
@@ -269,8 +269,7 @@ class PixelatedDispatcherServer(object):
     def _create_provider(self):
         if self._provider == 'docker':
             docker_host = os.environ['DOCKER_HOST'] if os.environ.get('DOCKER_HOST') else None
-            # adapter = MailpileDockerAdapter()
-            adapter = TwsmailDockerAdapter()
+            adapter = PixelatedDockerAdapter()
             return DockerProvider(self._root_path, adapter, docker_host)
         else:
             adapter = MailpileAdapter(self._mailpile_bin, mailpile_virtualenv=self._mailpile_virtualenv)
