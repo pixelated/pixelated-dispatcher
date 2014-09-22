@@ -24,7 +24,7 @@ from tempdir import TempDir
 
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
 from pixelated.dispatcher import Dispatcher
-from pixelated.server import PixelatedDispatcherServer, SSLConfig, DEFAULT_PORT
+from pixelated.manager import PixelatedDispatcherManager, SSLConfig, DEFAULT_PORT
 from pixelated.test.util import EnforceTLSv1Adapter, cafile, certfile, keyfile
 
 
@@ -70,7 +70,7 @@ class SmokeTest(unittest.TestCase):
     def _pixelated_dispatcher_server(self):
         fake_mailpile = os.path.join(os.path.dirname(__file__), 'fake_mailpile.py')
         ssl_config = SSLConfig(certfile(), keyfile())
-        server = PixelatedDispatcherServer(self._tmpdir.name, fake_mailpile, ssl_config, mailpile_virtualenv=INHERIT)
+        server = PixelatedDispatcherManager(self._tmpdir.name, fake_mailpile, ssl_config, mailpile_virtualenv=INHERIT)
 
         return SmokeTest.Server(server.serve_forever, server.shutdown, thread_name='PixelatedServer')
 

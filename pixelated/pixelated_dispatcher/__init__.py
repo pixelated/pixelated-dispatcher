@@ -21,7 +21,7 @@ import logging
 from pixelated.client.cli import Cli
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
 from pixelated.dispatcher import Dispatcher
-from pixelated.server import SSLConfig, PixelatedDispatcherServer
+from pixelated.manager import SSLConfig, PixelatedDispatcherManager
 from pixelated.common import init_logging
 
 __author__ = 'fbernitt'

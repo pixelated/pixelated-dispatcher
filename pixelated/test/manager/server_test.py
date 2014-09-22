@@ -23,7 +23,7 @@ import json
 import requests
 from mock import MagicMock, patch
 from pixelated.provider import Provider
-from pixelated.server import RESTfulServer, SSLConfig, PixelatedDispatcherServer
+from pixelated.manager import RESTfulServer, SSLConfig, PixelatedDispatcherManager
 from pixelated.test.util import certfile, keyfile, cafile
 from pixelated.exceptions import *
 
@@ -224,8 +224,8 @@ class RESTfulServerTest(unittest.TestCase):
 
         self.assertSuccessJson(expected, r)
 
-    @patch('pixelated.server.WSGIRefServer')
-    @patch('pixelated.server.run')    # mock run call to avoid actually startng the server
+    @patch('pixelated.manager.WSGIRefServer')
+    @patch('pixelated.manager.run')    # mock run call to avoid actually startng the server
     def test_that_serve_forever_runs_without_ssl_context(self, run_mock, wsgiRefServer_mock):
         # given
         server = RESTfulServer(None, RESTfulServerTest.mock_provider)
@@ -245,13 +245,13 @@ class RESTfulServerTest(unittest.TestCase):
         self.assertEqual(503, r.status_code)
         self.assertEqual('Service Unavailable - Busy initializing Provider', r.reason)
 
-    @patch('pixelated.server.DockerProvider')
-    @patch('pixelated.server.RESTfulServer')
-    @patch('pixelated.server.Thread')
+    @patch('pixelated.manager.DockerProvider')
+    @patch('pixelated.manager.RESTfulServer')
+    @patch('pixelated.manager.Thread')
     def test_that_initialize_happens_in_background_thread(self, thread_mock, server_mock, docker_provider_mock):
         # given
         docker_provider_mock.return_value = self.mock_provider
-        server = PixelatedDispatcherServer(None, None, None, None, provider='docker')
+        server = PixelatedDispatcherManager(None, None, None, None, provider='docker')
 
         # when
         server.serve_forever()

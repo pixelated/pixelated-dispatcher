@@ -31,7 +31,7 @@ import ssl
 
 from bottle import run, Bottle, request, response, WSGIRefServer
 
-from pixelated.server.bottle_adapter import SSLWSGIRefServerAdapter
+from pixelated.manager.bottle_adapter import SSLWSGIRefServerAdapter
 from pixelated.provider.fork import ForkProvider
 from pixelated.provider.fork.fork_runner import ForkRunner
 from pixelated.provider.fork.mailpile_adapter import MailpileAdapter
@@ -234,7 +234,7 @@ class RESTfulServer(object):
             self._server_adapter = None
 
 
-class PixelatedDispatcherServer(object):
+class PixelatedDispatcherManager(object):
     __slots__ = ('_root_path', '_mailpile_bin', '_mailpile_virtualenv', '_ssl_config', '_server', '_provider')
 
     def __init__(self, root_path, mailpile_bin, ssl_config, mailpile_virtualenv=None, provider='fork'):
