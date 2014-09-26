@@ -20,10 +20,8 @@ node default {
     ensure => latest
   }
 
-  service { 'docker.io':
+  service { 'docker':
     ensure => running,
-    enable => yes,
-    provider => 'init',
     require => Package['docker.io']
   }
 
@@ -72,7 +70,7 @@ node default {
     stop => "/usr/bin/pkill -x -f '${server_cmd} -r ${$dispatcher_path} ${ssl_options}' > /dev/null",
     status => "/usr/bin/pgrep -x -f '${server_cmd} -r ${$dispatcher_path} ${ssl_options}'",
     hasstatus => true,
-    require => [Service['docker.io'], File[$dispatcher_path]]
+    require => [Service['docker'], File[$dispatcher_path]]
   }
 
   $dispatcher_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py dispatcher"
@@ -85,6 +83,6 @@ node default {
     stop => "/usr/bin/pkill -x -f \"${dispatcher_cmd} -s localhost:4443 --bind 0.0.0.0 ${ssl_options}\"",
     status => "/usr/bin/pgrep -x -f \"${dispatcher_cmd} -s localhost:4443 --bind 0.0.0.0 ${ssl_options}\"",
     hasstatus => true,
-    require => [Service['docker.io'], Service['dispatcher-server'], File[$dispatcher_path]]
+    require => [Service['docker'], Service['dispatcher-server'], File[$dispatcher_path]]
   }
 }
