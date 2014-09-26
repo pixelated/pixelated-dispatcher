@@ -40,6 +40,29 @@ input {
     margin: 10px 0;
 }
 
-input[type="submit"] {
-    margin-top: 20px;
+button, .button, input[type=button] {
+  cursor: pointer;
+  margin: 0 0 1.25rem;
+  border: none;
+  position: relative;
+  text-decoration: none;
+  text-align: center;
+  -webkit-appearance: none;
+  display: inline-block;
+  padding: 0.4rem 1.1rem;
+  font-size: 0.9rem;
+  background-color: #2ba6cb;
+  border-color: #2285a2;
+  color: white;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  -ms-border-radius: 2px;
+  -o-border-radius: 2px;
+  border-radius: 2px;
+}
+
+button:hover, button:focus, .button:hover, .button:focus, input[type=button]:hover, input[type=button]:focus {
+  background-color: #2285a2;
+  outline: none;
+  color: white;
 }
