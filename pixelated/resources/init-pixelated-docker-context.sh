@@ -61,7 +61,7 @@ RUN /bin/bash -l -c "cd /pixelated-user-agent/web-ui && ./go build"
 
 RUN /bin/bash -l -c "cd /pixelated-user-agent/fake-service && pip install -r requirements.txt"
 
-#ENTRYPOINT /bin/bash -l -c "cd /pixelated-user-agent/py-fake-service && ./go"
+#ENTRYPOINT /bin/bash -l -c "cd /pixelated-user-agent/fake-service && ./go"
 
 EXPOSE 4567
 

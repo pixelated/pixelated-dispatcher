@@ -30,7 +30,7 @@ class PixelatedDockerAdapter(DockerAdapter):
         return 'pixelated'
 
     def run_command(self):
-        return '/bin/bash -l -c "cd /pixelated-user-agent/py-fake-service && ./go"'
+        return '/bin/bash -l -c "cd /pixelated-user-agent/fake-service && ./go"'
 
     def setup_command(self):
         return '/bin/true'
