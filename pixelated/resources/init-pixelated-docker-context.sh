@@ -59,7 +59,7 @@ RUN /bin/bash -l -c "cd /pixelated-user-agent/web-ui && npm install"
 RUN /bin/bash -l -c "cd /pixelated-user-agent/web-ui && node_modules/bower/bin/bower --allow-root install"
 RUN /bin/bash -l -c "cd /pixelated-user-agent/web-ui && ./go build"
 
-RUN /bin/bash -l -c "cd /pixelated-user-agent/py-fake-service && pip install -r requirements.txt"
+RUN /bin/bash -l -c "cd /pixelated-user-agent/fake-service && pip install -r requirements.txt"
 
 #ENTRYPOINT /bin/bash -l -c "cd /pixelated-user-agent/py-fake-service && ./go"
 
