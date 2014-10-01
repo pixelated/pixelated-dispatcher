@@ -94,7 +94,7 @@ def run_server():
     init_logging('server', level=log_level, config_file=log_config)
 
     server = PixelatedDispatcherManager(args.root_path, mailpile_bin, ssl_config,
-                                       mailpile_virtualenv=venv, provider=args.backend)
+                                        mailpile_virtualenv=venv, provider=args.backend)
 
     server.serve_forever()
 
