@@ -25,7 +25,7 @@ from mock import MagicMock, patch
 from pixelated.provider import Provider
 from pixelated.manager import RESTfulServer, SSLConfig, PixelatedDispatcherManager
 from pixelated.test.util import certfile, keyfile, cafile
-from pixelated.exceptions import *
+from pixelated.exceptions import InstanceAlreadyExistsError, InstanceAlreadyRunningError
 
 
 class RESTfulServerTest(unittest.TestCase):
@@ -118,6 +118,19 @@ class RESTfulServerTest(unittest.TestCase):
         self.assertEqual(201, r.status_code)
         self.assertEqual('http://localhost:4443/agents/first', r.headers['Location'])
         self.mock_provider.add.assert_called_with('first', 'some password')
+
+    def test_add_agent_twice_returns_conflict(self):
+        self.mock_provider.status.return_value = {'state': 'stopped'}
+        self.mock_provider.add.side_effect = InstanceAlreadyExistsError
+
+        payload = {'name': 'first', 'password': 'some password'}
+
+        # when
+        r = self.post('https://localhost:4443/agents', data=payload)
+
+        # then
+        self.assertEqual(409, r.status_code)
+        self.assertEqual('Conflict -', r.reason)
 
     def test_get_agent(self):
         # given

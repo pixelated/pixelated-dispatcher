@@ -1,3 +1,7 @@
+class InstanceAlreadyExistsError(Exception):
+    pass
+
+
 class InstanceAlreadyRunningError(Exception):
     pass
 

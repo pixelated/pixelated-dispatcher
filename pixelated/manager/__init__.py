@@ -22,7 +22,7 @@ from pixelated.provider.docker import DockerProvider
 from pixelated.provider.docker.pixelated_adapter import PixelatedDockerAdapter
 from pixelated.exceptions import InstanceNotFoundError
 from pixelated.exceptions import InstanceNotRunningError
-from pixelated.exceptions import InstanceAlreadyRunningError
+from pixelated.exceptions import InstanceAlreadyRunningError, InstanceAlreadyExistsError
 
 
 __author__ = 'fbernitt'
@@ -133,7 +133,7 @@ class RESTfulServer(object):
             response.status = '201 Created'
             response.headers['Location'] = self._agent_uri(name)
             return self._agent_to_json(name)
-        except InstanceAlreadyRunningError as error:
+        except InstanceAlreadyExistsError as error:
                 logger.warn(error.message)
                 response.status = '409 Conflict - %s' % error.message
 
