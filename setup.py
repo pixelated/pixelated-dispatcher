@@ -38,7 +38,7 @@ setup(
     license="AGPL",
     keywords=['pixelated', 'email'],
     install_requires=[
-        'python-gnupg',
+        'python-gnupg-ng',
         'bottle',
         'tornado',
         'requests',
