@@ -39,4 +39,4 @@ class PixelatedDockerAdapter(DockerAdapter):
         return self.PIXELATED_PORT
 
     def environment(self, data_path):
-        return {}
+        return { 'DISPATCHER_LOGOUT_URL': '/auth/logout' }

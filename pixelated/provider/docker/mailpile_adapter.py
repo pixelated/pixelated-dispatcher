@@ -35,4 +35,4 @@ class MailpileDockerAdapter(DockerAdapter):
         return MailpileDockerAdapter.MAILPILE_PORT
 
     def environment(self, data_path):
-        return {'MAILPILE_HOME': data_path}
+        return {'MAILPILE_HOME': data_path, 'DISPATCHER_LOGOUT_URL': '/auth/logout' }

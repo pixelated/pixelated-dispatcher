@@ -140,8 +140,8 @@ class DockerProviderTest(unittest.TestCase):
         provider.add('test', 'password')
         provider.start('test')
 
-        client.create_container.assert_any_call('mailpile', '/Mailpile.git/mp --www', name='test', volumes=['/mnt/user'], ports=[33411], environment={'MAILPILE_HOME': '/mnt/user'})
-        client.create_container.assert_any_call('mailpile', '/Mailpile.git/mp --setup --set sys.http_host=0.0.0.0', name='mailpile_prepare', volumes=['/mnt/user'], environment={'MAILPILE_HOME': '/mnt/user'})
+        client.create_container.assert_any_call('mailpile', '/Mailpile.git/mp --www', name='test', volumes=['/mnt/user'], ports=[33411], environment={'MAILPILE_HOME': '/mnt/user', 'DISPATCHER_LOGOUT_URL': '/auth/logout'})
+        client.create_container.assert_any_call('mailpile', '/Mailpile.git/mp --setup --set sys.http_host=0.0.0.0', name='mailpile_prepare', volumes=['/mnt/user'], environment={'MAILPILE_HOME': '/mnt/user', 'DISPATCHER_LOGOUT_URL': '/auth/logout'})
 
         data_path = join(self.root_path, 'test', 'data')
 
