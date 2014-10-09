@@ -1,6 +1,6 @@
 
 PIXELATED_USER=pixelated
-PIXELATED_SSLCERT=/etc/ssl/certs/ssl-cert-snakeoil.crt
+PIXELATED_SSLCERT=/etc/ssl/certs/ssl-cert-snakeoil.pem
 PIXELATED_SSLKEY=/etc/ssl/private/ssl-cert-snakeoil.key
 PIXELATED_PROXY_EXTRA_OPTS="--bind `hostname -f`"
 PIXELATED_MANAGER=localhost:4443
