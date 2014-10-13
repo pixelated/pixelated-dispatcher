@@ -15,6 +15,8 @@
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
 
 import gnupg
+import os
+from gnupg._util import _which
 
 __author__ = 'fbernitt'
 
@@ -25,13 +27,14 @@ class GnuPGInitializer(object):
     """
 
     def create_key_pair(self, gnupg_home, email, name_real, keytype='RSA', key_length='2048', expire_date=0):
-        gpg = gnupg.GPG(gnupghome=gnupg_home, verbose=True)
+        gpg_binary = os.path.realpath(_which('gpg')[0])  # need to find binary on our own, library can't handle symlinks
+        gpg = gnupg.GPG(homedir=gnupg_home, binary=gpg_binary, verbose=True)
 
         data = {
             'name_email': email,
             'name_real': name_real,
             'key_type': keytype,
-            'key_length': key_length,
+            'key_length': int(key_length),
             'expire_date': expire_date
         }
 

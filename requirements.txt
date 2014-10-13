@@ -1,6 +1,6 @@
 bottle==0.12.7
 psutil==2.1.1
-python-gnupg==0.3.6
+gnupg==1.3.2
 requests==2.2.1
 scrypt==0.6.1
 tornado==3.2.2
