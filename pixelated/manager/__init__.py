@@ -35,12 +35,12 @@ from pixelated.manager.bottle_adapter import SSLWSGIRefServerAdapter
 from pixelated.provider.fork import ForkProvider
 from pixelated.provider.fork.fork_runner import ForkRunner
 from pixelated.provider.fork.mailpile_adapter import MailpileAdapter
-
+from pixelated.common import latest_available_ssl_version
 DEFAULT_PORT = 4443
 
 
 class SSLConfig(object):
-    def __init__(self, ssl_certfile, ssl_keyfile, ssl_version=ssl.PROTOCOL_TLSv1, ssl_ca_certs=None):
+    def __init__(self, ssl_certfile, ssl_keyfile, ssl_version=latest_available_ssl_version(), ssl_ca_certs=None):
         self.ssl_certfile = ssl_certfile
         self.ssl_keyfile = ssl_keyfile
         self.ssl_version = ssl_version

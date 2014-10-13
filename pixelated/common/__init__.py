@@ -1,3 +1,4 @@
+import ssl
 import logging
 from logging.handlers import SysLogHandler
 
@@ -19,3 +20,10 @@ def init_logging(name, level=logging.INFO, config_file=None):
 
     logger.name = logger_name
     logger.info('Initialized logging')
+
+
+def latest_available_ssl_version():
+    try:
+        return ssl.PROTOCOL_TLSv1_2
+    except AttributeError:
+        return ssl.PROTOCOL_TLSv1

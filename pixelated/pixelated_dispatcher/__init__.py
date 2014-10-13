@@ -22,7 +22,7 @@ from pixelated.client.cli import Cli
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
 from pixelated.dispatcher import Dispatcher
 from pixelated.manager import SSLConfig, PixelatedDispatcherManager
-from pixelated.common import init_logging
+from pixelated.common import init_logging, latest_available_ssl_version
 
 __author__ = 'fbernitt'
 
@@ -76,7 +76,8 @@ def run_server():
 
     if args.sslcert:
         ssl_config = SSLConfig(args.sslcert,
-                               args.sslkey)
+                               args.sslkey,
+                               latest_available_ssl_version())
     else:
         ssl_config = None
 

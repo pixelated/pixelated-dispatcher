@@ -20,6 +20,7 @@ import ssl
 
 import requests
 from requests.adapters import HTTPAdapter
+from pixelated.common import latest_available_ssl_version
 try:
     from requests.packages.urllib3.poolmanager import PoolManager
 except:
@@ -27,7 +28,7 @@ except:
 
 
 class EnforceTLSv1Adapter(HTTPAdapter):
-    __slots__ = ( '_assert_hostname', '_assert_fingerprint' )
+    __slots__ = ('_assert_hostname', '_assert_fingerprint')
 
     def __init__(self, assert_hostname=None, assert_fingerprint=None):
         self._assert_hostname = assert_hostname
@@ -36,7 +37,9 @@ class EnforceTLSv1Adapter(HTTPAdapter):
 
     def init_poolmanager(self, connections, maxsize, block=False):
         self.poolmanager = PoolManager(num_pools=connections, maxsize=maxsize,
-                                       block=block, ssl_version=ssl.PROTOCOL_TLSv1, assert_hostname=self._assert_hostname, assert_fingerprint=self._assert_fingerprint)
+                                       block=block, ssl_version=latest_available_ssl_version(),
+                                       assert_hostname=self._assert_hostname,
+                                       assert_fingerprint=self._assert_fingerprint)
 
 
 class PixelatedHTTPError(IOError):

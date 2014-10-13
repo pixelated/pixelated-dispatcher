@@ -30,8 +30,10 @@ import tornado.ioloop
 import tornado.web
 import tornado.escape
 import time
+import ssl
 
 from tornado import gen
+from pixelated.common import latest_available_ssl_version
 
 COOKIE_NAME = 'pixelated_user'
 
@@ -223,6 +225,7 @@ class Dispatcher(object):
             return {
                 'certfile': os.path.join(self._certfile),
                 'keyfile': os.path.join(self._keyfile),
+                'ssl_version': latest_available_ssl_version()
             }
         else:
             return None

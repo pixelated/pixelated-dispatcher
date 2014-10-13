@@ -127,7 +127,7 @@ class CliTest(unittest.TestCase):
         running_test = self
         running_test._last_cacert = None
 
-        def override_create_cli(self, host, port, cacert, ssl):
+        def override_create_cli(self, host, port, cacert, ssl, fingerprint):
             running_test._last_cacert = cacert
             running_test._last_ssl = ssl
             return mock
