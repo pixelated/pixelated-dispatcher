@@ -27,9 +27,16 @@ except:
 
 
 class EnforceTLSv1Adapter(HTTPAdapter):
+    __slots__ = ( '_assert_hostname', '_assert_fingerprint' )
+
+    def __init__(self, assert_hostname=None, assert_fingerprint=None):
+        self._assert_hostname = assert_hostname
+        self._assert_fingerprint = assert_fingerprint
+        super(EnforceTLSv1Adapter, self).__init__()
+
     def init_poolmanager(self, connections, maxsize, block=False):
         self.poolmanager = PoolManager(num_pools=connections, maxsize=maxsize,
-                                       block=block, ssl_version=ssl.PROTOCOL_TLSv1)
+                                       block=block, ssl_version=ssl.PROTOCOL_TLSv1, assert_hostname=self._assert_hostname, assert_fingerprint=self._assert_fingerprint)
 
 
 class PixelatedHTTPError(IOError):
@@ -49,19 +56,21 @@ class PixelatedNotAvailableHTTPError(PixelatedHTTPError):
 
 
 class PixelatedDispatcherClient(object):
-    __slots__ = ('_hostname', '_port', '_base_url', '_cacert', '_scheme')
+    __slots__ = ('_hostname', '_port', '_base_url', '_cacert', '_scheme', '_assert_hostname', '_fingerprint')
 
-    def __init__(self, hostname, port, cacert=True, ssl=True):
+    def __init__(self, hostname, port, cacert=True, ssl=True, assert_hostname=False, fingerprint=None):
         self._hostname = hostname
         self._port = port
         self._scheme = 'https' if ssl else 'http'
         self._base_url = '%s://%s:%s' % (self._scheme, hostname, port)
         self._cacert = cacert
+        self._assert_hostname = assert_hostname
+        self._fingerprint = fingerprint
 
     def _get(self, path):
         uri = '%s%s' % (self._base_url, path)
         s = requests.Session()
-        s.mount('https://', EnforceTLSv1Adapter())
+        s.mount('https://', EnforceTLSv1Adapter(assert_fingerprint=self._fingerprint))
         r = s.get(uri, verify=self._cacert)
         self._raise_error_for_status(r.status_code, r.reason)
         return r.json()

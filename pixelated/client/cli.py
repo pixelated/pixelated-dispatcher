@@ -39,6 +39,8 @@ class Cli(object):
         parser.add_argument('--server', help='Provide server url (default: localhost:4449')
         parser.add_argument('-k', '--no-check-certificate', help='don\'t validate SSL/TLS certificates', dest='check_cert', action='store_false', default=True)
         parser.add_argument('--no-ssl', help='Force unsecured connection', dest='use_ssl', action='store_false', default=True)
+        parser.add_argument('--sslcert', help='The SSL certficate to use', default=None)
+        parser.add_argument('--fingerprint', help='Pin certifcate to fingerprint', default=None)
         subparsers = parser.add_subparsers(help='Commands', dest='cmd')
         subparsers.add_parser('list', help='List known agents')
         subparsers.add_parser('running', help='List known agents')
@@ -63,7 +65,10 @@ class Cli(object):
             else:
                 host, port = 'localhost', Cli.DEFAULT_SERVER_PORT
 
-            cli = self._create_cli(host, port, args.check_cert, args.use_ssl)
+            check_cert = args.sslcert if args.sslcert else args.check_cert
+            fingerprint = args.fingerprint
+
+            cli = self._create_cli(host, port, check_cert, args.use_ssl, fingerprint)
             if 'list' == args.cmd:
                 for agent in cli.list():
                     self._out.write('%s\n' % agent['name'])
@@ -99,5 +104,5 @@ class Cli(object):
         except SystemExit:
             pass
 
-    def _create_cli(self, host, port, cacert, ssl):
-        return PixelatedDispatcherClient(host, port, cacert=cacert, ssl=ssl)
+    def _create_cli(self, host, port, cacert, ssl, fingerprint):
+        return PixelatedDispatcherClient(host, port, cacert=cacert, ssl=ssl, fingerprint=fingerprint)
