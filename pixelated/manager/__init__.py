@@ -67,10 +67,11 @@ def log_all_exceptions(callback):
 
 
 class RESTfulServer(object):
-    __slots__ = ('_ssl_config', '_port', '_provider', '_server_adapter')
+    __slots__ = ('_ssl_config', '_bindaddr', '_port', '_provider', '_server_adapter')
 
-    def __init__(self, ssl_config, provider, port=DEFAULT_PORT):
+    def __init__(self, ssl_config, provider, bindaddr='127.0.0.1', port=DEFAULT_PORT):
         self._ssl_config = ssl_config
+        self._bindaddr=bindaddr
         self._port = port
         self._provider = provider
         self._server_adapter = None
@@ -209,7 +210,7 @@ class RESTfulServer(object):
     def serve_forever(self):
         app = self.init_bottle_app()
         if self._ssl_config:
-            server_adapter = SSLWSGIRefServerAdapter(host='localhost', port=self._port,
+            server_adapter = SSLWSGIRefServerAdapter(host=self._bindaddr, port=self._port,
                                                      ssl_version=self._ssl_config.ssl_version,
                                                      ssl_cert_file=self._ssl_config.ssl_certfile,
                                                      ssl_key_file=self._ssl_config.ssl_keyfile,
@@ -235,15 +236,16 @@ class RESTfulServer(object):
 
 
 class PixelatedDispatcherManager(object):
-    __slots__ = ('_root_path', '_mailpile_bin', '_mailpile_virtualenv', '_ssl_config', '_server', '_provider')
+    __slots__ = ('_root_path', '_mailpile_bin', '_mailpile_virtualenv', '_ssl_config', '_server', '_provider', '_bindaddr')
 
-    def __init__(self, root_path, mailpile_bin, ssl_config, mailpile_virtualenv=None, provider='fork'):
+    def __init__(self, root_path, mailpile_bin, ssl_config, mailpile_virtualenv=None, provider='fork', bindaddr='127.0.0.1'):
         self._root_path = root_path
         self._mailpile_bin = mailpile_bin
         self._mailpile_virtualenv = mailpile_virtualenv
         self._ssl_config = ssl_config
         self._server = None
         self._provider = provider
+        self._bindaddr = bindaddr
 
     def serve_forever(self):
         provider = self._create_provider()
@@ -252,7 +254,7 @@ class PixelatedDispatcherManager(object):
 
         # 'server.key', ssl_ca_certs='clientCA.crt')
         logger.info('Starting REST api')
-        self._server = RESTfulServer(self._ssl_config, provider, port=DEFAULT_PORT)
+        self._server = RESTfulServer(self._ssl_config, provider, bindaddr=self._bindaddr, port=DEFAULT_PORT)
         if self._ssl_config:
             logger.info('Using SSL certfile %s and keyfile %s' % (self._ssl_config.ssl_certfile, self._ssl_config.ssl_keyfile))
         else:

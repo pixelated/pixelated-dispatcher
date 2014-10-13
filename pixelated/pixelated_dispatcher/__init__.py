@@ -64,6 +64,7 @@ def run_server():
     parser.add_argument('-r', '--root_path', help='The rootpath for mailpile')
     parser.add_argument('-m', '--mailpile_bin', help='The mailpile executable', default='mailpile')
     parser.add_argument('-b', '--backend', help='the backend to use (fork|docker)', default='fork')
+    parser.add_argument('--bind', help="bind to interface. Default 127.0.0.1", default='127.0.0.1')
     parser.add_argument('--sslcert', help='The SSL certficate to use', default=None)
     parser.add_argument('--sslkey', help='The SSL key to use', default=None)
     parser.add_argument('--debug', help='Set log level to debug', default=False, action='store_true')
@@ -95,7 +96,7 @@ def run_server():
     init_logging('server', level=log_level, config_file=log_config)
 
     server = PixelatedDispatcherManager(args.root_path, mailpile_bin, ssl_config,
-                                        mailpile_virtualenv=venv, provider=args.backend)
+                                        mailpile_virtualenv=venv, provider=args.backend, bindaddr=args.bind)
 
     server.serve_forever()
 

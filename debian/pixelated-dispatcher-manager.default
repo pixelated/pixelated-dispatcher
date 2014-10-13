@@ -4,6 +4,5 @@ PIXELATED_USER=pixelated
 PIXELATED_PROVIDER=docker
 PIXELATED_SSLCERT=/etc/ssl/certs/ssl-cert-snakeoil.pem
 PIXELATED_SSLKEY=/etc/ssl/private/ssl-cert-snakeoil.key
-PIXELATED_MANAGER_EXTRA_OPTS=
+PIXELATED_MANAGER_EXTRA_OPTS="--bind 0.0.0.0"
 PIXELATED_ROOT=/var/lib/pixelated/dispatcher
-
