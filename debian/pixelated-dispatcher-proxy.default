@@ -4,4 +4,4 @@ PIXELATED_SSLCERT=/etc/ssl/certs/ssl-cert-snakeoil.pem
 PIXELATED_SSLKEY=/etc/ssl/private/ssl-cert-snakeoil.key
 PIXELATED_PROXY_EXTRA_OPTS="--bind 0.0.0.0"
 PIXELATED_MANAGER=localhost:4443
-
+#PIXELATED_MANAGER_FINGERPRINT=01:02:03:...

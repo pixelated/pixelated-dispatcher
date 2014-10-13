@@ -107,6 +107,7 @@ def run_dispatcher():
     parser.add_argument('--bind', help="bind to interface. Default 127.0.0.1", default='127.0.0.1')
     parser.add_argument('--sslcert', help='The SSL certficate to use', default=None)
     parser.add_argument('--sslkey', help='The SSL key to use', default=None)
+    parser.add_argument('--fingerprint', help='Pin certifcate to fingerprint', default=None)
     parser.add_argument('--debug', help='Set log level to debug', default=False, action='store_true')
     parser.add_argument('--log-config', help='Provide a python logging config file', default=None)
 
@@ -120,7 +121,7 @@ def run_dispatcher():
     log_config = args.log_config
     init_logging('dipatcher', level=log_level, config_file=log_config)
 
-    dispatcher = Dispatcher(PixelatedDispatcherClient(server_hostname, server_port, cacert=certfile), bindaddr=args.bind, keyfile=keyfile,
+    dispatcher = Dispatcher(PixelatedDispatcherClient(server_hostname, server_port, cacert=certfile, fingerprint=args.fingerprint), bindaddr=args.bind, keyfile=keyfile,
                             certfile=certfile)
     dispatcher.serve_forever()
 
