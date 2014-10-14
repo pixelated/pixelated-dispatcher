@@ -71,7 +71,7 @@ class RESTfulServer(object):
 
     def __init__(self, ssl_config, provider, bindaddr='127.0.0.1', port=DEFAULT_PORT):
         self._ssl_config = ssl_config
-        self._bindaddr=bindaddr
+        self._bindaddr = bindaddr
         self._port = port
         self._provider = provider
         self._server_adapter = None
