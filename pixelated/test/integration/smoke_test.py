@@ -18,7 +18,7 @@ import unittest
 import os
 import threading
 import time
-
+import psutil
 import requests
 from tempdir import TempDir
 
@@ -58,6 +58,15 @@ class SmokeTest(unittest.TestCase):
         def __exit__(self, exc_type, exc_val, exc_tb):
             self._shutdown_method()
             self._thread.join()
+            self._kill_subprocesses()
+
+        def _kill_subprocesses(self):
+            for pid in psutil.Process(os.getpid()).children():
+                try:
+                    p = psutil.Process(pid)
+                    p.kill()
+                except psutil.Error:
+                    pass
 
     def setUp(self):
         self._tmpdir = TempDir()
