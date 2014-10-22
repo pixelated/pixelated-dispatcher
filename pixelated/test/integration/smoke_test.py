@@ -61,9 +61,9 @@ class SmokeTest(unittest.TestCase):
             self._kill_subprocesses()
 
         def _kill_subprocesses(self):
-            for pid in psutil.Process(os.getpid()).children():
+            for child in psutil.Process(os.getpid()).children():
                 try:
-                    p = psutil.Process(pid)
+                    p = psutil.Process(child.pid)
                     p.kill()
                 except psutil.Error:
                     pass
