@@ -22,6 +22,8 @@ import binascii
 
 import scrypt
 
+from multiprocessing import Process
+from pixelated.common import Watchdog
 from pixelated.provider import Provider, NotEnoughFreeMemory
 from pixelated.exceptions import InstanceNotFoundError
 from pixelated.exceptions import InstanceNotRunningError
@@ -34,6 +36,31 @@ __author__ = 'fbernitt'
 
 class ProviderInitializingException(Exception):
     pass
+
+
+class PasswordFifoWriterProcess(object):
+
+    def __init__(self, filename, password):
+        self._filename = filename
+        self._password = password
+
+    def start(self):
+        os.mkfifo(self._filename)
+        self._process = Process(target=self.run)
+        self._process.daemon = True
+        self._process.start()
+
+    def run(self):
+        if os.path.exists(self._filename):
+            fifo = os.open(self._filename, os.O_WRONLY)
+            os.write(fifo, "%s\n" % self._password)
+            os.close(fifo)
+            os.remove(self._filename)
+
+    def terminate(self):
+        self._process.terminate()
+        if os.path.exists(self._filename):
+            os.remove(self._filename)
 
 
 class AgentConfig(object):
@@ -134,12 +161,15 @@ class BaseProvider(Provider):
         self._agents.append(name)
 
         _mkdir_if_not_exists(self._instance_path(name))
-        _mkdir_if_not_exists(path.join(self._instance_path(name), 'data'))
+        _mkdir_if_not_exists(self._data_path(name))
 
         self._create_config_file(name, password)
 
     def _instance_path(self, name):
         return path.join(self._root_path, name)
+
+    def _data_path(self, name):
+        return path.join(self._instance_path(name), 'data')
 
     def _ensure_initialized(self):
         if self.initializing:
@@ -165,7 +195,22 @@ class BaseProvider(Provider):
 
         hashed_password = binascii.hexlify(scrypt.hash(str_password(password), cfg.salt))
 
-        return cfg.hashed_password == hashed_password
+        success = cfg.hashed_password == hashed_password
+        if success:
+            self._write_password_to_fifo(name, password)
+
+        return success
+
+    def _write_password_to_fifo(self, name, password):
+        fifo_file = path.join(self._data_path(name), 'password-fifo')
+
+        p = PasswordFifoWriterProcess(fifo_file, password)
+        p.start()
+
+        def kill_process_after_timeout(process):
+            process.terminate()
+
+        watchdog = Watchdog(2, userHandler=kill_process_after_timeout, args=[p])
 
     def _start(self, name):
         if name not in self._agents:

@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
 import os
+import stat
 from os.path import join, isdir, isfile, exists
 from tempfile import NamedTemporaryFile
-from time import sleep
+from time import sleep, time
 from mock import patch, MagicMock
 import pkg_resources
 import requests
@@ -374,6 +375,50 @@ class DockerProviderTest(unittest.TestCase):
                 docker_mock.return_value.build.assert_called_once_with(path=tempBuildDir_name, tag='mailpile:latest', fileobj=None)
         finally:
             tempBuildDir.dissolve()
+
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_that_authenticate_writes_password_to_fifo(self, docker_mock):
+        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider.initialize()
+        provider.add('test', 'password')
+
+        provider.authenticate('test', 'password')
+
+        fifo_file = join(self.root_path, 'test', 'data', 'password-fifo')
+        self.assertTrue(stat.S_ISFIFO(os.stat(fifo_file).st_mode))
+        password = self._read_line_from_fifo(fifo_file, 5)
+
+        self.assertEqual('password', password)
+        self.assertFalse(exists(fifo_file))
+
+    def _read_line_from_fifo(self, filename, timeout):
+        value = ''
+        try:
+            fifo = os.open(filename, os.O_RDONLY | os.O_NONBLOCK)
+            started = time()
+            passed_time = 0
+            while value == '' and passed_time < timeout:
+                try:
+                    value = os.read(fifo, 8)
+                except OSError:
+                    pass
+                passed_time = time() - started
+                sleep(0.1)
+        finally:
+            os.close(fifo)
+        return value
+
+    @patch('pixelated.provider.docker.docker.Client')
+    def footest_that_authenticate_deletes_fifo_after_timeout(self, docker_mock):
+        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider.initialize()
+        provider.add('test', 'password')
+        fifo_file = join(self.root_path, 'test', 'data', 'password-fifo')
+        provider.authenticate('test', 'password')
+
+        sleep(3)
+
+        self.assertFalse(stat.S_ISFIFO(os.stat(fifo_file).st_mode))
 
     def _create_initialized_provider(self, root_path, adapter, docker_url=DockerProvider.DEFAULT_DOCKER_URL):
         provider = DockerProvider(root_path, adapter, docker_url)

@@ -1,6 +1,7 @@
 import ssl
 import logging
 from logging.handlers import SysLogHandler
+from threading import Timer
 
 logger = logging.getLogger('pixelated.startup')
 
@@ -24,3 +25,25 @@ def init_logging(name, level=logging.INFO, config_file=None):
 
 def latest_available_ssl_version():
     return ssl.PROTOCOL_TLSv1
+
+
+class Watchdog:
+    def __init__(self, timeout, userHandler=None, args=[]):
+        self.timeout = timeout
+        self.handler = userHandler if userHandler is not None else self.defaultHandler
+        self.timer = Timer(self.timeout, self.handler, args=args)
+        self.timer.daemon = True
+        self.timer.start()
+
+    def reset(self):
+        self.timer.cancel()
+        self.timer = Timer(self.timeout, self.handler)
+
+    def stop(self):
+        self.timer.cancel()
+
+    def defaultHandler(self):
+        f = open('/tmp/watchdog', 'w')
+        f.write('Hello from the Thread\n')
+        f.close()
+        raise self
