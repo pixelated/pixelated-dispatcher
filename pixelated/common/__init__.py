@@ -43,7 +43,4 @@ class Watchdog:
         self.timer.cancel()
 
     def defaultHandler(self):
-        f = open('/tmp/watchdog', 'w')
-        f.write('Hello from the Thread\n')
-        f.close()
         raise self
