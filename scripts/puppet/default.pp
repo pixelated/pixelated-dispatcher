@@ -11,10 +11,7 @@ node default {
   'docker.io',
   'rng-tools',
   'python-dev',
-  'python-tornado',
-  'python-bottle',
-  'python-requests',
-  'python-gnupg',
+  'python-setuptools',
   'gnupg']:
     ensure => latest
   }
@@ -31,7 +28,8 @@ node default {
 
   exec { 'install-pip':
     command => '/usr/bin/easy_install pip',
-    creates => '/usr/local/bin/pip'
+    creates => '/usr/local/bin/pip',
+    require => [Package['python-setuptools']]
   }
     
 
