@@ -10,7 +10,6 @@ node default {
   'libssl-dev',
   'docker.io',
   'rng-tools',
-  'python-pip',
   'python-dev',
   'python-tornado',
   'python-bottle',
@@ -30,16 +29,22 @@ node default {
     groups => 'docker'
   }
 
+  exec { 'install-pip':
+    command => '/usr/bin/easy_install pip',
+    creates => '/usr/local/bin/pip'
+  }
+    
+
   package { 'scrypt':
     ensure => latest,
     provider => 'pip',
-    require => [Package['python-pip'], Package['python-dev']]
+    require => [Exec['install-pip'], Package['python-dev']]
   }
 
   exec { 'install-dispatcher-dependencies':
-    command => '/usr/bin/pip install -r requirements.txt',
+    command => '/usr/local/bin/pip install -r requirements.txt',
     cwd => '/vagrant',
-    require => [Package['python-pip'], Package['python-dev']]
+    require => [Exec['install-pip'], Package['python-dev']]
   }
 
   service { 'rngd':
