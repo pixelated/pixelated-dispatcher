@@ -38,10 +38,12 @@ class ProviderInitializingException(Exception):
     pass
 
 
-class PasswordFifoWriterProcess(object):
+class CredentialsFifoWriterProcess(object):
 
-    def __init__(self, filename, password):
+    def __init__(self, filename, leap_provider, user, password):
         self._filename = filename
+        self._leap_provider = leap_provider
+        self._user = user
         self._password = password
 
     def start(self):
@@ -52,9 +54,10 @@ class PasswordFifoWriterProcess(object):
 
     def run(self):
         if os.path.exists(self._filename):
-            fifo = os.open(self._filename, os.O_WRONLY)
-            os.write(fifo, "%s\n" % self._password)
-            os.close(fifo)
+            with os.open(self._filename, os.O_WRONLY) as fifo:
+                fifo.write(self._leap_provider)
+                fifo.write(self._user)
+                fifo.write(self._password)
             os.remove(self._filename)
 
     def terminate(self):
@@ -197,14 +200,14 @@ class BaseProvider(Provider):
 
         success = cfg.hashed_password == hashed_password
         if success:
-            self._write_password_to_fifo(name, password)
+            self._write_credentials_to_fifo(self._leap_provider, name, password)
 
         return success
 
-    def _write_password_to_fifo(self, name, password):
-        fifo_file = path.join(self._data_path(name), 'password-fifo')
+    def _write_credentials_to_fifo(self, leap_provider, name, password):
+        fifo_file = path.join(self._data_path(name), 'credentials-fifo')
 
-        p = PasswordFifoWriterProcess(fifo_file, password)
+        p = CredentialsFifoWriterProcess(fifo_file, leap_provider, name, password)
         p.start()
 
         def kill_process_after_timeout(process):

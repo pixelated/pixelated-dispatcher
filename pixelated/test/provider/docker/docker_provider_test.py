@@ -25,7 +25,8 @@ from tempdir import TempDir
 from psutil._common import pmem
 from threading import Thread
 from pixelated.provider.base_provider import BaseProvider, ProviderInitializingException
-from pixelated.provider.docker import DockerProvider, MailpileDockerAdapter
+from pixelated.provider.docker import DockerProvider
+from pixelated.provider.docker.pixelated_adapter import PixelatedDockerAdapter
 from pixelated.test.util import StringIOMatcher
 from pixelated.exceptions import *
 
@@ -38,36 +39,36 @@ class DockerProviderTest(unittest.TestCase):
     def setUp(self):
         self._tmpdir = TempDir()
         self.root_path = self._tmpdir.name
-        self._adapter = MailpileDockerAdapter()
+        self._adapter = PixelatedDockerAdapter()
 
     def tearDown(self):
         self._tmpdir.dissolve()
 
     def test_constructor_expects_docker_url(self):
-        DockerProvider(self.root_path, self._adapter, 'some docker url')
+        DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some docker url')
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_initialize_builds_docker_image(self, docker_mock):
         # given
         client = docker_mock.return_value
         client.images.return_value = []
-        dockerfile = pkg_resources.resource_string('pixelated.resources', 'Dockerfile.mailpile')
+        dockerfile = pkg_resources.resource_string('pixelated.resources', 'Dockerfile.pixelated')
 
         # when
-        DockerProvider(self.root_path, self._adapter, 'some docker url').initialize()
+        DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some docker url').initialize()
 
         # then
         docker_mock.assert_called_once_with(base_url="some docker url")
-        client.build.assert_called_once_with(path=None, fileobj=StringIOMatcher(dockerfile), tag='mailpile:latest')
+        client.build.assert_called_once_with(path=None, fileobj=StringIOMatcher(dockerfile), tag='pixelated:latest')
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_initialize_skips_image_build_if_available(self, docker_mock):
         # given
         client = docker_mock.return_value
-        client.images.return_value = [{'Created': 1404833111, 'VirtualSize': 297017244, 'ParentId': '57885511c8444c2b89743bef8b89eccb65f302b2a95daa95dfcc9b972807b6db', 'RepoTags': ['mailpile:latest'], 'Id': 'b4f10a2395ab8dfc5e1c0fae26fa56c7f5d2541debe54263105fe5af1d263189', 'Size': 181956643}]
+        client.images.return_value = [{'Created': 1404833111, 'VirtualSize': 297017244, 'ParentId': '57885511c8444c2b89743bef8b89eccb65f302b2a95daa95dfcc9b972807b6db', 'RepoTags': ['pixelated:latest'], 'Id': 'b4f10a2395ab8dfc5e1c0fae26fa56c7f5d2541debe54263105fe5af1d263189', 'Size': 181956643}]
 
         # when
-        DockerProvider(self.root_path, self._adapter, 'some docker url').initialize()
+        DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some docker url').initialize()
 
         # then
         self.assertFalse(client.build.called)
@@ -120,7 +121,7 @@ class DockerProviderTest(unittest.TestCase):
         cfg_file = join(instance_path, BaseProvider.CFG_FILE_NAME)
 
         self.assertTrue(isdir(instance_path), 'No folder for user has been created')
-        self.assertTrue(isdir(data_dir), 'No folder for mailpile has been created')
+        self.assertTrue(isdir(data_dir), 'No folder for pixelated has been created')
         self.assertTrue(isfile(cfg_file), 'No config file had been created')
 
     @patch('pixelated.provider.docker.docker.Client')
@@ -133,26 +134,26 @@ class DockerProviderTest(unittest.TestCase):
     def test_that_instance_can_be_started(self, docker_mock):
         client = docker_mock.return_value
         provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        prepare_mailpile_container = MagicMock()
+        prepare_pixelated_container = MagicMock()
         container = MagicMock()
-        client.create_container.side_effect = [prepare_mailpile_container, container]
+        client.create_container.side_effect = [prepare_pixelated_container, container]
         client.wait.return_value = 0
 
         provider.add('test', 'password')
         provider.start('test')
 
-        client.create_container.assert_any_call('mailpile', '/Mailpile.git/mp --www', name='test', volumes=['/mnt/user'], ports=[33411], environment={'MAILPILE_HOME': '/mnt/user', 'DISPATCHER_LOGOUT_URL': '/auth/logout'})
-        client.create_container.assert_any_call('mailpile', '/Mailpile.git/mp --setup --set sys.http_host=0.0.0.0', name='mailpile_prepare', volumes=['/mnt/user'], environment={'MAILPILE_HOME': '/mnt/user', 'DISPATCHER_LOGOUT_URL': '/auth/logout'})
+        client.create_container.assert_any_call('pixelated', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --dispatcher"', name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
+        client.create_container.assert_any_call('pixelated', '/bin/true', name='pixelated_prepare', volumes=['/mnt/user'], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
 
         data_path = join(self.root_path, 'test', 'data')
 
-        client.start.assert_any_call(container, binds={data_path: {'bind': '/mnt/user', 'ro': False}}, port_bindings={33411: 5000})
-        client.start.assert_any_call(prepare_mailpile_container, binds={data_path: {'bind': '/mnt/user', 'ro': False}})
+        client.start.assert_any_call(container, binds={data_path: {'bind': '/mnt/user', 'ro': False}}, port_bindings={4567: 5000})
+        client.start.assert_any_call(prepare_pixelated_container, binds={data_path: {'bind': '/mnt/user', 'ro': False}})
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_that_existing_container_gets_reused(self, docker_mock):
         client = docker_mock.return_value
-        client.containers.side_effect = [[], [{u'Status': u'Exited (-1) About an hour ago', u'Created': 1405332375, u'Image': u'mailpile:latest', u'Ports': [], u'Command': u'/Mailpile.git/mp --www', u'Names': [u'/test'], u'Id': u'adfd4633fc42734665d7d98076b19b5f439648678b3b76db891f9d5072af50b6'}]]
+        client.containers.side_effect = [[], [{u'Status': u'Exited (-1) About an hour ago', u'Created': 1405332375, u'Image': u'pixelated:latest', u'Ports': [], u'Command': u'/bin/bash -l -c "/usr/bin/pixelated-user-agent --dispatcher"', u'Names': [u'/test'], u'Id': u'adfd4633fc42734665d7d98076b19b5f439648678b3b76db891f9d5072af50b6'}]]
         provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         container = MagicMock()
         client.create_container.return_value = container
@@ -176,7 +177,7 @@ class DockerProviderTest(unittest.TestCase):
     @patch('pixelated.provider.docker.docker.Client')
     def test_running_returns_running_container(self, docker_mock):
         client = docker_mock.return_value
-        client.containers.side_effect = [[], [], [{u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}]]
+        client.containers.side_effect = [[], [], [{u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}]]
         client.wait.return_value = 0
         provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
@@ -189,7 +190,7 @@ class DockerProviderTest(unittest.TestCase):
     @patch('pixelated.provider.docker.docker.Client')
     def test_a_container_cannot_be_started_twice(self, docker_mock):
         client = docker_mock.return_value
-        client.containers.side_effect = [[], [], [{u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}]]
+        client.containers.side_effect = [[], [], [{u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}]]
         client.wait.return_value = 0
         provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
         provider.add('test', 'password')
@@ -210,7 +211,7 @@ class DockerProviderTest(unittest.TestCase):
     def test_stop_running_container(self, docker_mock):
         # given
         client = docker_mock.return_value
-        container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33411}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
+        container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 4567}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
         client.containers.side_effect = [[], [], [container], [container], [container]]
         client.wait.return_value = 0
         provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
@@ -227,7 +228,7 @@ class DockerProviderTest(unittest.TestCase):
     def test_stop_running_container_calls_kill_if_stop_times_out(self, docker_mock):
         # given
         client = docker_mock.return_value
-        container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33411}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
+        container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 4567}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
         client.containers.side_effect = [[], [], [container], [container], [container]]
         client.wait.return_value = 0
         client.stop.side_effect = requests.exceptions.Timeout
@@ -253,7 +254,7 @@ class DockerProviderTest(unittest.TestCase):
     @patch('pixelated.provider.docker.docker.Client')
     def test_status_running(self, docker_mock):
         client = docker_mock.return_value
-        container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33144}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
+        container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33144}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
         client.containers.side_effect = [[], [], [container], [container]]
         client.wait.return_value = 0
         provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
@@ -275,8 +276,8 @@ class DockerProviderTest(unittest.TestCase):
     @patch('pixelated.provider.docker.docker.Client')
     def test_memory_usage(self, docker_mock, process_mock):
         # given
-        container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33144}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
-        info = {u'HostsPath': u'/var/lib/docker/containers/f2cdb04277e9e056c610240edffe8ff94ae272e462312c270e5300975d60af89/hosts', u'Created': u'2014-07-14T13:17:46.17558664Z', u'Image': u'f63df19194389be6481a174b36d291c483c8982d5c07485baa71a46b7f6582c8', u'Args': [u'--www'], u'Driver': u'aufs', u'HostConfig': {u'PortBindings': {u'33411/tcp': [{u'HostPort': u'5000', u'HostIp': u'0.0.0.0'}]}, u'NetworkMode': u'', u'Links': None, u'LxcConf': None, u'ContainerIDFile': u'', u'Binds': [u'/tmp/multipile/folker:/mnt/user:rw'], u'PublishAllPorts': False, u'Dns': None, u'DnsSearch': None, u'Privileged': False, u'VolumesFrom': None}, u'MountLabel': u'', u'VolumesRW': {u'/mnt/user': True}, u'State': {u'Pid': 3250, u'Paused': False, u'Running': True, u'FinishedAt': u'0001-01-01T00:00:00Z', u'StartedAt': u'2014-07-14T13:17:46.601922899Z', u'ExitCode': 0}, u'ExecDriver': u'native-0.2', u'ResolvConfPath': u'/etc/resolv.conf', u'Volumes': {u'/mnt/user': u'/tmp/multipile/folker'}, u'Path': u'/Mailpile.git/mp', u'HostnamePath': u'/var/lib/docker/containers/f2cdb04277e9e056c610240edffe8ff94ae272e462312c270e5300975d60af89/hostname', u'ProcessLabel': u'', u'Config': {u'MemorySwap': 0, u'Hostname': u'f2cdb04277e9', u'Entrypoint': None, u'PortSpecs': None, u'Memory': 0, u'OnBuild': None, u'OpenStdin': False, u'Cpuset': u'', u'Env': [u'MAILPILE_HOME=/mnt/user', u'HOME=/', u'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'], u'User': u'', u'CpuShares': 0, u'AttachStdout': True, u'NetworkDisabled': False, u'WorkingDir': u'', u'Cmd': [u'/Mailpile.git/mp', u'--www'], u'StdinOnce': False, u'AttachStdin': False, u'Volumes': {u'/mnt/user': {}}, u'Tty': False, u'AttachStderr': True, u'Domainname': u'', u'Image': u'mailpile', u'ExposedPorts': {u'33411/tcp': {}}}, u'Id': u'f2cdb04277e9e056c610240edffe8ff94ae272e462312c270e5300975d60af89', u'NetworkSettings': {u'Bridge': u'docker0', u'PortMapping': None, u'Gateway': u'172.17.42.1', u'IPPrefixLen': 16, u'IPAddress': u'172.17.0.14', u'Ports': {u'33411/tcp': [{u'HostPort': u'5000', u'HostIp': u'0.0.0.0'}]}}, u'Name': u'/folker'}
+        container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33144}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
+        info = {u'HostsPath': u'/var/lib/docker/containers/f2cdb04277e9e056c610240edffe8ff94ae272e462312c270e5300975d60af89/hosts', u'Created': u'2014-07-14T13:17:46.17558664Z', u'Image': u'f63df19194389be6481a174b36d291c483c8982d5c07485baa71a46b7f6582c8', u'Args': [], u'Driver': u'aufs', u'HostConfig': {u'PortBindings': {u'4567/tcp': [{u'HostPort': u'5000', u'HostIp': u'0.0.0.0'}]}, u'NetworkMode': u'', u'Links': None, u'LxcConf': None, u'ContainerIDFile': u'', u'Binds': [u'/tmp/multipile/folker:/mnt/user:rw'], u'PublishAllPorts': False, u'Dns': None, u'DnsSearch': None, u'Privileged': False, u'VolumesFrom': None}, u'MountLabel': u'', u'VolumesRW': {u'/mnt/user': True}, u'State': {u'Pid': 3250, u'Paused': False, u'Running': True, u'FinishedAt': u'0001-01-01T00:00:00Z', u'StartedAt': u'2014-07-14T13:17:46.601922899Z', u'ExitCode': 0}, u'ExecDriver': u'native-0.2', u'ResolvConfPath': u'/etc/resolv.conf', u'Volumes': {u'/mnt/user': u'/tmp/multipile/folker'}, u'Path': u'/bin/bash -l -c "/usr/bin/pixelated-user-agent --dispatcher"', u'HostnamePath': u'/var/lib/docker/containers/f2cdb04277e9e056c610240edffe8ff94ae272e462312c270e5300975d60af89/hostname', u'ProcessLabel': u'', u'Config': {u'MemorySwap': 0, u'Hostname': u'f2cdb04277e9', u'Entrypoint': None, u'PortSpecs': None, u'Memory': 0, u'OnBuild': None, u'OpenStdin': False, u'Cpuset': u'', u'Env': [u'HOME=/', u'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'], u'User': u'', u'CpuShares': 0, u'AttachStdout': True, u'NetworkDisabled': False, u'WorkingDir': u'', u'Cmd': [u'/bin/bash -l -c "/usr/bin/pixelated-user-agent --dispatcher"'], u'StdinOnce': False, u'AttachStdin': False, u'Volumes': {u'/mnt/user': {}}, u'Tty': False, u'AttachStderr': True, u'Domainname': u'', u'Image': u'pixelated', u'ExposedPorts': {u'4567/tcp': {}}}, u'Id': u'f2cdb04277e9e056c610240edffe8ff94ae272e462312c270e5300975d60af89', u'NetworkSettings': {u'Bridge': u'docker0', u'PortMapping': None, u'Gateway': u'172.17.42.1', u'IPPrefixLen': 16, u'IPAddress': u'172.17.0.14', u'Ports': {u'4567/tcp': [{u'HostPort': u'5000', u'HostIp': u'0.0.0.0'}]}}, u'Name': u'/folker'}
         client = docker_mock.return_value
         client.containers.return_value = [container]
         client.inspect_container.return_value = info
@@ -336,7 +337,7 @@ class DockerProviderTest(unittest.TestCase):
     def test_cannot_remove_while_running(self, docker_mock):
         # given
         client = docker_mock.return_value
-        container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'mailpile:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33411}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
+        container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 4567}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
         client.containers.side_effect = [[], [], [container]]
         client.wait.return_value = 0
 
@@ -352,7 +353,7 @@ class DockerProviderTest(unittest.TestCase):
     @patch('pixelated.provider.docker.docker.Client')
     def test_use_build_script_instead_of_docker_file_if_available(self, docker_mock, res_mock, tempDir_mock):
         # given
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some docker url')
 
         tempBuildDir = TempDir()
         try:
@@ -366,13 +367,13 @@ class DockerProviderTest(unittest.TestCase):
                 provider.initialize()
 
                 # then
-                res_mock.resource_exists.assert_called_with('pixelated.resources', 'init-mailpile-docker-context.sh')
-                res_mock.resource_string.assert_called_with('pixelated.resources', 'init-mailpile-docker-context.sh')
+                res_mock.resource_exists.assert_called_with('pixelated.resources', 'init-pixelated-docker-context.sh')
+                res_mock.resource_string.assert_called_with('pixelated.resources', 'init-pixelated-docker-context.sh')
                 with open(file.name, "r") as input:
                     data = input.read().replace('\n', '')
                     self.assertEqual('%s %s' % (file.name, os.path.realpath(tempBuildDir_name)), data)
 
-                docker_mock.return_value.build.assert_called_once_with(path=tempBuildDir_name, tag='mailpile:latest', fileobj=None)
+                docker_mock.return_value.build.assert_called_once_with(path=tempBuildDir_name, tag='pixelated:latest', fileobj=None)
         finally:
             tempBuildDir.dissolve()
 
@@ -384,36 +385,24 @@ class DockerProviderTest(unittest.TestCase):
 
         provider.authenticate('test', 'password')
 
-        fifo_file = join(self.root_path, 'test', 'data', 'password-fifo')
+        fifo_file = join(self.root_path, 'test', 'data', 'credentials-fifo')
         self.assertTrue(stat.S_ISFIFO(os.stat(fifo_file).st_mode))
-        password = self._read_line_from_fifo(fifo_file, 5)
+        with open(fifo_file, 'r') as fifo:
+            provider = fifo.read()
+            user = fifo.read()
+            password = fifo.read()
 
+        self.assertEqual('test', user)
         self.assertEqual('password', password)
         self.assertFalse(exists(fifo_file))
 
-    def _read_line_from_fifo(self, filename, timeout):
-        value = ''
-        try:
-            fifo = os.open(filename, os.O_RDONLY | os.O_NONBLOCK)
-            started = time()
-            passed_time = 0
-            while value == '' and passed_time < timeout:
-                try:
-                    value = os.read(fifo, 8)
-                except OSError:
-                    pass
-                passed_time = time() - started
-                sleep(0.1)
-        finally:
-            os.close(fifo)
-        return value
 
     @patch('pixelated.provider.docker.docker.Client')
     def footest_that_authenticate_deletes_fifo_after_timeout(self, docker_mock):
         provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
         provider.initialize()
         provider.add('test', 'password')
-        fifo_file = join(self.root_path, 'test', 'data', 'password-fifo')
+        fifo_file = join(self.root_path, 'test', 'data', 'credentials-fifo')
         provider.authenticate('test', 'password')
 
         sleep(3)

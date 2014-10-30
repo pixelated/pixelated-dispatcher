@@ -62,7 +62,7 @@ node default {
     mode => '0755'
   }
 
-  $server_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py server -b docker"
+  $server_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py server -b docker  --provider example.wazokazi.is"
   $ssl_options = "--sslcert /vagrant/pixelated/test/util/server.crt --sslkey /vagrant/pixelated/test/util/server.key"
 
   service { 'dispatcher-server':

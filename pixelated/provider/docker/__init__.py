@@ -29,7 +29,6 @@ from psutil import Process
 import shutil
 
 from pixelated.provider.base_provider import BaseProvider
-from pixelated.provider.docker.mailpile_adapter import MailpileDockerAdapter
 
 from pixelated.common import logger
 
@@ -69,16 +68,17 @@ class TempDir(object):
 
 
 class DockerProvider(BaseProvider):
-    __slots__ = ('_docker_host', '_docker', '_ports', '_adapter')
+    __slots__ = ('_docker_host', '_docker', '_ports', '_adapter', '_leap_provider')
 
     DEFAULT_DOCKER_URL = 'http+unix://var/run/docker.sock'
 
-    def __init__(self, root_path, adapter, docker_url=DEFAULT_DOCKER_URL):
+    def __init__(self, root_path, adapter, leap_provider, docker_url=DEFAULT_DOCKER_URL):
         super(DockerProvider, self).__init__(root_path)
         self._docker_url = docker_url
         self._docker = docker.Client(base_url=docker_url)
         self._ports = set()
         self._adapter = adapter
+        self._leap_provider = leap_provider
 
     def initialize(self):
         imgs = self._docker.images()

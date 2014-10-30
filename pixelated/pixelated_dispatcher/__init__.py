@@ -69,6 +69,7 @@ def run_server():
     parser.add_argument('--sslkey', help='The SSL key to use', default=None)
     parser.add_argument('--debug', help='Set log level to debug', default=False, action='store_true')
     parser.add_argument('--log-config', help='Provide a python logging config file', default=None)
+    parser.add_argument('--provider', help='Specify the provider this dispatcher will connect to')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--mailpile-virtualenv', help='Use specified virtual env for mailpile', default=None)
     group.add_argument('--auto-mailpile-virtualenv', dest='auto_venv', help='Boostrap virtualenv for mailpile', default=False, action='store_true')
@@ -95,8 +96,7 @@ def run_server():
     log_config = args.log_config
     init_logging('server', level=log_level, config_file=log_config)
 
-    server = PixelatedDispatcherManager(args.root_path, mailpile_bin, ssl_config,
-                                        mailpile_virtualenv=venv, provider=args.backend, bindaddr=args.bind)
+    server = PixelatedDispatcherManager(args.root_path, mailpile_bin, ssl_config, args.provider, mailpile_virtualenv=venv, provider=args.backend, bindaddr=args.bind)
 
     server.serve_forever()
 
