@@ -16,10 +16,12 @@
 import io
 import os
 from os.path import join
+from os import path
 import stat
 import subprocess
 import time
 import tempfile
+import multiprocessing
 
 import pkg_resources
 import docker
@@ -27,12 +29,39 @@ import psutil
 import requests
 from psutil import Process
 import shutil
+import json
 
 from pixelated.provider.base_provider import BaseProvider
-
+from pixelated.common import Watchdog
 from pixelated.common import logger
 
 __author__ = 'fbernitt'
+
+
+class CredentialsFifoWriterProcess(object):
+
+    def __init__(self, filename, leap_provider, user, password):
+        self._filename = filename
+        self._leap_provider = leap_provider
+        self._user = user
+        self._password = password
+
+    def start(self):
+        os.mkfifo(self._filename)
+        self._process = multiprocessing.Process(target=self.run)
+        self._process.daemon = True
+        self._process.start()
+
+    def run(self):
+        if os.path.exists(self._filename):
+            with open(self._filename, 'w') as fifo:
+                fifo.write(json.dumps({'leap_provider_hostname': self._leap_provider, 'user': self._user, 'password': self._password}))
+            os.remove(self._filename)
+
+    def terminate(self):
+        self._process.terminate()
+        if os.path.exists(self._filename):
+            os.remove(self._filename)
 
 
 class TempDir(object):
@@ -68,17 +97,17 @@ class TempDir(object):
 
 
 class DockerProvider(BaseProvider):
-    __slots__ = ('_docker_host', '_docker', '_ports', '_adapter', '_leap_provider')
+    __slots__ = ('_docker_host', '_docker', '_ports', '_adapter', '_leap_provider_hostname')
 
     DEFAULT_DOCKER_URL = 'http+unix://var/run/docker.sock'
 
-    def __init__(self, root_path, adapter, leap_provider, docker_url=DEFAULT_DOCKER_URL):
+    def __init__(self, root_path, adapter, leap_provider_hostname, docker_url=DEFAULT_DOCKER_URL):
         super(DockerProvider, self).__init__(root_path)
         self._docker_url = docker_url
         self._docker = docker.Client(base_url=docker_url)
         self._ports = set()
         self._adapter = adapter
-        self._leap_provider = leap_provider
+        self._leap_provider_hostname = leap_provider_hostname
 
     def initialize(self):
         imgs = self._docker.images()
@@ -114,6 +143,25 @@ class DockerProvider(BaseProvider):
         r = self._docker.build(path=path, fileobj=fileobj, tag='%s:latest' % self._adapter.app_name())
         for l in r:
             logger.debug(l)
+
+    def authenticate(self, name, password):
+        success = super(DockerProvider, self).authenticate(name, password)
+
+        if success:
+            self._write_credentials_to_fifo(self._leap_provider_hostname, name, password)
+
+        return success
+
+    def _write_credentials_to_fifo(self, leap_provider, name, password):
+        fifo_file = path.join(self._data_path(name), 'credentials-fifo')
+
+        p = CredentialsFifoWriterProcess(fifo_file, leap_provider, name, password)
+        p.start()
+
+        def kill_process_after_timeout(process):
+            process.terminate()
+
+        watchdog = Watchdog(2, userHandler=kill_process_after_timeout, args=[p])
 
     def start(self, name):
         self._ensure_initialized()

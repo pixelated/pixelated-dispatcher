@@ -35,7 +35,7 @@ class RESTfulServerTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        RESTfulServerTest.mock_provider = MagicMock(spec=DockerProvider)
+        RESTfulServerTest.mock_provider = MagicMock(spec=Provider)
 
         RESTfulServerTest.ssl_config = SSLConfig(certfile(),
                                                  keyfile())

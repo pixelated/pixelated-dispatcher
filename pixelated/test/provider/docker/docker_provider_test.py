@@ -21,6 +21,7 @@ from time import sleep, time
 from mock import patch, MagicMock
 import pkg_resources
 import requests
+import json
 from tempdir import TempDir
 from psutil._common import pmem
 from threading import Thread
@@ -379,7 +380,7 @@ class DockerProviderTest(unittest.TestCase):
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_that_authenticate_writes_password_to_fifo(self, docker_mock):
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = DockerProvider(self.root_path, self._adapter, 'leap_provider_hostname', 'some docker url')
         provider.initialize()
         provider.add('test', 'password')
 
@@ -388,14 +389,12 @@ class DockerProviderTest(unittest.TestCase):
         fifo_file = join(self.root_path, 'test', 'data', 'credentials-fifo')
         self.assertTrue(stat.S_ISFIFO(os.stat(fifo_file).st_mode))
         with open(fifo_file, 'r') as fifo:
-            provider = fifo.read()
-            user = fifo.read()
-            password = fifo.read()
+            config = json.loads(fifo.read())
 
-        self.assertEqual('test', user)
-        self.assertEqual('password', password)
+        self.assertEqual('leap_provider_hostname', config['leap_provider_hostname'])
+        self.assertEqual('test', config['user'])
+        self.assertEqual('password', config['password'])
         self.assertFalse(exists(fifo_file))
-
 
     @patch('pixelated.provider.docker.docker.Client')
     def footest_that_authenticate_deletes_fifo_after_timeout(self, docker_mock):
@@ -410,6 +409,6 @@ class DockerProviderTest(unittest.TestCase):
         self.assertFalse(stat.S_ISFIFO(os.stat(fifo_file).st_mode))
 
     def _create_initialized_provider(self, root_path, adapter, docker_url=DockerProvider.DEFAULT_DOCKER_URL):
-        provider = DockerProvider(root_path, adapter, docker_url)
+        provider = DockerProvider(root_path, adapter, 'leap_provider_hostname', docker_url)
         provider._initializing = False
         return provider
