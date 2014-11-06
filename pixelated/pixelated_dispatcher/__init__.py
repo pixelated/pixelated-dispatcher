@@ -121,8 +121,10 @@ def run_dispatcher():
     log_level = logging.DEBUG if args.debug else logging.INFO
     log_config = args.log_config
     init_logging('dipatcher', level=log_level, config_file=log_config)
+    client = PixelatedDispatcherClient(server_hostname, server_port, cacert=certfile, fingerprint=args.fingerprint)
+    client.validate_connection()
 
-    dispatcher = Dispatcher(PixelatedDispatcherClient(server_hostname, server_port, cacert=certfile, fingerprint=args.fingerprint), bindaddr=args.bind, keyfile=keyfile,
+    dispatcher = Dispatcher(client, bindaddr=args.bind, keyfile=keyfile,
                             certfile=certfile)
     dispatcher.serve_forever()
 

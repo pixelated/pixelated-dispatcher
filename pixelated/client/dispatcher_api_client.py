@@ -146,3 +146,6 @@ class PixelatedDispatcherClient(object):
 
     def memory_usage(self):
         return self._get('/stats/memory_usage')
+
+    def validate_connection(self):
+        self.list()

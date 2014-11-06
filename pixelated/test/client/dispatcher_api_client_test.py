@@ -16,8 +16,7 @@
 import unittest
 
 from httmock import HTTMock, all_requests, urlmatch
-from mock import patch
-
+from mock import patch, ANY
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient, PixelatedHTTPError, PixelatedNotAvailableHTTPError
 
 
@@ -226,3 +225,17 @@ class MultipileClientTest(unittest.TestCase):
 
         with HTTMock(list_agents, not_found_handler):
             self.assertRaises(PixelatedNotAvailableHTTPError, self.client.list)
+
+    @patch('requests.Session')
+    def test_validate_connection(self, session_mock):
+        some_ca = 'some cert'
+        some_fingerprint = 'some Fingerprint'
+        self.client = PixelatedDispatcherClient('localhost', 12345, cacert=some_ca, fingerprint=some_fingerprint)
+        session = session_mock.return_value
+
+        self.client.validate_connection()
+
+        session.mount.assert_called_once_with('https://', ANY)
+        session.get.assert_called_once_with('https://localhost:12345/agents', verify=some_ca)
+        adapter = session.mount.call_args[0][1]
+        self.assertEqual(some_fingerprint, adapter._assert_fingerprint)
