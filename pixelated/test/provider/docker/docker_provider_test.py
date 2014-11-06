@@ -17,7 +17,7 @@ import os
 import stat
 from os.path import join, isdir, isfile, exists
 from tempfile import NamedTemporaryFile
-from time import sleep, time
+from time import sleep, clock
 from mock import patch, MagicMock
 import pkg_resources
 import requests
@@ -394,7 +394,15 @@ class DockerProviderTest(unittest.TestCase):
         self.assertEqual('leap_provider_hostname', config['leap_provider_hostname'])
         self.assertEqual('test', config['user'])
         self.assertEqual('password', config['password'])
-        self.assertFalse(exists(fifo_file))
+        self._assert_file_gets_deleted(fifo_file)
+
+    def _assert_file_gets_deleted(self, filename):
+        start = clock()
+        timeout = 5
+        while (clock() - start) < timeout and exists(filename):
+            sleep(0.1)
+
+        self.assertFalse(exists(filename))
 
     @patch('pixelated.provider.docker.docker.Client')
     def footest_that_authenticate_deletes_fifo_after_timeout(self, docker_mock):
