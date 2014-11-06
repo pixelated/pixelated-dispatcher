@@ -143,7 +143,7 @@ class DockerProviderTest(unittest.TestCase):
         provider.add('test', 'password')
         provider.start('test')
 
-        client.create_container.assert_any_call('pixelated', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --dispatcher"', name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
+        client.create_container.assert_any_call('pixelated', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --dispatcher /mnt/user/credentials-fifo"', name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
         client.create_container.assert_any_call('pixelated', '/bin/true', name='pixelated_prepare', volumes=['/mnt/user'], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
 
         data_path = join(self.root_path, 'test', 'data')
