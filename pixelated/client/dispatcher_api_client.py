@@ -31,6 +31,7 @@ except:
 
 DEFAULT_TIMEOUT_IN_S = 10
 
+
 class EnforceTLSv1Adapter(HTTPAdapter):
     __slots__ = ('_assert_hostname', '_assert_fingerprint')
 
@@ -165,4 +166,4 @@ class PixelatedDispatcherClient(object):
             if not ok:
                 raise ConnectionError('Failed to connect to manager (%s) within %d seconds' % (self._hostname, timeout_in_s))
         except PixelatedNotAvailableHTTPError:
-            pass # ignore this kind of problem
+            pass  # ignore this kind of problem

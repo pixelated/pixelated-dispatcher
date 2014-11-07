@@ -263,4 +263,3 @@ class MultipileClientTest(unittest.TestCase):
 
         with HTTMock(list_agents, not_found_handler):
             self.client.validate_connection(timeout_in_s=5)
-
