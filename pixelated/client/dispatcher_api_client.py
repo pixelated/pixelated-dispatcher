@@ -17,15 +17,19 @@ __author__ = 'fbernitt'
 
 import json
 import ssl
+import time
 
 import requests
 from requests.adapters import HTTPAdapter
+from requests.exceptions import ConnectionError
 from pixelated.common import latest_available_ssl_version
 try:
     from requests.packages.urllib3.poolmanager import PoolManager
 except:
     from urllib3.poolmanager import PoolManager
 
+
+DEFAULT_TIMEOUT_IN_S = 10
 
 class EnforceTLSv1Adapter(HTTPAdapter):
     __slots__ = ('_assert_hostname', '_assert_fingerprint')
@@ -147,5 +151,18 @@ class PixelatedDispatcherClient(object):
     def memory_usage(self):
         return self._get('/stats/memory_usage')
 
-    def validate_connection(self):
-        self.list()
+    def validate_connection(self, timeout_in_s=DEFAULT_TIMEOUT_IN_S):
+        try:
+            start = time.time()
+            ok = False
+            while not ok and (time.time() - start < timeout_in_s):
+                try:
+                    self.list()
+                    ok = True
+                except ConnectionError:
+                    pass
+                time.sleep(0.5)
+            if not ok:
+                raise ConnectionError('Failed to connect to manager (%s) within %d seconds' % (self._hostname, timeout_in_s))
+        except PixelatedNotAvailableHTTPError:
+            pass # ignore this kind of problem

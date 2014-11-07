@@ -15,6 +15,7 @@
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
 import unittest
 
+from requests.exceptions import ConnectionError
 from httmock import HTTMock, all_requests, urlmatch
 from mock import patch, ANY
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient, PixelatedHTTPError, PixelatedNotAvailableHTTPError
@@ -239,3 +240,27 @@ class MultipileClientTest(unittest.TestCase):
         session.get.assert_called_once_with('https://localhost:12345/agents', verify=some_ca)
         adapter = session.mount.call_args[0][1]
         self.assertEqual(some_fingerprint, adapter._assert_fingerprint)
+
+    def test_validate_connection_ignores_http_status_code(self):
+
+        @urlmatch(path='/agents')
+        def list_agents(url, request):
+            return {'status_code': 503, 'reason': 'some reason'}
+
+        with HTTMock(list_agents, not_found_handler):
+            self.client.validate_connection()
+
+    def test_validate_connection_allows_timeout(self):
+        self.count = 0
+
+        @urlmatch(path='/agents')
+        def list_agents(url, request):
+            self.count = self.count + 1
+            if self.count < 2:
+                raise ConnectionError('Test Error')
+            else:
+                return {'status_code': 503, 'reason': 'some reason'}
+
+        with HTTMock(list_agents, not_found_handler):
+            self.client.validate_connection(timeout_in_s=5)
+
