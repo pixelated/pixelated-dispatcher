@@ -158,10 +158,20 @@ class DockerProvider(BaseProvider):
         p = CredentialsFifoWriterProcess(fifo_file, leap_provider, name, password)
         p.start()
 
+        self._wait_for_fifo_to_be_created(fifo_file, timeout_in_s=1)
+
         def kill_process_after_timeout(process):
             process.terminate()
 
-        watchdog = Watchdog(2, userHandler=kill_process_after_timeout, args=[p])
+        watchdog = Watchdog(5, userHandler=kill_process_after_timeout, args=[p])
+
+    def _wait_for_fifo_to_be_created(self, fifo_file, timeout_in_s):
+        start = time.clock()
+        while time.clock() - start < timeout_in_s and not path.exists(fifo_file):
+            time.sleep(0.01)
+
+        if not path.exists(fifo_file):
+            raise Exception('Unexpected: FIFO file %s has not been created' % fifo_file)
 
     def start(self, name):
         self._ensure_initialized()
@@ -174,7 +184,7 @@ class DockerProvider(BaseProvider):
             c = self._docker.create_container(self._adapter.app_name(), self._adapter.run_command(), name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'))
         else:
             c = cm[name]
-        data_path = join(self._instance_path(name), 'data')
+        data_path = self._data_path(name)
         port = self._next_available_port()
         self._ports.add(port)
 
