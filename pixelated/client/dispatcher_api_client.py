@@ -23,6 +23,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 from pixelated.common import latest_available_ssl_version
+from pixelated.common import logger
 try:
     from requests.packages.urllib3.poolmanager import PoolManager
 except:
@@ -30,12 +31,13 @@ except:
 
 
 DEFAULT_TIMEOUT_IN_S = 10
+VERIFY_HOSTNAME = None
 
 
 class EnforceTLSv1Adapter(HTTPAdapter):
     __slots__ = ('_assert_hostname', '_assert_fingerprint')
 
-    def __init__(self, assert_hostname=None, assert_fingerprint=None):
+    def __init__(self, assert_hostname=VERIFY_HOSTNAME, assert_fingerprint=None):
         self._assert_hostname = assert_hostname
         self._assert_fingerprint = assert_fingerprint
         super(EnforceTLSv1Adapter, self).__init__()
@@ -66,7 +68,7 @@ class PixelatedNotAvailableHTTPError(PixelatedHTTPError):
 class PixelatedDispatcherClient(object):
     __slots__ = ('_hostname', '_port', '_base_url', '_cacert', '_scheme', '_assert_hostname', '_fingerprint')
 
-    def __init__(self, hostname, port, cacert=True, ssl=True, assert_hostname=False, fingerprint=None):
+    def __init__(self, hostname, port, cacert=True, ssl=True, assert_hostname=VERIFY_HOSTNAME, fingerprint=None):
         self._hostname = hostname
         self._port = port
         self._scheme = 'https' if ssl else 'http'
@@ -78,7 +80,7 @@ class PixelatedDispatcherClient(object):
     def _get(self, path):
         uri = '%s%s' % (self._base_url, path)
         s = requests.Session()
-        s.mount('https://', EnforceTLSv1Adapter(assert_fingerprint=self._fingerprint))
+        s.mount('https://', EnforceTLSv1Adapter(assert_fingerprint=self._fingerprint, assert_hostname=self._assert_hostname))
         r = s.get(uri, verify=self._cacert)
         self._raise_error_for_status(r.status_code, r.reason)
         return r.json()
@@ -160,8 +162,8 @@ class PixelatedDispatcherClient(object):
                 try:
                     self.list()
                     ok = True
-                except ConnectionError:
-                    pass
+                except ConnectionError, e:
+                    logger.warn(e.message)
                 time.sleep(0.5)
             if not ok:
                 raise ConnectionError('Failed to connect to manager (%s) within %d seconds' % (self._hostname, timeout_in_s))

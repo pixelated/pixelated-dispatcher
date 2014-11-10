@@ -18,7 +18,7 @@ import unittest
 from requests.exceptions import ConnectionError
 from httmock import HTTMock, all_requests, urlmatch
 from mock import patch, ANY
-from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient, PixelatedHTTPError, PixelatedNotAvailableHTTPError
+from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient, PixelatedHTTPError, PixelatedNotAvailableHTTPError, VERIFY_HOSTNAME
 
 
 __author__ = 'fbernitt'
@@ -263,3 +263,27 @@ class MultipileClientTest(unittest.TestCase):
 
         with HTTMock(list_agents, not_found_handler):
             self.client.validate_connection(timeout_in_s=5)
+
+    @patch('requests.Session')
+    def test_assert_hostname_gets_past_to_tlsv1_adapter(self, session_mock):
+        some_ca = 'some cert'
+        self.client = PixelatedDispatcherClient('localhost', 12345, cacert=some_ca, assert_hostname=False)
+        session = session_mock.return_value
+
+        self.client.validate_connection()
+
+        session.mount.assert_called_once_with('https://', ANY)
+        adapter = session.mount.call_args[0][1]
+        self.assertEqual(False, adapter._assert_hostname)
+
+    @patch('requests.Session')
+    def test_hostname_gets_checkt_by_default(self, session_mock):
+        some_ca = 'some cert'
+        self.client = PixelatedDispatcherClient('localhost', 12345, cacert=some_ca)
+        session = session_mock.return_value
+
+        self.client.validate_connection()
+
+        session.mount.assert_called_once_with('https://', ANY)
+        adapter = session.mount.call_args[0][1]
+        self.assertEqual(VERIFY_HOSTNAME, adapter._assert_hostname)

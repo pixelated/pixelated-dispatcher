@@ -84,7 +84,7 @@ class SmokeTest(unittest.TestCase):
         return SmokeTest.Server(server.serve_forever, server.shutdown, thread_name='PixelatedServer')
 
     def _dispatcher(self):
-        dispatcher = Dispatcher(PixelatedDispatcherClient('localhost', DEFAULT_PORT, cacert=cafile()), port=12345, certfile=certfile(),
+        dispatcher = Dispatcher(PixelatedDispatcherClient('localhost', DEFAULT_PORT, cacert=cafile(), assert_hostname=False), port=12345, certfile=certfile(),
                                 keyfile=keyfile())
         return SmokeTest.Server(dispatcher.serve_forever, dispatcher.shutdown, thread_name='PixelatedDispatcher')
 

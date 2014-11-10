@@ -109,6 +109,7 @@ def run_dispatcher():
     parser.add_argument('--sslcert', help='The SSL certficate to use', default=None)
     parser.add_argument('--sslkey', help='The SSL key to use', default=None)
     parser.add_argument('--fingerprint', help='Pin certifcate to fingerprint', default=None)
+    parser.add_argument('--disable-verifyhostname', help='Disable hostname verification. If fingerprint is specified it gets precedence', dest="verify_hostname", action='store_false', default=None)
     parser.add_argument('--debug', help='Set log level to debug', default=False, action='store_true')
     parser.add_argument('--log-config', help='Provide a python logging config file', default=None)
 
@@ -121,7 +122,7 @@ def run_dispatcher():
     log_level = logging.DEBUG if args.debug else logging.INFO
     log_config = args.log_config
     init_logging('dipatcher', level=log_level, config_file=log_config)
-    client = PixelatedDispatcherClient(server_hostname, server_port, cacert=certfile, fingerprint=args.fingerprint)
+    client = PixelatedDispatcherClient(server_hostname, server_port, cacert=certfile, fingerprint=args.fingerprint, assert_hostname=args.verify_hostname)
     client.validate_connection()
 
     dispatcher = Dispatcher(client, bindaddr=args.bind, keyfile=keyfile,
