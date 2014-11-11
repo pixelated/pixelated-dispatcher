@@ -23,7 +23,7 @@ import tornado
 from tornado.testing import AsyncHTTPTestCase
 
 from pixelated.client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
-from pixelated.dispatcher import DispatcherProxy, MainHandler
+from pixelated.proxy import DispatcherProxy, MainHandler
 
 
 __author__ = 'fbernitt'
@@ -48,7 +48,7 @@ class TestServer(object):
         pass
 
 
-class DispatcherTest(AsyncHTTPTestCase):
+class DispatcherProxyTest(AsyncHTTPTestCase):
     def setUp(self):
         self.client = MagicMock()
         self.cookies = Cookie.SimpleCookie()

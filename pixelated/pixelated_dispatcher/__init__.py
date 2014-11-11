@@ -20,7 +20,7 @@ import logging
 
 from pixelated.client.cli import Cli
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
-from pixelated.dispatcher import DispatcherProxy
+from pixelated.proxy import DispatcherProxy
 from pixelated.manager import SSLConfig, PixelatedDispatcherManager
 from pixelated.common import init_logging, latest_available_ssl_version
 

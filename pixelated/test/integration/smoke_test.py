@@ -23,7 +23,7 @@ import requests
 from tempdir import TempDir
 
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
-from pixelated.dispatcher import DispatcherProxy
+from pixelated.proxy import DispatcherProxy
 from pixelated.manager import PixelatedDispatcherManager, SSLConfig, DEFAULT_PORT
 from pixelated.test.util import EnforceTLSv1Adapter, cafile, certfile, keyfile
 
