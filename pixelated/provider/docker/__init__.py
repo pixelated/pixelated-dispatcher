@@ -15,6 +15,7 @@
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
 import io
 import os
+import signal
 from os.path import join
 from os import path
 import stat
@@ -140,9 +141,20 @@ class DockerProvider(BaseProvider):
         self._initializing = False
 
     def _build_image(self, path, fileobj):
-        r = self._docker.build(path=path, fileobj=fileobj, tag='%s:latest' % self._adapter.app_name())
-        for l in r:
-            logger.debug(l)
+        stream = self._docker.build(path=path, fileobj=fileobj, tag='%s:latest' % self._adapter.app_name())
+        lines = []
+        for event in stream:
+            data = json.loads(event)
+            if 'stream' in data:
+                logger.debug(data['stream'])
+                lines.append(data['stream'])
+            if 'error' in data:
+                logger.error('Whoops! Failed to build image: %s' % data['error'])
+                logger.error('Replaying docker image build output')
+                for line in lines:
+                    logger.error('Docker output: %s' % line)
+                logger.error('Terminating process by sending TERM signal')
+                os.kill(os.getpid(), signal.SIGTERM)
 
     def authenticate(self, name, password):
         success = super(DockerProvider, self).authenticate(name, password)
