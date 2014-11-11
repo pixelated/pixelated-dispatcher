@@ -87,6 +87,22 @@ class MainHandler(BaseHandler):
                 logger.error('Got some exception.... %s' % e)
                 raise
 
+    @tornado.web.authenticated
+    @tornado.web.asynchronous
+    @gen.engine
+    def post(self):
+        self.get()
+
+    @tornado.web.authenticated
+    @tornado.web.asynchronous
+    @gen.engine
+    def put(self):
+        self.get()
+
+    def check_xsrf_cookie(self):
+        # agent should do it after user has logged in
+        pass
+
     @gen.engine
     def _wait_til_agent_is_up(self, agent_runtime, callback):
         max_wait = 10
@@ -106,7 +122,7 @@ class MainHandler(BaseHandler):
 
     def handle_response(self, response):
         if response.error and not isinstance(response.error, tornado.httpclient.HTTPError):
-            logger.error('Got error %s from user %s agent: %s' % (self.current_user, response.error))
+            logger.error('Got error from user %s agent: %s' % (self.current_user, response.error))
             self.set_status(500)
             self.write("Internal server error:\n" + str(response.error))
             self.finish()
