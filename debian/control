@@ -45,7 +45,7 @@ Description: Pixelated-dispatcher dispatches between multiple pixelated user-age
  pixelated-dispatcher allows you to run multiple instances of an application that had been designed for a single user.
  One example is to run multiple [pixelated-user-agents](https://github.com/pixelated-project/pixelated-user-agent) or [Mailpile](http://github.com/pagekite/Mailpile.git) instances (agents) on a server,
  hence the name pixelated-dispatcher.
- This package provides the server responsible for starting the instances
+ This package provides the manager responsible for starting the instances
 
 Package: pixelated-dispatcher-common
 Architecture: all

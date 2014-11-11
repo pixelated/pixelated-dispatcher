@@ -27,7 +27,7 @@ test -f $DAEMON || exit 0
 
 [ -r /etc/default/pixelated-dispatcher-manager ] && . /etc/default/pixelated-dispatcher-manager
 
-EXTRA_OPTS="server -b $PIXELATED_PROVIDER -r $PIXELATED_ROOT --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_MANAGER_EXTRA_OPTS"
+EXTRA_OPTS="manager -b $PIXELATED_PROVIDER -r $PIXELATED_ROOT --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_MANAGER_EXTRA_OPTS"
 
 case "$1" in
 start)	log_daemon_msg "Starting pixelated-dispatcher manager" "pixelated-manager"

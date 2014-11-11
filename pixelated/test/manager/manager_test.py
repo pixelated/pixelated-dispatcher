@@ -264,10 +264,10 @@ class RESTfulServerTest(unittest.TestCase):
     def test_that_initialize_happens_in_background_thread(self, thread_mock, server_mock, docker_provider_mock):
         # given
         docker_provider_mock.return_value = self.mock_provider
-        server = PixelatedDispatcherManager(None, None, None, None, provider='docker')
+        manager = PixelatedDispatcherManager(None, None, None, None, provider='docker')
 
         # when
-        server.serve_forever()
+        manager.serve_forever()
 
         # then
         thread_mock.assert_called_with(target=self.mock_provider.initialize)

@@ -23,7 +23,7 @@ import tornado
 from tornado.testing import AsyncHTTPTestCase
 
 from pixelated.client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
-from pixelated.dispatcher import Dispatcher, MainHandler
+from pixelated.dispatcher import DispatcherProxy, MainHandler
 
 
 __author__ = 'fbernitt'
@@ -55,7 +55,7 @@ class DispatcherTest(AsyncHTTPTestCase):
         super(DispatcherTest, self).setUp()
 
     def get_app(self):
-        self._dispatcher = Dispatcher(self.client)
+        self._dispatcher = DispatcherProxy(self.client)
         self._dispatcher._ioloop = self.io_loop
         return self._dispatcher.create_app()
 

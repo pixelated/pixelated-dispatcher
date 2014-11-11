@@ -23,7 +23,7 @@ import requests
 from tempdir import TempDir
 
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
-from pixelated.dispatcher import Dispatcher
+from pixelated.dispatcher import DispatcherProxy
 from pixelated.manager import PixelatedDispatcherManager, SSLConfig, DEFAULT_PORT
 from pixelated.test.util import EnforceTLSv1Adapter, cafile, certfile, keyfile
 
@@ -76,17 +76,17 @@ class SmokeTest(unittest.TestCase):
     def tearDown(self):
         self._tmpdir.dissolve()
 
-    def _pixelated_dispatcher_server(self):
+    def _pixelated_dispatcher_manager(self):
         fake_mailpile = os.path.join(os.path.dirname(__file__), 'fake_mailpile.py')
         ssl_config = SSLConfig(certfile(), keyfile())
         server = PixelatedDispatcherManager(self._tmpdir.name, fake_mailpile, ssl_config, 'leap provider hostname', mailpile_virtualenv=INHERIT)
 
-        return SmokeTest.Server(server.serve_forever, server.shutdown, thread_name='PixelatedServer')
+        return SmokeTest.Server(server.serve_forever, server.shutdown, thread_name='PixelatedServerManager')
 
-    def _dispatcher(self):
-        dispatcher = Dispatcher(PixelatedDispatcherClient('localhost', DEFAULT_PORT, cacert=cafile(), assert_hostname=False), port=12345, certfile=certfile(),
-                                keyfile=keyfile())
-        return SmokeTest.Server(dispatcher.serve_forever, dispatcher.shutdown, thread_name='PixelatedDispatcher')
+    def _dispatcher_proxy(self):
+        dispatcher = DispatcherProxy(PixelatedDispatcherClient('localhost', DEFAULT_PORT, cacert=cafile(), assert_hostname=False), port=12345, certfile=certfile(),
+                                     keyfile=keyfile())
+        return SmokeTest.Server(dispatcher.serve_forever, dispatcher.shutdown, thread_name='PixelatedDispatcherProxy')
 
     def _method(self, method, url, form_data=None, json_data=None, timeout=2.0):
         if json_data:
@@ -111,7 +111,7 @@ class SmokeTest(unittest.TestCase):
         return self._method(self.ssl_request.post, url, form_data=form_data, json_data=json_data)
 
     def test_dispatcher_run(self):
-        with self._pixelated_dispatcher_server():
+        with self._pixelated_dispatcher_manager():
             self.assertSuccess(
                 self.post('https://localhost:4443/agents', json_data={'name': 'test', 'password': 'some password'}))
             self.assertSuccess(self.get('https://localhost:4443/agents'), json_body={
@@ -126,12 +126,12 @@ class SmokeTest(unittest.TestCase):
                 self.put('https://localhost:4443/agents/test/state', json_data={'state': 'stopped'}))
 
     def test_dispatcher_starts(self):
-        with self._dispatcher():
+        with self._dispatcher_proxy():
             self.assertSuccess(self.get('https://localhost:12345/auth/login'))
 
     def test_server_dispatcher_combination(self):
-        with self._pixelated_dispatcher_server():
-            with self._dispatcher():
+        with self._pixelated_dispatcher_manager():
+            with self._dispatcher_proxy():
                 # add user
                 self.assertSuccess(
                     self.post('https://localhost:4443/agents', json_data={'name': 'test', 'password': 'some password'}))

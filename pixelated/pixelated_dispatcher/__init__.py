@@ -20,7 +20,7 @@ import logging
 
 from pixelated.client.cli import Cli
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
-from pixelated.dispatcher import Dispatcher
+from pixelated.dispatcher import DispatcherProxy
 from pixelated.manager import SSLConfig, PixelatedDispatcherManager
 from pixelated.common import init_logging, latest_available_ssl_version
 
@@ -29,26 +29,26 @@ __author__ = 'fbernitt'
 import argparse
 
 
-def is_dispatcher():
+def is_proxy():
     for arg in sys.argv:
-        if arg == 'dispatcher':
+        if arg == 'proxy':
             return True
     return False
 
 
-def is_server():
+def is_manager():
     for arg in sys.argv:
-        if arg == 'server':
+        if arg == 'manager':
             return True
     return False
 
 
 def filter_args():
-    return [arg for arg in sys.argv[1:] if arg not in ['server', 'dispatcher']]
+    return [arg for arg in sys.argv[1:] if arg not in ['manager', 'proxy']]
 
 
 def is_cli():
-    return not (is_server() or is_dispatcher())
+    return not (is_manager() or is_proxy())
 
 
 def prepare_venv(root_path):
@@ -59,7 +59,7 @@ def prepare_venv(root_path):
     return venv_path, mailpile_path
 
 
-def run_server():
+def run_manager():
     parser = argparse.ArgumentParser(description='Multipile', )
     parser.add_argument('-r', '--root_path', help='The rootpath for mailpile')
     parser.add_argument('-m', '--mailpile_bin', help='The mailpile executable', default='mailpile')
@@ -94,17 +94,17 @@ def run_server():
 
     log_level = logging.DEBUG if args.debug else logging.INFO
     log_config = args.log_config
-    init_logging('server', level=log_level, config_file=log_config)
+    init_logging('manager', level=log_level, config_file=log_config)
 
-    server = PixelatedDispatcherManager(args.root_path, mailpile_bin, ssl_config, args.provider, mailpile_virtualenv=venv, provider=args.backend, bindaddr=args.bind)
+    manager = PixelatedDispatcherManager(args.root_path, mailpile_bin, ssl_config, args.provider, mailpile_virtualenv=venv, provider=args.backend, bindaddr=args.bind)
 
-    server.serve_forever()
+    manager.serve_forever()
 
 
-def run_dispatcher():
+def run_proxy():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', help='The port the dispatcher runs on')
-    parser.add_argument('-s', '--server', help="hostname:port of the server")
+    parser.add_argument('-m', '--manager', help="hostname:port of the manager")
     parser.add_argument('--bind', help="bind to interface. Default 127.0.0.1", default='127.0.0.1')
     parser.add_argument('--sslcert', help='The SSL certficate to use', default=None)
     parser.add_argument('--sslkey', help='The SSL key to use', default=None)
@@ -115,18 +115,18 @@ def run_dispatcher():
 
     args = parser.parse_args(args=filter_args())
 
-    server_hostname, server_port = args.server.split(':')
+    manager_hostname, manager_port = args.manager.split(':')
     certfile = args.sslcert if args.sslcert else None
     keyfile = args.sslkey if args.sslcert else None
 
     log_level = logging.DEBUG if args.debug else logging.INFO
     log_config = args.log_config
     init_logging('dipatcher', level=log_level, config_file=log_config)
-    client = PixelatedDispatcherClient(server_hostname, server_port, cacert=certfile, fingerprint=args.fingerprint, assert_hostname=args.verify_hostname)
+    client = PixelatedDispatcherClient(manager_hostname, manager_port, cacert=certfile, fingerprint=args.fingerprint, assert_hostname=args.verify_hostname)
     client.validate_connection()
 
-    dispatcher = Dispatcher(client, bindaddr=args.bind, keyfile=keyfile,
-                            certfile=certfile)
+    dispatcher = DispatcherProxy(client, bindaddr=args.bind, keyfile=keyfile,
+                                 certfile=certfile)
     dispatcher.serve_forever()
 
 
@@ -135,10 +135,10 @@ def run_cli():
 
 
 def main():
-    if is_server():
-        run_server()
-    elif is_dispatcher():
-        run_dispatcher()
+    if is_manager():
+        run_manager()
+    elif is_proxy():
+        run_proxy()
     else:
         run_cli()
 

@@ -190,7 +190,7 @@ class AuthLogoutHandler(BaseHandler):
         self.write("You are now logged out")
 
 
-class Dispatcher(object):
+class DispatcherProxy(object):
     __slots__ = ('_port', '_client', '_bindaddr', '_ioloop', '_certfile', '_keyfile', '_server')
 
     def __init__(self, dispatcher_client, bindaddr='127.0.0.1', port=8080, certfile=None, keyfile=None):

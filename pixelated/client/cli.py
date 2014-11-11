@@ -36,7 +36,7 @@ class Cli(object):
 
     def _build_parser(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--server', help='Provide server url (default: localhost:4449')
+        parser.add_argument('--manager', help='Provide manager url (default: localhost:4449')
         parser.add_argument('-k', '--no-check-certificate', help='don\'t validate SSL/TLS certificates', dest='check_cert', action='store_false', default=True)
         parser.add_argument('--no-ssl', help='Force unsecured connection', dest='use_ssl', action='store_false', default=True)
         parser.add_argument('--sslcert', help='The SSL certficate to use', default=None)
@@ -60,8 +60,8 @@ class Cli(object):
 
         try:
             args = parser.parse_args(self._args)
-            if args.server:
-                host, port = args.server.split(':')
+            if args.manager:
+                host, port = args.manager.split(':')
             else:
                 host, port = 'localhost', Cli.DEFAULT_SERVER_PORT
 

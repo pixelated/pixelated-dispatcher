@@ -27,7 +27,7 @@ test -f $DAEMON || exit 0
 
 [ -r /etc/default/pixelated-dispatcher-proxy ] && . /etc/default/pixelated-dispatcher-proxy
 
-EXTRA_OPTS="dispatcher --server $PIXELATED_MANAGER --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_PROXY_EXTRA_OPTS"
+EXTRA_OPTS="proxy --manager $PIXELATED_MANAGER --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_PROXY_EXTRA_OPTS"
 if [ -n "$PIXELATED_MANAGER_FINGERPRINT" ] ; then
   EXTRA_OPTS="$EXTRA_OPTS --fingerprint $PIXELATED_MANAGER_FINGERPRINT"
 fi
