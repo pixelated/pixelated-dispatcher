@@ -24,7 +24,10 @@ def init_logging(name, level=logging.INFO, config_file=None):
 
 
 def latest_available_ssl_version():
-    return ssl.PROTOCOL_TLSv1
+    try:
+        return ssl.PROTOCOL_TLSv1_2
+    except AttributeError:
+        return ssl.PROTOCOL_TLSv1
 
 
 class Watchdog:
