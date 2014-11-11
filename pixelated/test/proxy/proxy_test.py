@@ -52,7 +52,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
     def setUp(self):
         self.client = MagicMock()
         self.cookies = Cookie.SimpleCookie()
-        super(DispatcherTest, self).setUp()
+        super(DispatcherProxyTest, self).setUp()
 
     def get_app(self):
         self._dispatcher = DispatcherProxy(self.client)
