@@ -33,9 +33,9 @@ RUN apt-key adv --keyserver pool.sks-keyservers.net --recv-key 1E34A1828E207901 
     apt-key adv --keyserver pool.sks-keyservers.net --recv-key 287A1542472DC0E3
 
 # Update packages lists
-RUN apt-get update -y
-RUN apt-get install -y --allow-unauthenticated soledad-client
+RUN apt-get update -y --force-yes
+RUN apt-get install -y --force-yes --allow-unauthenticated soledad-client
 # Install Pixelated User Agent
-RUN apt-get install pixelated-user-agent
+RUN apt-get install -y --force-yes pixelated-user-agent
 
 EXPOSE 4567
