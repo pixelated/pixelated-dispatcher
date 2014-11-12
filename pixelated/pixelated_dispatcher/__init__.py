@@ -70,6 +70,7 @@ def run_manager():
     parser.add_argument('--debug', help='Set log level to debug', default=False, action='store_true')
     parser.add_argument('--log-config', help='Provide a python logging config file', default=None)
     parser.add_argument('--provider', help='Specify the provider this dispatcher will connect to')
+    parser.add_argument('--provider-ca', dest='provider_ca', help='Specify the provider CA to use to validate connections', default=True)
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--mailpile-virtualenv', help='Use specified virtual env for mailpile', default=None)
     group.add_argument('--auto-mailpile-virtualenv', dest='auto_venv', help='Boostrap virtualenv for mailpile', default=False, action='store_true')
@@ -96,7 +97,7 @@ def run_manager():
     log_config = args.log_config
     init_logging('manager', level=log_level, config_file=log_config)
 
-    manager = PixelatedDispatcherManager(args.root_path, mailpile_bin, ssl_config, args.provider, mailpile_virtualenv=venv, provider=args.backend, bindaddr=args.bind)
+    manager = PixelatedDispatcherManager(args.root_path, mailpile_bin, ssl_config, args.provider, mailpile_virtualenv=venv, provider=args.backend, leap_provider_ca=args.provider_ca, bindaddr=args.bind)
 
     manager.serve_forever()
 

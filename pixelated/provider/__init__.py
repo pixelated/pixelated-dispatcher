@@ -18,6 +18,24 @@
 class NotEnoughFreeMemory(Exception):
     pass
 
+SYSTEM_CA_BUNDLE = True
+
+
+class LeapProviderConfig(object):
+    __slots__ = ('_provider_hostname', '_provider_ca')
+
+    def initialize(self, provider_hostname, provider_ca=SYSTEM_CA_BUNDLE):
+        self._provider_hostname = provider_hostname
+        self._provider_ca = provider_ca
+
+    @property
+    def provider_hostname(self):
+        return self._provider_hostname
+
+    @property
+    def provider_ca(self):
+        return self._provider_ca
+
 
 class Provider(object):  # pragma: no cover
     def initialize(self):

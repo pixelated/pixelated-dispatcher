@@ -56,7 +56,7 @@ class DockerProviderTest(unittest.TestCase):
         dockerfile = pkg_resources.resource_string('pixelated.resources', 'Dockerfile.pixelated')
 
         # when
-        DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some docker url').initialize()
+        DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
 
         # then
         docker_mock.assert_called_once_with(base_url="some docker url")
@@ -85,7 +85,7 @@ class DockerProviderTest(unittest.TestCase):
             return []
 
         client.build.side_effect = build
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = DockerProvider(self.root_path, self._adapter, 'some provider', 'some provider ca', 'some docker url')
 
         self.assertTrue(provider.initializing)
 
@@ -99,9 +99,11 @@ class DockerProviderTest(unittest.TestCase):
         t.join()
         self.assertFalse(provider.initializing)
 
-    def test_throws_initializing_exception_while_initializing(self):
+    @patch('pixelated.provider.docker.LeapProvider')
+    @patch('pixelated.provider.docker.LeapSecureRemotePassword')
+    def test_throws_initializing_exception_while_initializing(self, leap_provider_mock, leap_srp_mock):
         # given
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = DockerProvider(self.root_path, self._adapter, 'provider url', 'provider ca', 'some docker url')
 
         # when/then
         self.assertRaises(ProviderInitializingException, provider.start, 'test')
@@ -417,6 +419,6 @@ class DockerProviderTest(unittest.TestCase):
         self.assertFalse(stat.S_ISFIFO(os.stat(fifo_file).st_mode))
 
     def _create_initialized_provider(self, root_path, adapter, docker_url=DockerProvider.DEFAULT_DOCKER_URL):
-        provider = DockerProvider(root_path, adapter, 'leap_provider_hostname', docker_url)
+        provider = DockerProvider(root_path, adapter, 'leap_provider_hostname', 'leap provider ca', docker_url)
         provider._initializing = False
         return provider

@@ -12,7 +12,8 @@ node default {
   'rng-tools',
   'python-dev',
   'python-setuptools',
-  'gnupg']:
+  'gnupg',
+  'libffi-dev']:
     ensure => latest
   }
 
@@ -42,7 +43,7 @@ node default {
   exec { 'install-dispatcher-dependencies':
     command => '/usr/local/bin/pip install -r requirements.txt',
     cwd => '/vagrant',
-    require => [Exec['install-pip'], Package['python-dev']]
+    require => [Exec['install-pip'], Package['python-dev'], Package['libffi-dev']]
   }
 
   service { 'rngd':
@@ -62,7 +63,7 @@ node default {
     mode => '0755'
   }
 
-  $manager_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py manager -b docker --provider example.wazokazi.is"
+  $manager_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py manager -b docker --provider example.wazokazi.is --provider-ca /vagrant/pixelated/resources/example.wazokazi.is.ca.crt"
   $ssl_options = "--sslcert /vagrant/pixelated/test/util/server.crt --sslkey /vagrant/pixelated/test/util/server.key"
 
   service { 'dispatcher-proxy':

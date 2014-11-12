@@ -44,7 +44,9 @@ setup(
         'requests',
         'scrypt',
         'psutil',
-        'docker-py'
+        'docker-py',
+        'srp',
+        'leap.common'
     ],
     test_suite='nose.collector',
     tests_require=[

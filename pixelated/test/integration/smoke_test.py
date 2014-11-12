@@ -79,7 +79,8 @@ class SmokeTest(unittest.TestCase):
     def _pixelated_dispatcher_manager(self):
         fake_mailpile = os.path.join(os.path.dirname(__file__), 'fake_mailpile.py')
         ssl_config = SSLConfig(certfile(), keyfile())
-        server = PixelatedDispatcherManager(self._tmpdir.name, fake_mailpile, ssl_config, 'leap provider hostname', mailpile_virtualenv=INHERIT)
+        provider_ca = None
+        server = PixelatedDispatcherManager(self._tmpdir.name, fake_mailpile, ssl_config, 'leap provider hostname', provider_ca, mailpile_virtualenv=INHERIT)
 
         return SmokeTest.Server(server.serve_forever, server.shutdown, thread_name='PixelatedServerManager')
 

@@ -35,6 +35,10 @@ import json
 from pixelated.provider.base_provider import BaseProvider
 from pixelated.common import Watchdog
 from pixelated.common import logger
+from pixelated.provider.leap_provider import LeapProvider
+from pixelated.provider.leap_config import LeapConfig
+from pixelated.provider.leap_srp import LeapSecureRemotePassword, LeapAuthException
+from pixelated.provider.leap_certs import which_bundle
 
 __author__ = 'fbernitt'
 
@@ -98,17 +102,18 @@ class TempDir(object):
 
 
 class DockerProvider(BaseProvider):
-    __slots__ = ('_docker_host', '_docker', '_ports', '_adapter', '_leap_provider_hostname')
+    __slots__ = ('_docker_host', '_docker', '_ports', '_adapter', '_leap_provider_hostname', '_leap_provider_ca')
 
     DEFAULT_DOCKER_URL = 'http+unix://var/run/docker.sock'
 
-    def __init__(self, root_path, adapter, leap_provider_hostname, docker_url=DEFAULT_DOCKER_URL):
+    def __init__(self, root_path, adapter, leap_provider_hostname, leap_provider_ca, docker_url=DEFAULT_DOCKER_URL):
         super(DockerProvider, self).__init__(root_path)
         self._docker_url = docker_url
         self._docker = docker.Client(base_url=docker_url)
         self._ports = set()
         self._adapter = adapter
         self._leap_provider_hostname = leap_provider_hostname
+        self._leap_provider_ca = leap_provider_ca
 
     def initialize(self):
         imgs = self._docker.images()
@@ -157,6 +162,16 @@ class DockerProvider(BaseProvider):
                 os.kill(os.getpid(), signal.SIGTERM)
 
     def authenticate(self, name, password):
+        if name not in self._agents:
+            config = LeapConfig(ca_cert_bundle=self._leap_provider_ca)
+            provider = LeapProvider(self._leap_provider_hostname, config)
+            srp = LeapSecureRemotePassword(ca_bundle=which_bundle(provider))
+            try:
+                srp.authenticate(provider.api_uri, name, password)
+                self.add(name, password)
+            except LeapAuthException:
+                return False
+
         success = super(DockerProvider, self).authenticate(name, password)
 
         if success:

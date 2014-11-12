@@ -236,9 +236,9 @@ class RESTfulServer(object):
 
 
 class PixelatedDispatcherManager(object):
-    __slots__ = ('_root_path', '_mailpile_bin', '_mailpile_virtualenv', '_ssl_config', '_server', '_provider', '_bindaddr', '_leap_provider_hostname')
+    __slots__ = ('_root_path', '_mailpile_bin', '_mailpile_virtualenv', '_ssl_config', '_server', '_provider', '_bindaddr', '_leap_provider_hostname', '_leap_provider_ca')
 
-    def __init__(self, root_path, mailpile_bin, ssl_config, leap_provider_hostname, mailpile_virtualenv=None, provider='fork', bindaddr='127.0.0.1'):
+    def __init__(self, root_path, mailpile_bin, ssl_config, leap_provider_hostname, leap_provider_ca, mailpile_virtualenv=None, provider='fork', bindaddr='127.0.0.1'):
         self._root_path = root_path
         self._mailpile_bin = mailpile_bin
         self._mailpile_virtualenv = mailpile_virtualenv
@@ -247,13 +247,13 @@ class PixelatedDispatcherManager(object):
         self._provider = provider
         self._bindaddr = bindaddr
         self._leap_provider_hostname = leap_provider_hostname
+        self._leap_provider_ca = leap_provider_ca
 
     def serve_forever(self):
         provider = self._create_provider()
 
         Thread(target=provider.initialize).start()
 
-        # 'server.key', ssl_ca_certs='clientCA.crt')
         logger.info('Starting REST api')
         self._server = RESTfulServer(self._ssl_config, provider, bindaddr=self._bindaddr, port=DEFAULT_PORT)
         if self._ssl_config:
@@ -273,7 +273,7 @@ class PixelatedDispatcherManager(object):
         if self._provider == 'docker':
             docker_host = os.environ['DOCKER_HOST'] if os.environ.get('DOCKER_HOST') else None
             adapter = PixelatedDockerAdapter()
-            return DockerProvider(self._root_path, adapter, self._leap_provider_hostname, docker_host)
+            return DockerProvider(self._root_path, adapter, self._leap_provider_hostname, self._leap_provider_ca, docker_host)
         else:
             adapter = MailpileAdapter(self._mailpile_bin, mailpile_virtualenv=self._mailpile_virtualenv)
             runner = ForkRunner(self._root_path, adapter)
