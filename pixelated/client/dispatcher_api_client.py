@@ -91,7 +91,7 @@ class PixelatedDispatcherClient(object):
             json_data = json.dumps(json_data)
 
         s = requests.Session()
-        s.mount('https://', EnforceTLSv1Adapter())
+        s.mount('https://', EnforceTLSv1Adapter(assert_fingerprint=self._fingerprint, assert_hostname=self._assert_hostname))
         r = s.put(uri, data=json_data, headers={'Content-Type': 'application/json'}, verify=self._cacert)
 
         self._raise_error_for_status(r.status_code, r.reason)
@@ -103,7 +103,7 @@ class PixelatedDispatcherClient(object):
             json_data = json.dumps(json_data)
 
         s = requests.Session()
-        s.mount('https://', EnforceTLSv1Adapter())
+        s.mount('https://', EnforceTLSv1Adapter(assert_fingerprint=self._fingerprint, assert_hostname=self._assert_hostname))
         r = s.post(uri, data=json_data, headers={'Content-Type': 'application/json'}, verify=self._cacert)
 
         self._raise_error_for_status(r.status_code, r.reason)

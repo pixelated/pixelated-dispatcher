@@ -287,3 +287,33 @@ class MultipileClientTest(unittest.TestCase):
         session.mount.assert_called_once_with('https://', ANY)
         adapter = session.mount.call_args[0][1]
         self.assertEqual(VERIFY_HOSTNAME, adapter._assert_hostname)
+
+    @patch('requests.Session')
+    def test_that_post_uses_tls_adapter_with_params(self, session_mock):
+        session = session_mock.return_value
+
+        def call_post(client):
+            client._post('http://localhost/some/path')
+
+        self._verify_enforce_tls(session, call_post)
+
+    @patch('requests.Session')
+    def test_that_put_uses_tls_adapter_with_params(self, session_mock):
+        session = session_mock.return_value
+
+        def call_put(client):
+            client._put('http://localhost/some/path')
+
+        self._verify_enforce_tls(session, call_put)
+
+    def _verify_enforce_tls(self, session, func):
+        some_ca = 'some cert'
+        fingerprint = 'fingerprint'
+        self.client = PixelatedDispatcherClient('localhost', 12345, cacert=some_ca, assert_hostname=False, fingerprint=fingerprint)
+
+        func(self.client)
+
+        session.mount.assert_called_once_with('https://', ANY)
+        adapter = session.mount.call_args[0][1]
+        self.assertEqual(False, adapter._assert_hostname)
+        self.assertEqual(fingerprint, adapter._assert_fingerprint)
