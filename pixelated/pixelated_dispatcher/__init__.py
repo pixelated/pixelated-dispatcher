@@ -21,7 +21,7 @@ import logging
 from pixelated.client.cli import Cli
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
 from pixelated.proxy import DispatcherProxy
-from pixelated.manager import SSLConfig, PixelatedDispatcherManager
+from pixelated.manager import SSLConfig, DispatcherManager
 from pixelated.common import init_logging, latest_available_ssl_version
 
 __author__ = 'fbernitt'
@@ -97,7 +97,7 @@ def run_manager():
     log_config = args.log_config
     init_logging('manager', level=log_level, config_file=log_config)
 
-    manager = PixelatedDispatcherManager(args.root_path, mailpile_bin, ssl_config, args.provider, mailpile_virtualenv=venv, provider=args.backend, leap_provider_ca=args.provider_ca, bindaddr=args.bind)
+    manager = DispatcherManager(args.root_path, mailpile_bin, ssl_config, args.provider, mailpile_virtualenv=venv, provider=args.backend, leap_provider_ca=args.provider_ca, bindaddr=args.bind)
 
     manager.serve_forever()
 

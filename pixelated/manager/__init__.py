@@ -235,7 +235,7 @@ class RESTfulServer(object):
             self._server_adapter = None
 
 
-class PixelatedDispatcherManager(object):
+class DispatcherManager(object):
     __slots__ = ('_root_path', '_mailpile_bin', '_mailpile_virtualenv', '_ssl_config', '_server', '_provider', '_bindaddr', '_leap_provider_hostname', '_leap_provider_ca')
 
     def __init__(self, root_path, mailpile_bin, ssl_config, leap_provider_hostname, leap_provider_ca, mailpile_virtualenv=None, provider='fork', bindaddr='127.0.0.1'):

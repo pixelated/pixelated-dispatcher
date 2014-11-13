@@ -24,7 +24,7 @@ from tempdir import TempDir
 
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
 from pixelated.proxy import DispatcherProxy
-from pixelated.manager import PixelatedDispatcherManager, SSLConfig, DEFAULT_PORT
+from pixelated.manager import DispatcherManager, SSLConfig, DEFAULT_PORT
 from pixelated.test.util import EnforceTLSv1Adapter, cafile, certfile, keyfile
 
 
@@ -76,11 +76,11 @@ class SmokeTest(unittest.TestCase):
     def tearDown(self):
         self._tmpdir.dissolve()
 
-    def _pixelated_dispatcher_manager(self):
+    def _dispatcher_manager(self):
         fake_mailpile = os.path.join(os.path.dirname(__file__), 'fake_mailpile.py')
         ssl_config = SSLConfig(certfile(), keyfile())
         provider_ca = None
-        server = PixelatedDispatcherManager(self._tmpdir.name, fake_mailpile, ssl_config, 'leap provider hostname', provider_ca, mailpile_virtualenv=INHERIT)
+        server = DispatcherManager(self._tmpdir.name, fake_mailpile, ssl_config, 'leap provider hostname', provider_ca, mailpile_virtualenv=INHERIT)
 
         return SmokeTest.Server(server.serve_forever, server.shutdown, thread_name='PixelatedServerManager')
 
@@ -112,7 +112,7 @@ class SmokeTest(unittest.TestCase):
         return self._method(self.ssl_request.post, url, form_data=form_data, json_data=json_data)
 
     def test_dispatcher_run(self):
-        with self._pixelated_dispatcher_manager():
+        with self._dispatcher_manager():
             self.assertSuccess(
                 self.post('https://localhost:4443/agents', json_data={'name': 'test', 'password': 'some password'}))
             self.assertSuccess(self.get('https://localhost:4443/agents'), json_body={
@@ -131,7 +131,7 @@ class SmokeTest(unittest.TestCase):
             self.assertSuccess(self.get('https://localhost:12345/auth/login'))
 
     def test_server_dispatcher_combination(self):
-        with self._pixelated_dispatcher_manager():
+        with self._dispatcher_manager():
             with self._dispatcher_proxy():
                 # add user
                 self.assertSuccess(

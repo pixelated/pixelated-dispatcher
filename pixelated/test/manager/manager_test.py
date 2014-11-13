@@ -23,7 +23,7 @@ import json
 import requests
 from mock import MagicMock, patch
 from pixelated.provider import Provider
-from pixelated.manager import RESTfulServer, SSLConfig, PixelatedDispatcherManager
+from pixelated.manager import RESTfulServer, SSLConfig, DispatcherManager
 from pixelated.test.util import certfile, keyfile, cafile
 from pixelated.exceptions import InstanceAlreadyExistsError, InstanceAlreadyRunningError
 
@@ -264,7 +264,7 @@ class RESTfulServerTest(unittest.TestCase):
     def test_that_initialize_happens_in_background_thread(self, thread_mock, server_mock, docker_provider_mock):
         # given
         docker_provider_mock.return_value = self.mock_provider
-        manager = PixelatedDispatcherManager(None, None, None, None, None, provider='docker')
+        manager = DispatcherManager(None, None, None, None, None, provider='docker')
 
         # when
         manager.serve_forever()
