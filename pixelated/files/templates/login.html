@@ -14,10 +14,10 @@
     <div class="title">Pixelated Login</div>
     {% if error is not None %}
         <p class="error">
-            {% raw error %}
+	{{ error }}
         </p>
     {% end %}
-    
+
     <form class="standard" id="login_form" action="/auth/login" method="post" style="padding: 10px">
         <input type="text" name="username" id="email" class="text-field" placeholder="username">
         <input type="password" name="password" id="password" class="text-field" placeholder="password">

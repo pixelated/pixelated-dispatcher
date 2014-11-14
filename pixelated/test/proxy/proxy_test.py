@@ -126,6 +126,12 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         cookies.load(response.headers['Set-Cookie'])
         self.assertTrue('pixelated_user' in cookies)
 
+    def test_error_message_is_escaped(self):
+        response = self._get("/auth/login?error=<script>alert('helloworld')</script>")
+
+        self.assertEqual(200, response.code)
+        self.assertTrue('&lt;script&gt;alert(&#39;helloworld&#39;)&lt;/script&gt;' in str(response.body))
+
     def test_missing_xsrf_token_cookie(self):
         self.client.get_agent.return_value = {}
         payload = {
