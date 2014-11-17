@@ -1,3 +1,11 @@
+class UserAlreadyExistsError(Exception):
+    pass
+
+
+class UserNotExistError(Exception):
+    pass
+
+
 class InstanceAlreadyExistsError(Exception):
     pass
 

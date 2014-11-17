@@ -25,22 +25,20 @@ class ForkProvider(BaseProvider):
 
     __slots__ = ('_running', '_runner')
 
-    def __init__(self, root_path, runner):
-        super(ForkProvider, self).__init__(root_path)
+    def __init__(self, runner):
+        super(ForkProvider, self).__init__()
         self._running = dict()
         self._runner = runner
-
-    def add(self, name, password):
-        super(ForkProvider, self).add(name, password)
-
-        gnupg_path = path.join(self._instance_path(name), 'gnupg')
-        _mkdir_if_not_exists(gnupg_path)
 
     def list_running(self):
         return self._running.keys()
 
-    def start(self, name):
-        self._start(name)
+    def start(self, user_config):
+        name = user_config.username
+        self._start(user_config)
+
+        gnupg_path = path.join(user_config.path, 'gnupg')
+        _mkdir_if_not_exists(gnupg_path)
 
         self._runner.initialize(name)
         process = self._runner.start(name)

@@ -32,7 +32,7 @@ from psutil import Process
 import shutil
 import json
 
-from pixelated.provider.base_provider import BaseProvider
+from pixelated.provider.base_provider import BaseProvider, _mkdir_if_not_exists
 from pixelated.common import Watchdog
 from pixelated.common import logger
 from pixelated.provider.leap_provider import LeapProvider
@@ -106,8 +106,8 @@ class DockerProvider(BaseProvider):
 
     DEFAULT_DOCKER_URL = 'http+unix://var/run/docker.sock'
 
-    def __init__(self, root_path, adapter, leap_provider_hostname, leap_provider_ca, docker_url=DEFAULT_DOCKER_URL):
-        super(DockerProvider, self).__init__(root_path)
+    def __init__(self, adapter, leap_provider_hostname, leap_provider_ca, docker_url=DEFAULT_DOCKER_URL):
+        super(DockerProvider, self).__init__()
         self._docker_url = docker_url
         self._docker = docker.Client(base_url=docker_url)
         self._ports = set()
@@ -161,28 +161,14 @@ class DockerProvider(BaseProvider):
                 logger.error('Terminating process by sending TERM signal')
                 os.kill(os.getpid(), signal.SIGTERM)
 
-    def authenticate(self, name, password):
-        if name not in self._agents:
-            config = LeapConfig(ca_cert_bundle=self._leap_provider_ca)
-            provider = LeapProvider(self._leap_provider_hostname, config)
-            srp = LeapSecureRemotePassword(ca_bundle=which_bundle(provider))
-            try:
-                srp.authenticate(provider.api_uri, name, password)
-                self.add(name, password)
-            except LeapAuthException:
-                return False
+    def pass_credentials_to_agent(self, user_config, password):
+        _mkdir_if_not_exists(self._data_path(user_config))
+        self._write_credentials_to_fifo(user_config, password)
 
-        success = super(DockerProvider, self).authenticate(name, password)
+    def _write_credentials_to_fifo(self, user_config, password):
+        fifo_file = path.join(self._data_path(user_config), 'credentials-fifo')
 
-        if success:
-            self._write_credentials_to_fifo(self._leap_provider_hostname, name, password)
-
-        return success
-
-    def _write_credentials_to_fifo(self, leap_provider, name, password):
-        fifo_file = path.join(self._data_path(name), 'credentials-fifo')
-
-        p = CredentialsFifoWriterProcess(fifo_file, leap_provider, name, password)
+        p = CredentialsFifoWriterProcess(fifo_file, self._leap_provider_hostname, user_config.username, password)
         p.start()
 
         self._wait_for_fifo_to_be_created(fifo_file, timeout_in_s=1)
@@ -200,25 +186,25 @@ class DockerProvider(BaseProvider):
         if not path.exists(fifo_file):
             raise Exception('Unexpected: FIFO file %s has not been created' % fifo_file)
 
-    def start(self, name):
+    def start(self, user_config):
         self._ensure_initialized()
-
-        self._start(name)
+        name = user_config.username
+        self._start(user_config)
 
         cm = self._map_container_by_name(all=True)
         if name not in cm:
-            self._setup_instance(name, cm)
+            self._setup_instance(user_config, cm)
             c = self._docker.create_container(self._adapter.app_name(), self._adapter.run_command(), name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'))
         else:
             c = cm[name]
-        data_path = self._data_path(name)
+        data_path = self._data_path(user_config)
         port = self._next_available_port()
         self._ports.add(port)
 
         self._docker.start(c, binds={data_path: {'bind': '/mnt/user', 'ro': False}}, port_bindings={self._adapter.port(): port})
 
-    def _setup_instance(self, name, container_map):
-        data_path = join(self._instance_path(name), 'data')
+    def _setup_instance(self, user_config, container_map):
+        data_path = join(user_config.path, 'data')
 
         container_name = '%s_prepare' % self._adapter.app_name()
         if container_name not in container_map:

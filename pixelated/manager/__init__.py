@@ -20,10 +20,9 @@ from pixelated.provider.base_provider import ProviderInitializingException
 from pixelated.common import logger
 from pixelated.provider.docker import DockerProvider
 from pixelated.provider.docker.pixelated_adapter import PixelatedDockerAdapter
-from pixelated.exceptions import InstanceNotFoundError
-from pixelated.exceptions import InstanceNotRunningError
-from pixelated.exceptions import InstanceAlreadyRunningError, InstanceAlreadyExistsError
-
+from pixelated.exceptions import InstanceAlreadyRunningError, InstanceAlreadyExistsError, UserNotExistError, InstanceNotRunningError, UserAlreadyExistsError, InstanceNotFoundError
+from pixelated.users import Users
+from pixelated.authenticator import Authenticator
 
 __author__ = 'fbernitt'
 
@@ -67,12 +66,14 @@ def log_all_exceptions(callback):
 
 
 class RESTfulServer(object):
-    __slots__ = ('_ssl_config', '_bindaddr', '_port', '_provider', '_server_adapter')
+    __slots__ = ('_ssl_config', '_bindaddr', '_port', '_users', '_authenticator', '_provider', '_server_adapter')
 
-    def __init__(self, ssl_config, provider, bindaddr='127.0.0.1', port=DEFAULT_PORT):
+    def __init__(self, ssl_config, users, authenticator, provider, bindaddr='127.0.0.1', port=DEFAULT_PORT):
         self._ssl_config = ssl_config
         self._bindaddr = bindaddr
         self._port = port
+        self._users = users
+        self._authenticator = authenticator
         self._provider = provider
         self._server_adapter = None
 
@@ -116,12 +117,17 @@ class RESTfulServer(object):
 
         return {'name': agent, 'uri': uri, 'state': state}
 
-    def _list_agents(self):
-        agents = self._provider.list()
+    def _user_with_agent_to_json(self, user):
+        uri = self._agent_uri(user)
+        state = self._provider.status(user)['state']
 
+        return {'name': user, 'uri': uri, 'state': state}
+
+    def _list_agents(self):
+        users = self._users.list()
         json = []
-        for agent in agents:
-            json.append(self._agent_to_json(agent))
+        for user in users:
+            json.append(self._user_with_agent_to_json(user))
 
         return {"agents": json}
 
@@ -129,12 +135,13 @@ class RESTfulServer(object):
         name = request.json['name']
         password = request.json['password']
         try:
-            self._provider.add(name, password)
+            self._users.add(name)
+            self._authenticator.add_credentials(name, password)
             logger.info('Added agent for user %s' % name)
             response.status = '201 Created'
             response.headers['Location'] = self._agent_uri(name)
             return self._agent_to_json(name)
-        except InstanceAlreadyExistsError as error:
+        except UserAlreadyExistsError as error:
                 logger.warn(error.message)
                 response.status = '409 Conflict - %s' % error.message
 
@@ -147,13 +154,7 @@ class RESTfulServer(object):
                 response.status = '404 Not Found - %s' % error.message
 
     def _delete_agent(self, name):
-        try:
-            self._provider.remove(name)
-            logger.info('Removed agent of user %s' % name)
-            response.status = "200 OK"
-        except InstanceNotFoundError as error:
-                logger.warn(error.message)
-                response.status = '404 Not Found - %s' % error.message
+        response.status = '500 Not yet implemented'
 
     def _get_agent_state(self, name):
         try:
@@ -168,10 +169,11 @@ class RESTfulServer(object):
 
         if state == 'running':
             try:
-                self._provider.start(name)
+                user_cfg = self._users.config(name)
+                self._provider.start(user_cfg)
                 logger.info('Started agent for user %s' % name)
                 return self._get_agent_state(name)
-            except InstanceNotFoundError as error:
+            except UserNotExistError as error:
                 logger.warn(error.message)
                 response.status = '404 Not Found - %s' % error.message
             except InstanceAlreadyRunningError as error:
@@ -195,8 +197,9 @@ class RESTfulServer(object):
 
     def _authenticate_agent(self, name):
         password = request.json['password']
-        result = self._provider.authenticate(name, password)
+        result = self._authenticator.authenticate(name, password)
         if result:
+            self._provider.pass_credentials_to_agent(self._users.config(name), password)
             response.status = '200 Ok'
             logger.info('User %s logged in successfully' % name)
         else:
@@ -250,12 +253,14 @@ class DispatcherManager(object):
         self._leap_provider_ca = leap_provider_ca
 
     def serve_forever(self):
+        users = Users(self._root_path)
+        authenticator = Authenticator(users, self._leap_provider_hostname, self._leap_provider_ca)
         provider = self._create_provider()
 
         Thread(target=provider.initialize).start()
 
         logger.info('Starting REST api')
-        self._server = RESTfulServer(self._ssl_config, provider, bindaddr=self._bindaddr, port=DEFAULT_PORT)
+        self._server = RESTfulServer(self._ssl_config, users, authenticator, provider, bindaddr=self._bindaddr, port=DEFAULT_PORT)
         if self._ssl_config:
             logger.info('Using SSL certfile %s and keyfile %s' % (self._ssl_config.ssl_certfile, self._ssl_config.ssl_keyfile))
         else:
@@ -273,8 +278,8 @@ class DispatcherManager(object):
         if self._provider == 'docker':
             docker_host = os.environ['DOCKER_HOST'] if os.environ.get('DOCKER_HOST') else None
             adapter = PixelatedDockerAdapter()
-            return DockerProvider(self._root_path, adapter, self._leap_provider_hostname, self._leap_provider_ca, docker_host)
+            return DockerProvider(adapter, self._leap_provider_hostname, self._leap_provider_ca, docker_host)
         else:
             adapter = MailpileAdapter(self._mailpile_bin, mailpile_virtualenv=self._mailpile_virtualenv)
             runner = ForkRunner(self._root_path, adapter)
-            return ForkProvider(self._root_path, runner)
+            return ForkProvider(runner)

@@ -41,13 +41,7 @@ class Provider(object):  # pragma: no cover
     def initialize(self):
         pass
 
-    def add(self, name, password):
-        pass
-
     def remove(self, name):
-        pass
-
-    def list(self):
         pass
 
     def list_running(self):
@@ -62,7 +56,7 @@ class Provider(object):  # pragma: no cover
     def status(self, name):
         pass
 
-    def authenticate(self, name, password):
+    def pass_credentials_to_agent(self, user_config, password):
         pass
 
     def memory_usage(self):

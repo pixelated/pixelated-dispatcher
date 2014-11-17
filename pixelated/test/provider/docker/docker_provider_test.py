@@ -30,6 +30,8 @@ from pixelated.provider.docker import DockerProvider
 from pixelated.provider.docker.pixelated_adapter import PixelatedDockerAdapter
 from pixelated.test.util import StringIOMatcher
 from pixelated.exceptions import *
+from pixelated.users import UserConfig, Users
+
 
 __author__ = 'fbernitt'
 
@@ -38,6 +40,7 @@ import unittest
 
 class DockerProviderTest(unittest.TestCase):
     def setUp(self):
+        self.users = MagicMock(spec=Users)
         self._tmpdir = TempDir()
         self.root_path = self._tmpdir.name
         self._adapter = PixelatedDockerAdapter()
@@ -56,7 +59,7 @@ class DockerProviderTest(unittest.TestCase):
         dockerfile = pkg_resources.resource_string('pixelated.resources', 'Dockerfile.pixelated')
 
         # when
-        DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
+        DockerProvider(self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
 
         # then
         docker_mock.assert_called_once_with(base_url="some docker url")
@@ -69,7 +72,7 @@ class DockerProviderTest(unittest.TestCase):
         client.images.return_value = [{'Created': 1404833111, 'VirtualSize': 297017244, 'ParentId': '57885511c8444c2b89743bef8b89eccb65f302b2a95daa95dfcc9b972807b6db', 'RepoTags': ['pixelated:latest'], 'Id': 'b4f10a2395ab8dfc5e1c0fae26fa56c7f5d2541debe54263105fe5af1d263189', 'Size': 181956643}]
 
         # when
-        DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some docker url').initialize()
+        DockerProvider(self._adapter, 'leap_provider', 'some docker url').initialize()
 
         # then
         self.assertFalse(client.build.called)
@@ -85,7 +88,7 @@ class DockerProviderTest(unittest.TestCase):
             return []
 
         client.build.side_effect = build
-        provider = DockerProvider(self.root_path, self._adapter, 'some provider', 'some provider ca', 'some docker url')
+        provider = DockerProvider(self._adapter, 'some provider', 'some provider ca', 'some docker url')
 
         self.assertTrue(provider.initializing)
 
@@ -103,47 +106,26 @@ class DockerProviderTest(unittest.TestCase):
     @patch('pixelated.provider.docker.LeapSecureRemotePassword')
     def test_throws_initializing_exception_while_initializing(self, leap_provider_mock, leap_srp_mock):
         # given
-        provider = DockerProvider(self.root_path, self._adapter, 'provider url', 'provider ca', 'some docker url')
+        provider = DockerProvider(self._adapter, 'provider url', 'provider ca', 'some docker url')
 
         # when/then
         self.assertRaises(ProviderInitializingException, provider.start, 'test')
-        self.assertRaises(ProviderInitializingException, provider.add, 'test', 'password')
         self.assertRaises(ProviderInitializingException, provider.remove, 'test')
-        self.assertRaises(ProviderInitializingException, provider.list)
         self.assertRaises(ProviderInitializingException, provider.list_running)
         self.assertRaises(ProviderInitializingException, provider.stop, 'test')
         self.assertRaises(ProviderInitializingException, provider.status, 'test')
-        self.assertRaises(ProviderInitializingException, provider.authenticate, 'test', 'password')
         self.assertRaises(ProviderInitializingException, provider.memory_usage)
-
-    def test_add(self):
-        self._create_initialized_provider(self.root_path, self._adapter, 'some docker url').add('test', 'password')
-
-        instance_path = join(self.root_path, 'test')
-        data_dir = join(instance_path, 'data')
-        cfg_file = join(instance_path, BaseProvider.CFG_FILE_NAME)
-
-        self.assertTrue(isdir(instance_path), 'No folder for user has been created')
-        self.assertTrue(isdir(data_dir), 'No folder for pixelated has been created')
-        self.assertTrue(isfile(cfg_file), 'No config file had been created')
-
-    @patch('pixelated.provider.docker.docker.Client')
-    def test_that_non_existing_instance_cannot_be_started(self, docker_mock):
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-
-        self.assertRaises(InstanceNotFoundError, provider.start, 'test')
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_that_instance_can_be_started(self, docker_mock):
         client = docker_mock.return_value
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
         prepare_pixelated_container = MagicMock()
         container = MagicMock()
         client.create_container.side_effect = [prepare_pixelated_container, container]
         client.wait.return_value = 0
 
-        provider.add('test', 'password')
-        provider.start('test')
+        provider.start(self._user_config('test'))
 
         client.create_container.assert_any_call('pixelated', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --host 0.0.0.0 --port 4567 --dispatcher /mnt/user/credentials-fifo"', name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
         client.create_container.assert_any_call('pixelated', '/bin/true', name='pixelated_prepare', volumes=['/mnt/user'], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
@@ -157,12 +139,11 @@ class DockerProviderTest(unittest.TestCase):
     def test_that_existing_container_gets_reused(self, docker_mock):
         client = docker_mock.return_value
         client.containers.side_effect = [[], [{u'Status': u'Exited (-1) About an hour ago', u'Created': 1405332375, u'Image': u'pixelated:latest', u'Ports': [], u'Command': u'/bin/bash -l -c "/usr/bin/pixelated-user-agent --dispatcher"', u'Names': [u'/test'], u'Id': u'adfd4633fc42734665d7d98076b19b5f439648678b3b76db891f9d5072af50b6'}]]
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
         container = MagicMock()
         client.create_container.return_value = container
 
-        provider.add('test', 'password')
-        provider.start('test')
+        provider.start(self._user_config('test'))
 
         client.containers.assert_called_with(all=True)
         self.assertFalse(client.build.called)
@@ -171,7 +152,7 @@ class DockerProviderTest(unittest.TestCase):
     def test_running_containers_empty_if_none_started(self, docker_mock):
         client = docker_mock.return_value
         client.containers.return_value = []
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
 
         running = provider.list_running()
 
@@ -182,9 +163,8 @@ class DockerProviderTest(unittest.TestCase):
         client = docker_mock.return_value
         client.containers.side_effect = [[], [], [{u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}]]
         client.wait.return_value = 0
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
-        provider.start('test')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+        provider.start(self._user_config('test'))
 
         running = provider.list_running()
 
@@ -195,18 +175,17 @@ class DockerProviderTest(unittest.TestCase):
         client = docker_mock.return_value
         client.containers.side_effect = [[], [], [{u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}]]
         client.wait.return_value = 0
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
-        provider.start('test')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+        user_config = self._user_config('test')
+        provider.start(user_config)
 
-        self.assertRaises(InstanceAlreadyRunningError, provider.start, 'test')
+        self.assertRaises(InstanceAlreadyRunningError, provider.start, user_config)
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_stopping_not_running_container_raises_value_error(self, docker_mock):
         client = docker_mock.return_value
         client.containers.return_value = []
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
 
         self.assertRaises(InstanceNotRunningError, provider.stop, 'test')
 
@@ -217,9 +196,8 @@ class DockerProviderTest(unittest.TestCase):
         container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 4567}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
         client.containers.side_effect = [[], [], [container], [container], [container]]
         client.wait.return_value = 0
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
-        provider.start('test')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+        provider.start(self._user_config('test'))
         # when
         provider.stop('test')
 
@@ -236,9 +214,8 @@ class DockerProviderTest(unittest.TestCase):
         client.wait.return_value = 0
         client.stop.side_effect = requests.exceptions.Timeout
 
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
-        provider.start('test')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+        provider.start(self._user_config('test'))
 
         # when
         provider.stop('test')
@@ -249,8 +226,7 @@ class DockerProviderTest(unittest.TestCase):
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_status_stopped(self, docker_mock):
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
 
         self.assertEqual({'state': 'stopped'}, provider.status('test'))
 
@@ -260,20 +236,10 @@ class DockerProviderTest(unittest.TestCase):
         container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 33144}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
         client.containers.side_effect = [[], [], [container], [container]]
         client.wait.return_value = 0
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
-        provider.start('test')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+        provider.start(self._user_config('test'))
 
         self.assertEqual({'state': 'running', 'port': 5000}, provider.status('test'))
-
-    def test_empty_list(self):
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        self.assertEqual([], provider.list())
-
-    def test_list(self):
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
-        self.assertEqual(['test'], provider.list())
 
     @patch('pixelated.provider.docker.Process')
     @patch('pixelated.provider.docker.docker.Client')
@@ -288,8 +254,7 @@ class DockerProviderTest(unittest.TestCase):
         psutil_mock = process_mock.return_value
         psutil_mock.memory_info.return_value = pmem(1024, 2048)
 
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
 
         # when
         usage = provider.memory_usage()
@@ -301,40 +266,26 @@ class DockerProviderTest(unittest.TestCase):
                               {'name': 'test', 'memory_usage': 1024}
                           ]}, usage)
 
-    def test_that_existing_agents_are_autodiscovered(self):
-        agent = os.path.join(self.root_path, 'test')
-        os.mkdir(agent)
-
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-
-        self.assertEqual(['test'], provider.list())
-
-    def test_authenticate(self):
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
-
-        self.assertTrue(provider.authenticate('test', 'password'))
-        self.assertFalse(provider.authenticate('test', 'something else'))
-
     def test_remove_error_if_not_exist(self):
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
 
-        self.assertRaises(ValueError, provider.remove, 'does_not_exist')
+        self.assertRaises(ValueError, provider.remove, self._user_config('does_not_exist'))
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_remove(self, docker_mock):
         # given
+        user_config = self._user_config('test')
+        os.makedirs(join(user_config.path, 'data'))
         client = docker_mock.return_value
         client.containers.return_value = []
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
 
         # when
-        provider.remove('test')
+        provider.remove(user_config)
 
         # then
-        self.assertFalse(exists(join(self.root_path, 'test')))
-        self.assertFalse('test' in provider.list())
+        self.assertTrue(exists(user_config.path))
+        self.assertFalse(exists(join(user_config.path, 'data')))
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_cannot_remove_while_running(self, docker_mock):
@@ -344,19 +295,19 @@ class DockerProviderTest(unittest.TestCase):
         client.containers.side_effect = [[], [], [container]]
         client.wait.return_value = 0
 
-        provider = self._create_initialized_provider(self.root_path, self._adapter, 'some docker url')
-        provider.add('test', 'password')
-        provider.start('test')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+        user_config = self._user_config('test')
+        provider.start(user_config)
 
         # when/then
-        self.assertRaises(ValueError, provider.remove, 'test')
+        self.assertRaises(ValueError, provider.remove, user_config)
 
     @patch('pixelated.provider.docker.TempDir')
     @patch('pixelated.provider.docker.pkg_resources')
     @patch('pixelated.provider.docker.docker.Client')
     def test_use_build_script_instead_of_docker_file_if_available(self, docker_mock, res_mock, tempDir_mock):
         # given
-        provider = DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some docker url')
+        provider = DockerProvider(self._adapter, 'leap_provider', 'some docker url')
 
         tempBuildDir = TempDir()
         try:
@@ -381,14 +332,13 @@ class DockerProviderTest(unittest.TestCase):
             tempBuildDir.dissolve()
 
     @patch('pixelated.provider.docker.docker.Client')
-    def test_that_authenticate_writes_password_to_fifo(self, docker_mock):
-        provider = DockerProvider(self.root_path, self._adapter, 'leap_provider_hostname', 'some docker url')
+    def test_that_pass_credentials_to_agent_writes_password_to_fifo(self, docker_mock):
+        provider = DockerProvider(self._adapter, 'leap_provider_hostname', 'some docker url')
         provider.initialize()
-        provider.add('test', 'password')
+        user_config = self._user_config('test')
+        provider.pass_credentials_to_agent(user_config, 'password')
 
-        provider.authenticate('test', 'password')
-
-        fifo_file = join(self.root_path, 'test', 'data', 'credentials-fifo')
+        fifo_file = join(user_config.path, 'data', 'credentials-fifo')
         self.assertTrue(stat.S_ISFIFO(os.stat(fifo_file).st_mode))
         with open(fifo_file, 'r') as fifo:
             config = json.loads(fifo.read())
@@ -408,7 +358,7 @@ class DockerProviderTest(unittest.TestCase):
 
     @patch('pixelated.provider.docker.docker.Client')
     def footest_that_authenticate_deletes_fifo_after_timeout(self, docker_mock):
-        provider = DockerProvider(self.root_path, self._adapter, 'some docker url')
+        provider = DockerProvider(self._adapter, 'some docker url')
         provider.initialize()
         provider.add('test', 'password')
         fifo_file = join(self.root_path, 'test', 'data', 'credentials-fifo')
@@ -418,7 +368,12 @@ class DockerProviderTest(unittest.TestCase):
 
         self.assertFalse(stat.S_ISFIFO(os.stat(fifo_file).st_mode))
 
-    def _create_initialized_provider(self, root_path, adapter, docker_url=DockerProvider.DEFAULT_DOCKER_URL):
-        provider = DockerProvider(root_path, adapter, 'leap_provider_hostname', 'leap provider ca', docker_url)
+    def _create_initialized_provider(self, adapter, docker_url=DockerProvider.DEFAULT_DOCKER_URL):
+        provider = DockerProvider(adapter, 'leap_provider_hostname', 'leap provider ca', docker_url)
         provider._initializing = False
         return provider
+
+    def _user_config(self, name):
+        path = join(self.root_path, name)
+        os.makedirs(path)
+        return UserConfig(name, path)

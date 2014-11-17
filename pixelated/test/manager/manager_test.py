@@ -25,7 +25,9 @@ from mock import MagicMock, patch
 from pixelated.provider import Provider
 from pixelated.manager import RESTfulServer, SSLConfig, DispatcherManager
 from pixelated.test.util import certfile, keyfile, cafile
-from pixelated.exceptions import InstanceAlreadyExistsError, InstanceAlreadyRunningError
+from pixelated.exceptions import InstanceAlreadyExistsError, InstanceAlreadyRunningError, UserAlreadyExistsError
+from pixelated.users import Users, UserConfig
+from pixelated.authenticator import Authenticator
 
 
 class RESTfulServerTest(unittest.TestCase):
@@ -36,11 +38,13 @@ class RESTfulServerTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         RESTfulServerTest.mock_provider = MagicMock(spec=Provider)
+        RESTfulServerTest.mock_users = MagicMock(spec=Users)
+        RESTfulServerTest.mock_authenticator = MagicMock(spec=Authenticator)
 
         RESTfulServerTest.ssl_config = SSLConfig(certfile(),
                                                  keyfile())
 
-        RESTfulServerTest.server = RESTfulServer(RESTfulServerTest.ssl_config, RESTfulServerTest.mock_provider)
+        RESTfulServerTest.server = RESTfulServer(RESTfulServerTest.ssl_config, RESTfulServerTest.mock_users, RESTfulServerTest.mock_authenticator, RESTfulServerTest.mock_provider)
 
         RESTfulServerTest.server.server_forever_in_backgroud()
         time.sleep(1)  # let it get up to speed
@@ -53,7 +57,8 @@ class RESTfulServerTest(unittest.TestCase):
     def setUp(self):
         self.mock_provider = RESTfulServerTest.mock_provider
         self.mock_provider.reset_mock()
-        self.mock_provider.list.side_effect = None
+        self.mock_users.reset_mock()
+        self.mock_authenticator.reset_mock()
 
         self.ssl_request = requests.Session()
         self.ssl_request.mount('https://', EnforceTLSv1Adapter())
@@ -82,7 +87,7 @@ class RESTfulServerTest(unittest.TestCase):
     def test_list_empty_agents(self):
         # given
         self.mock_provider.status.return_value = {'state': 'stopped'}
-        self.mock_provider.list.return_value = []
+        self.mock_users.list.return_value = []
 
         # when
         r = self.get('https://localhost:4443/agents')
@@ -93,7 +98,8 @@ class RESTfulServerTest(unittest.TestCase):
     def test_list_agents(self):
         # given
         self.mock_provider.status.return_value = {'state': 'stopped'}
-        self.mock_provider.list.return_value = ['first', 'second']
+        self.mock_provider.status.side_effect = None
+        self.mock_users.list.return_value = ['first', 'second']
 
         # when
         r = self.get('https://localhost:4443/agents')
@@ -117,11 +123,12 @@ class RESTfulServerTest(unittest.TestCase):
         # then
         self.assertEqual(201, r.status_code)
         self.assertEqual('http://localhost:4443/agents/first', r.headers['Location'])
-        self.mock_provider.add.assert_called_with('first', 'some password')
+        self.mock_users.add.assert_called_with('first')
+        self.mock_authenticator.add_credentials.assert_called_once_with('first', 'some password')
 
     def test_add_agent_twice_returns_conflict(self):
         self.mock_provider.status.return_value = {'state': 'stopped'}
-        self.mock_provider.add.side_effect = InstanceAlreadyExistsError
+        self.mock_users.add.side_effect = UserAlreadyExistsError
 
         payload = {'name': 'first', 'password': 'some password'}
 
@@ -147,8 +154,7 @@ class RESTfulServerTest(unittest.TestCase):
         r = self.delete('https://localhost:4443/agents/first')
 
         # then
-        self.assertEqual(200, r.status_code)
-        self.mock_provider.remove.assert_called_with('first')
+        self.assertEqual(500, r.status_code)
 
     def test_agent_status(self):
         # given
@@ -162,7 +168,9 @@ class RESTfulServerTest(unittest.TestCase):
 
     def test_start_agent(self):
         # given
+        user_config = UserConfig('first', None)
         self.mock_provider.status.return_value = {'state': 'running'}
+        self.mock_users.config.return_value = user_config
         payload = {'state': 'running'}
 
         # when
@@ -170,7 +178,7 @@ class RESTfulServerTest(unittest.TestCase):
 
         # then
         self.assertSuccessJson({'state': 'running'}, r)
-        self.mock_provider.start.assert_called_with('first')
+        self.mock_provider.start.assert_called_with(user_config)
 
     def test_start_agent_twice_returns_conflict(self):
         # given
@@ -205,9 +213,11 @@ class RESTfulServerTest(unittest.TestCase):
         # then
         self.assertSuccessJson({'state': 'running', 'port': 1234}, r)
 
-    def test_user_can_be_authenticated(self):
+    def test_user_can_be_authenticated_and_passes_credentials_to_provider(self):
         # given
-        self.mock_provider.authenticate.return_value = True
+        user_config = UserConfig('first', None)
+        self.mock_users.config.return_value = user_config
+        self.mock_authenticator.authenticate.return_value = True
         payload = {'password': 'some password'}
 
         # when
@@ -215,10 +225,11 @@ class RESTfulServerTest(unittest.TestCase):
 
         # then
         self.assertEqual(200, r.status_code)
+        self.mock_provider.pass_credentials_to_agent.assert_called_once_with(user_config, 'some password')
 
     def test_user_authenticate_with_invalid_password_returns_forbidden(self):
         # given
-        self.mock_provider.authenticate.return_value = False
+        self.mock_authenticator.authenticate.return_value = False
         payload = {'password': 'invalid password'}
 
         # when
@@ -241,7 +252,7 @@ class RESTfulServerTest(unittest.TestCase):
     @patch('pixelated.manager.run')    # mock run call to avoid actually startng the server
     def test_that_serve_forever_runs_without_ssl_context(self, run_mock, wsgiRefServer_mock):
         # given
-        server = RESTfulServer(None, RESTfulServerTest.mock_provider)
+        server = RESTfulServer(None, RESTfulServerTest.mock_users, RESTfulServerTest.mock_authenticator, RESTfulServerTest.mock_provider)
 
         # when
         server.serve_forever()
@@ -250,8 +261,8 @@ class RESTfulServerTest(unittest.TestCase):
         wsgiRefServer_mock.assert_called_once_with(host='localhost', port=4443)
 
     def test_handles_provider_initializing(self):
-
-        self.mock_provider.list.side_effect = ProviderInitializingException
+        self.mock_users.list.return_value = ['test']
+        self.mock_provider.status.side_effect = ProviderInitializingException
 
         r = self.get('https://localhost:4443/agents')
 
@@ -261,7 +272,8 @@ class RESTfulServerTest(unittest.TestCase):
     @patch('pixelated.manager.DockerProvider')
     @patch('pixelated.manager.RESTfulServer')
     @patch('pixelated.manager.Thread')
-    def test_that_initialize_happens_in_background_thread(self, thread_mock, server_mock, docker_provider_mock):
+    @patch('pixelated.manager.Users')
+    def test_that_initialize_happens_in_background_thread(self, users_mock, thread_mock, server_mock, docker_provider_mock):
         # given
         docker_provider_mock.return_value = self.mock_provider
         manager = DispatcherManager(None, None, None, None, None, provider='docker')
