@@ -122,7 +122,7 @@ def run_proxy():
 
     log_level = logging.DEBUG if args.debug else logging.INFO
     log_config = args.log_config
-    init_logging('dipatcher', level=log_level, config_file=log_config)
+    init_logging('dispatcher', level=log_level, config_file=log_config)
     client = PixelatedDispatcherClient(manager_hostname, manager_port, cacert=certfile, fingerprint=args.fingerprint, assert_hostname=args.verify_hostname)
     client.validate_connection()
 
