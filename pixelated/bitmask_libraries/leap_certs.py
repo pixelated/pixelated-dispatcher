@@ -17,7 +17,7 @@ import os
 
 from leap.common import ca_bundle
 
-from pixelated.provider.leap_config import AUTO_DETECT_CA_BUNDLE
+from pixelated.bitmask_libraries.leap_config import AUTO_DETECT_CA_BUNDLE
 
 
 def which_bundle(provider):

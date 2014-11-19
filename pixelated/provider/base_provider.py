@@ -43,10 +43,6 @@ def _mkdir_if_not_exists(dir, mode=0700):
         os.mkdir(dir, mode)
 
 
-def str_password(password):
-    return password if type(password) != unicode else password.encode('utf8')
-
-
 class BaseProvider(Provider):
     CFG_FILE_NAME = 'agent.cfg'
 

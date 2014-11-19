@@ -25,7 +25,7 @@ import json
 from tempdir import TempDir
 from psutil._common import pmem
 from threading import Thread
-from pixelated.provider.base_provider import BaseProvider, ProviderInitializingException
+from pixelated.provider.base_provider import ProviderInitializingException
 from pixelated.provider.docker import DockerProvider
 from pixelated.provider.docker.pixelated_adapter import PixelatedDockerAdapter
 from pixelated.test.util import StringIOMatcher
@@ -102,9 +102,7 @@ class DockerProviderTest(unittest.TestCase):
         t.join()
         self.assertFalse(provider.initializing)
 
-    @patch('pixelated.provider.docker.LeapProvider')
-    @patch('pixelated.provider.docker.LeapSecureRemotePassword')
-    def test_throws_initializing_exception_while_initializing(self, leap_provider_mock, leap_srp_mock):
+    def test_throws_initializing_exception_while_initializing(self):
         # given
         provider = DockerProvider(self._adapter, 'provider url', 'provider ca', 'some docker url')
 

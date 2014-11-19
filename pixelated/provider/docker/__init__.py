@@ -35,10 +35,6 @@ import json
 from pixelated.provider.base_provider import BaseProvider, _mkdir_if_not_exists
 from pixelated.common import Watchdog
 from pixelated.common import logger
-from pixelated.provider.leap_provider import LeapProvider
-from pixelated.provider.leap_config import LeapConfig
-from pixelated.provider.leap_srp import LeapSecureRemotePassword, LeapAuthException
-from pixelated.provider.leap_certs import which_bundle
 
 __author__ = 'fbernitt'
 

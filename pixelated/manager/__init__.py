@@ -20,7 +20,7 @@ from pixelated.provider.base_provider import ProviderInitializingException
 from pixelated.common import logger
 from pixelated.provider.docker import DockerProvider
 from pixelated.provider.docker.pixelated_adapter import PixelatedDockerAdapter
-from pixelated.exceptions import InstanceAlreadyRunningError, InstanceAlreadyExistsError, UserNotExistError, InstanceNotRunningError, UserAlreadyExistsError, InstanceNotFoundError
+from pixelated.exceptions import InstanceAlreadyRunningError, UserNotExistError, InstanceNotRunningError, UserAlreadyExistsError, InstanceNotFoundError
 from pixelated.users import Users
 from pixelated.authenticator import Authenticator
 
