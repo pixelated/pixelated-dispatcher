@@ -160,17 +160,17 @@ class MainHandler(BaseHandler):
 
 
 class AuthLoginHandler(tornado.web.RequestHandler):
+
     def initialize(self, client):
         self._client = client
 
     def get(self):
-        error = None
-        try:
-            error = self.get_query_argument('error')
-        except:
-            pass
+        error_message = self.get_cookie('error_msg')
+        if error_message:
+            error_message = tornado.escape.url_unescape(error_message)
+            self.clear_cookie('error_msg')
 
-        self.render('login.html', error=error)
+        self.render('login.html', error=error_message)
 
     def post(self):
 
@@ -187,10 +187,12 @@ class AuthLoginHandler(tornado.web.RequestHandler):
             logger.info('Successful login of user %s' % username)
         except PixelatedNotAvailableHTTPError:
             logger.error('Login attempt while service not available by user: %s' % username)
-            self.redirect(u'/auth/login?error=%s' % tornado.escape.url_escape('Service currently not available'))
+            self.set_cookie('error_msg', tornado.escape.url_escape('Service currently not available'))
+            self.redirect(u'/auth/login')
         except PixelatedHTTPError:
             logger.warn('Login attempt with invalid credentials by user %s' % username)
-            self.redirect(u'/auth/login?error=%s' % tornado.escape.url_escape('Invalid credentials'))
+            self.set_cookie('error_msg', tornado.escape.url_escape('Invalid credentials'))
+            self.redirect(u'/auth/login')
 
     def set_current_user(self, username):
         if username:

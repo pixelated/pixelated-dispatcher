@@ -88,6 +88,11 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self.assertEqual(302, response.code)
         self.assertEqual('/auth/login?next=%2F', response.headers['Location'])
 
+    def _get_cookies(self, response):
+        cookies = Cookie.SimpleCookie()
+        cookies.load(response.headers['Set-Cookie'])
+        return cookies
+
     def test_invalid_login(self):
         self.client.get_agent.return_value = {}
         self.client.authenticate.side_effect = PixelatedHTTPError
@@ -99,7 +104,10 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         response = self._post('/auth/login', payload=payload)
 
         self.assertEqual(302, response.code)
-        self.assertEqual('/auth/login?error=Invalid+credentials', response.headers['Location'])
+        cookies = self._get_cookies(response)
+
+        self.assertEqual('Invalid+credentials', cookies['error_msg'].value)
+        self.assertEqual('/auth/login', response.headers['Location'])
 
     def test_invalid_agent(self):
         self.client.get_agent.side_effect = PixelatedHTTPError()
@@ -110,7 +118,10 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         response = self._post('/auth/login', payload=payload)
 
         self.assertEqual(302, response.code)
-        self.assertEqual('/auth/login?error=Invalid+credentials', response.headers['Location'])
+        cookies = self._get_cookies(response)
+
+        self.assertEqual('Invalid+credentials', cookies['error_msg'].value)
+        self.assertEqual('/auth/login', response.headers['Location'])
 
     def test_successful_login(self):
         self.client.get_agent.return_value = {}
@@ -122,15 +133,8 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
 
         self.assertEqual(302, response.code)
         self.assertEqual('/', response.headers['Location'])
-        cookies = Cookie.SimpleCookie()
-        cookies.load(response.headers['Set-Cookie'])
+        cookies = self._get_cookies(response)
         self.assertTrue('pixelated_user' in cookies)
-
-    def test_error_message_is_escaped(self):
-        response = self._get("/auth/login?error=<script>alert('helloworld')</script>")
-
-        self.assertEqual(200, response.code)
-        self.assertTrue('&lt;script&gt;alert(&#39;helloworld&#39;)&lt;/script&gt;' in str(response.body))
 
     def test_missing_xsrf_token_cookie(self):
         self.client.get_agent.return_value = {}
@@ -153,8 +157,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
 
         self.assertEqual(302, response.code)
         self.assertEqual('/', response.headers['Location'])
-        login_cookies = Cookie.SimpleCookie()
-        login_cookies.load(response.headers['Set-Cookie'])
+        login_cookies = self._get_cookies(response)
         self.assertTrue('pixelated_user' in login_cookies)
 
         self.cookies = Cookie.SimpleCookie()
@@ -204,7 +207,8 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
 
         # when
         response = self._post('/auth/login', payload=payload)
+        cookies = self._get_cookies(response)
 
         # then
         self.assertEqual(302, response.code)
-        self.assertEqual('/auth/login?error=Service+currently+not+available', response.headers['Location'])
+        self.assertEqual('Service+currently+not+available', cookies['error_msg'].value)
