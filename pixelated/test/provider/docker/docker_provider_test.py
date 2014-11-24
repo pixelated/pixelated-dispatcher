@@ -48,7 +48,8 @@ class DockerProviderTest(unittest.TestCase):
     def tearDown(self):
         self._tmpdir.dissolve()
 
-    def test_constructor_expects_docker_url(self):
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_constructor_expects_docker_url(self, docker_mock):
         DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some docker url')
 
     @patch('pixelated.provider.docker.docker.Client')
@@ -102,7 +103,8 @@ class DockerProviderTest(unittest.TestCase):
         t.join()
         self.assertFalse(provider.initializing)
 
-    def test_throws_initializing_exception_while_initializing(self):
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_throws_initializing_exception_while_initializing(self, docker_mock):
         # given
         provider = DockerProvider(self._adapter, 'provider url', 'provider ca', 'some docker url')
 
@@ -264,7 +266,8 @@ class DockerProviderTest(unittest.TestCase):
                               {'name': 'test', 'memory_usage': 1024}
                           ]}, usage)
 
-    def test_remove_error_if_not_exist(self):
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_remove_error_if_not_exist(self, docker_mock):
         provider = self._create_initialized_provider(self._adapter, 'some docker url')
 
         self.assertRaises(ValueError, provider.remove, self._user_config('does_not_exist'))

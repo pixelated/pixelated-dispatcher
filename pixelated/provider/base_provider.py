@@ -74,7 +74,11 @@ class BaseProvider(Provider):
         if user_config.username in self.list_running():
             raise ValueError('Container %s is currently running. Please stop before removal!' % user_config.username)
 
-        shutil.rmtree(path.join(user_config.path, 'data'))
+        data_path = path.join(user_config.path, 'data')
+        if path.exists(data_path):
+            shutil.rmtree(data_path)
+        else:
+            raise ValueError('No container with name %s' % user_config.username)
 
     def _start(self, user_config):
         name = user_config.username
