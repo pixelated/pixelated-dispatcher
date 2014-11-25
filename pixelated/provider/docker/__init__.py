@@ -23,6 +23,7 @@ import subprocess
 import time
 import tempfile
 import multiprocessing
+import socket
 
 import pkg_resources
 import docker
@@ -39,30 +40,41 @@ from pixelated.common import logger
 __author__ = 'fbernitt'
 
 
-class CredentialsFifoWriterProcess(object):
+class CredentialsToDockerStdinWriter(object):
 
-    def __init__(self, filename, leap_provider, user, password):
-        self._filename = filename
+    __slots__ = ('_docker_url', '_container_id', '_leap_provider', '_user', '_password', '_process')
+
+    def __init__(self, docker_url, container_id, leap_provider, user, password):
+        self._docker_url = docker_url
+        self._container_id = container_id
         self._leap_provider = leap_provider
         self._user = user
         self._password = password
 
     def start(self):
-        os.mkfifo(self._filename)
         self._process = multiprocessing.Process(target=self.run)
         self._process.daemon = True
         self._process.start()
 
     def run(self):
-        if os.path.exists(self._filename):
-            with open(self._filename, 'w') as fifo:
-                fifo.write(json.dumps({'leap_provider_hostname': self._leap_provider, 'user': self._user, 'password': self._password}))
-            os.remove(self._filename)
+        try:
+            params = {
+                'stdin': True,
+                'stream': True,
+                'stdout': False,
+                'stderr': False}
+
+            client = docker.Client(base_url=self._docker_url)
+
+            s = client.attach_socket(container=self._container_id, params=params)
+            s.send("%s\n" % json.dumps({'leap_provider_hostname': self._leap_provider, 'user': self._user, 'password': self._password}))
+            s.shutdown(socket.SHUT_WR)
+            s.close()
+        except Exception, e:
+            logger.error('While passing credentials to container %s running on %s: %s' % (self._container_id, self._docker_url, str(e.message)))
 
     def terminate(self):
         self._process.terminate()
-        if os.path.exists(self._filename):
-            os.remove(self._filename)
 
 
 class TempDir(object):
@@ -98,7 +110,7 @@ class TempDir(object):
 
 
 class DockerProvider(BaseProvider):
-    __slots__ = ('_docker_host', '_docker', '_ports', '_adapter', '_leap_provider_hostname', '_leap_provider_ca')
+    __slots__ = ('_docker_host', '_docker', '_ports', '_adapter', '_leap_provider_hostname', '_leap_provider_ca', '_credentials')
 
     DEFAULT_DOCKER_URL = 'http+unix://var/run/docker.sock'
 
@@ -110,6 +122,7 @@ class DockerProvider(BaseProvider):
         self._adapter = adapter
         self._leap_provider_hostname = leap_provider_hostname
         self._leap_provider_ca = leap_provider_ca
+        self._credentials = {}
 
     def initialize(self):
         imgs = self._docker.images()
@@ -158,29 +171,20 @@ class DockerProvider(BaseProvider):
                 os.kill(os.getpid(), signal.SIGTERM)
 
     def pass_credentials_to_agent(self, user_config, password):
-        _mkdir_if_not_exists(self._data_path(user_config))
-        self._write_credentials_to_fifo(user_config, password)
+        self._credentials[user_config.username] = password  # remember crendentials until agent gets started
 
-    def _write_credentials_to_fifo(self, user_config, password):
-        fifo_file = path.join(self._data_path(user_config), 'credentials-fifo')
+    def _write_credentials_to_docker_stdin(self, user_config):
+        if user_config.username not in self._credentials:
+            return
 
-        p = CredentialsFifoWriterProcess(fifo_file, self._leap_provider_hostname, user_config.username, password)
+        password = self._credentials[user_config.username]
+        p = CredentialsToDockerStdinWriter(self._docker_url, user_config.username, self._leap_provider_hostname, user_config.username, password)
         p.start()
-
-        self._wait_for_fifo_to_be_created(fifo_file, timeout_in_s=1)
 
         def kill_process_after_timeout(process):
             process.terminate()
 
-        watchdog = Watchdog(5, userHandler=kill_process_after_timeout, args=[p])
-
-    def _wait_for_fifo_to_be_created(self, fifo_file, timeout_in_s):
-        start = time.clock()
-        while time.clock() - start < timeout_in_s and not path.exists(fifo_file):
-            time.sleep(0.01)
-
-        if not path.exists(fifo_file):
-            raise Exception('Unexpected: FIFO file %s has not been created' % fifo_file)
+        Watchdog(5, userHandler=kill_process_after_timeout, args=[p])
 
     def start(self, user_config):
         self._ensure_initialized()
@@ -190,7 +194,7 @@ class DockerProvider(BaseProvider):
         cm = self._map_container_by_name(all=True)
         if name not in cm:
             self._setup_instance(user_config, cm)
-            c = self._docker.create_container(self._adapter.app_name(), self._adapter.run_command(), name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'))
+            c = self._docker.create_container(self._adapter.app_name(), self._adapter.run_command(), name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'), stdin_open=True)
         else:
             c = cm[name]
         data_path = self._data_path(user_config)
@@ -198,6 +202,7 @@ class DockerProvider(BaseProvider):
         self._ports.add(port)
 
         self._docker.start(c, binds={data_path: {'bind': '/mnt/user', 'ro': False}}, port_bindings={self._adapter.port(): port})
+        self._write_credentials_to_docker_stdin(user_config)
 
     def _setup_instance(self, user_config, container_map):
         data_path = join(user_config.path, 'data')

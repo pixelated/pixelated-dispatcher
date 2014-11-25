@@ -30,7 +30,7 @@ class PixelatedDockerAdapter(DockerAdapter):
         return 'pixelated'
 
     def run_command(self):
-        return '/bin/bash -l -c "/usr/bin/pixelated-user-agent --host 0.0.0.0 --port 4567 --dispatcher /mnt/user/credentials-fifo"'
+        return '/bin/bash -l -c "/usr/bin/pixelated-user-agent --host 0.0.0.0 --port 4567 --dispatcher-stdin"'
 
     def setup_command(self):
         return '/bin/true'

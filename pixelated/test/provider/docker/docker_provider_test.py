@@ -15,6 +15,7 @@
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
 import os
 import stat
+import socket
 from os.path import join, isdir, isfile, exists
 from tempfile import NamedTemporaryFile
 from time import sleep, clock
@@ -26,7 +27,7 @@ from tempdir import TempDir
 from psutil._common import pmem
 from threading import Thread
 from pixelated.provider.base_provider import ProviderInitializingException
-from pixelated.provider.docker import DockerProvider
+from pixelated.provider.docker import DockerProvider, CredentialsToDockerStdinWriter
 from pixelated.provider.docker.pixelated_adapter import PixelatedDockerAdapter
 from pixelated.test.util import StringIOMatcher
 from pixelated.exceptions import *
@@ -36,6 +37,50 @@ from pixelated.users import UserConfig, Users
 __author__ = 'fbernitt'
 
 import unittest
+
+
+class CredentialsToDockerStdinWriterTest(unittest.TestCase):
+    @patch('pixelated.provider.docker.multiprocessing.Process')
+    def test_starts_background_process(self, process_mock):
+        cw = CredentialsToDockerStdinWriter('some docker url', 'container_id', 'leap provider hostname', 'username', 'password')
+
+        cw.start()
+
+        process_mock.assert_called_with(target=cw.run)
+        self.assertTrue(process_mock.return_value.daemon)
+        process_mock.return_value.start.assert_called_once_with()
+
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_run_sends_credentials_to_docker(self, docker_mock):
+        # given
+        socket_mock = MagicMock()
+        client = docker_mock.return_value
+        client.attach_socket.return_value = socket_mock
+        cw = CredentialsToDockerStdinWriter('some docker url', 'container_id', 'leap provider hostname', 'username', 'password')
+
+        # when
+        cw.run()
+
+        # then
+        docker_mock.assert_called_once_with(base_url='some docker url')
+        expected_params = {
+            'stdin': True,
+            'stderr': False,
+            'stream': True,
+            'stdout': False
+        }
+        client.attach_socket.assert_called_once_with(container='container_id', params=expected_params)
+        socket_mock.send.assert_called_once_with('{"password": "password", "leap_provider_hostname": "leap provider hostname", "user": "username"}\n')
+        socket_mock.shutdown.assert_called_once_with(socket.SHUT_WR)
+        socket_mock.close.assert_called_once_with()
+
+    def test_terminate_terminates_process(self):
+        cw = CredentialsToDockerStdinWriter('some docker url', 'container_id', 'leap provider hostname', 'username', 'password')
+        cw._process = MagicMock()
+
+        cw.terminate()
+
+        cw._process.terminate.assert_called_once_with()
 
 
 class DockerProviderTest(unittest.TestCase):
@@ -127,7 +172,7 @@ class DockerProviderTest(unittest.TestCase):
 
         provider.start(self._user_config('test'))
 
-        client.create_container.assert_any_call('pixelated', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --host 0.0.0.0 --port 4567 --dispatcher /mnt/user/credentials-fifo"', name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
+        client.create_container.assert_any_call('pixelated', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --host 0.0.0.0 --port 4567 --dispatcher-stdin"', name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'}, stdin_open=True)
         client.create_container.assert_any_call('pixelated', '/bin/true', name='pixelated_prepare', volumes=['/mnt/user'], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
 
         data_path = join(self.root_path, 'test', 'data')
@@ -333,41 +378,32 @@ class DockerProviderTest(unittest.TestCase):
             tempBuildDir.dissolve()
 
     @patch('pixelated.provider.docker.docker.Client')
-    def test_that_pass_credentials_to_agent_writes_password_to_fifo(self, docker_mock):
-        provider = DockerProvider(self._adapter, 'leap_provider_hostname', 'some docker url')
-        provider.initialize()
+    @patch('pixelated.provider.docker.CredentialsToDockerStdinWriter')
+    def test_that_credentials_are_passed_to_agent_by_stdin(self, credentials_mock, docker_mock):
+        # given
         user_config = self._user_config('test')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+        prepare_pixelated_container = MagicMock()
+        container = MagicMock()
+
+        class ProcessStub(object):
+            def start(self):
+                self._target()
+
+            def __init__(self, target):
+                self._target = target
+
+        client = docker_mock.return_value
+        client.create_container.side_effect = [prepare_pixelated_container, container]
+        client.wait.return_value = 0
+
+        # when
         provider.pass_credentials_to_agent(user_config, 'password')
 
-        fifo_file = join(user_config.path, 'data', 'credentials-fifo')
-        self.assertTrue(stat.S_ISFIFO(os.stat(fifo_file).st_mode))
-        with open(fifo_file, 'r') as fifo:
-            config = json.loads(fifo.read())
+        provider.start(user_config)
 
-        self.assertEqual('leap_provider_hostname', config['leap_provider_hostname'])
-        self.assertEqual('test', config['user'])
-        self.assertEqual('password', config['password'])
-        self._assert_file_gets_deleted(fifo_file)
-
-    def _assert_file_gets_deleted(self, filename):
-        start = clock()
-        timeout = 5
-        while (clock() - start) < timeout and exists(filename):
-            sleep(0.1)
-
-        self.assertFalse(exists(filename))
-
-    @patch('pixelated.provider.docker.docker.Client')
-    def footest_that_authenticate_deletes_fifo_after_timeout(self, docker_mock):
-        provider = DockerProvider(self._adapter, 'some docker url')
-        provider.initialize()
-        provider.add('test', 'password')
-        fifo_file = join(self.root_path, 'test', 'data', 'credentials-fifo')
-        provider.authenticate('test', 'password')
-
-        sleep(3)
-
-        self.assertFalse(stat.S_ISFIFO(os.stat(fifo_file).st_mode))
+        # then
+        credentials_mock.return_value.start.assert_called_once_with()
 
     def _create_initialized_provider(self, adapter, docker_url=DockerProvider.DEFAULT_DOCKER_URL):
         provider = DockerProvider(adapter, 'leap_provider_hostname', 'leap provider ca', docker_url)
