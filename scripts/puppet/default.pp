@@ -63,7 +63,7 @@ node default {
     mode => '0755'
   }
 
-  $manager_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py manager -b docker --provider example.wazokazi.is --provider-ca /vagrant/pixelated/resources/example.wazokazi.is.ca.crt"
+  $manager_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py manager -b docker --provider example.wazokazi.is --provider-ca /vagrant/pixelated/resources/example.wazokazi.is.ca.crt --bind 0.0.0.0"
   $ssl_options = "--sslcert /vagrant/pixelated/test/util/server.crt --sslkey /vagrant/pixelated/test/util/server.key"
 
   service { 'dispatcher-proxy':
