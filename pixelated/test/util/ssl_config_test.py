@@ -26,4 +26,3 @@ class SSLConfigTest(unittest.TestCase):
         expected = 'ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA:!RC4:HIGH:!MD5:!aNULL:!EDH'
 
         self.assertEqual(expected, c.ssl_ciphers)
-

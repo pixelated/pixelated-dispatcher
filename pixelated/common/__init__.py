@@ -6,7 +6,7 @@ from threading import Timer
 logger = logging.getLogger('pixelated.startup')
 
 # see https://github.com/ioerror/duraconf/blob/master/configs/apache2/https-hsts.conf
-DEFAULT_CIPHERS='ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA:!RC4:HIGH:!MD5:!aNULL:!EDH'
+DEFAULT_CIPHERS = 'ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA:!RC4:HIGH:!MD5:!aNULL:!EDH'
 
 
 def init_logging(name, level=logging.INFO, config_file=None):

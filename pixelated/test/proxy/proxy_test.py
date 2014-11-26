@@ -227,9 +227,9 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
 
         # then
         expected_ssl_options = {
-                'certfile': '/path/to/some/certfile',
-                'keyfile': '/path/to/some/keyfile',
-                'ssl_version': latest_available_ssl_version(),
-                'ciphers': DEFAULT_CIPHERS
+            'certfile': '/path/to/some/certfile',
+            'keyfile': '/path/to/some/keyfile',
+            'ssl_version': latest_available_ssl_version(),
+            'ciphers': DEFAULT_CIPHERS
         }
         http_server_mock.assert_called_once_with(ANY, ssl_options=expected_ssl_options)

@@ -30,6 +30,7 @@ from pixelated.users import Users, UserConfig
 from pixelated.authenticator import Authenticator
 from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
 
+
 class RESTfulServerTest(unittest.TestCase):
     mock_provider = None
     ssl_config = None
@@ -256,7 +257,7 @@ class RESTfulServerTest(unittest.TestCase):
         # when
         server.serve_forever()
 
-        expected_ca_certs = None # which means system ciphers
+        expected_ca_certs = None  # which means system ciphers
         expected_ciphers = DEFAULT_CIPHERS
         expected_ssl_version = latest_available_ssl_version()
         expected_host = '127.0.0.1'
