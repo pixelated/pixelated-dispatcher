@@ -33,7 +33,7 @@ import time
 import ssl
 
 from tornado import gen
-from pixelated.common import latest_available_ssl_version
+from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
 
 COOKIE_NAME = 'pixelated_user'
 
@@ -243,7 +243,8 @@ class DispatcherProxy(object):
             return {
                 'certfile': os.path.join(self._certfile),
                 'keyfile': os.path.join(self._keyfile),
-                'ssl_version': latest_available_ssl_version()
+                'ssl_version': latest_available_ssl_version(),
+                'ciphers': DEFAULT_CIPHERS
             }
         else:
             return None

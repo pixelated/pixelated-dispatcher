@@ -18,13 +18,13 @@ import urllib
 
 import tornado.httpserver
 
-from mock import MagicMock, patch
+from mock import MagicMock, patch, ANY
 import tornado
 from tornado.testing import AsyncHTTPTestCase
 
 from pixelated.client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
 from pixelated.proxy import DispatcherProxy, MainHandler
-
+from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
 
 __author__ = 'fbernitt'
 
@@ -212,3 +212,24 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         # then
         self.assertEqual(302, response.code)
         self.assertEqual('Service+currently+not+available', cookies['error_msg'].value)
+
+    @patch('pixelated.proxy.HTTPServer')
+    @patch('pixelated.proxy.tornado.ioloop.IOLoop.instance')
+    def test_serve_forever(self, ioloop_factory_mock, http_server_mock):
+        # given
+        ioloop_mock = MagicMock()
+        ioloop_factory_mock.return_value = ioloop_mock
+        dispatcher = DispatcherProxy(self.client, certfile='/path/to/some/certfile', keyfile='/path/to/some/keyfile')
+        dispatcher._ioloop = ioloop_mock
+
+        # when
+        dispatcher.serve_forever()
+
+        # then
+        expected_ssl_options = {
+                'certfile': '/path/to/some/certfile',
+                'keyfile': '/path/to/some/keyfile',
+                'ssl_version': latest_available_ssl_version(),
+                'ciphers': DEFAULT_CIPHERS
+        }
+        http_server_mock.assert_called_once_with(ANY, ssl_options=expected_ssl_options)
