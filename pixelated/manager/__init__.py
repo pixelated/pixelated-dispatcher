@@ -34,16 +34,21 @@ from pixelated.manager.bottle_adapter import SSLWSGIRefServerAdapter
 from pixelated.provider.fork import ForkProvider
 from pixelated.provider.fork.fork_runner import ForkRunner
 from pixelated.provider.fork.mailpile_adapter import MailpileAdapter
-from pixelated.common import latest_available_ssl_version
+from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
+
 DEFAULT_PORT = 4443
 
 
 class SSLConfig(object):
-    def __init__(self, ssl_certfile, ssl_keyfile, ssl_version=latest_available_ssl_version(), ssl_ca_certs=None):
+
+    __slots__ = ('ssl_certfile', 'ssl_keyfile', 'ssl_version', 'ssl_ca_certs', 'ssl_ciphers')
+
+    def __init__(self, ssl_certfile, ssl_keyfile, ssl_version=latest_available_ssl_version(), ssl_ca_certs=None, ssl_ciphers=DEFAULT_CIPHERS):
         self.ssl_certfile = ssl_certfile
         self.ssl_keyfile = ssl_keyfile
         self.ssl_version = ssl_version
         self.ssl_ca_certs = ssl_ca_certs
+        self.ssl_ciphers = ssl_ciphers
 
 
 def catch_initializing_exception_wrapper(callback):
@@ -217,7 +222,8 @@ class RESTfulServer(object):
                                                      ssl_version=self._ssl_config.ssl_version,
                                                      ssl_cert_file=self._ssl_config.ssl_certfile,
                                                      ssl_key_file=self._ssl_config.ssl_keyfile,
-                                                     ssl_ca_certs=self._ssl_config.ssl_ca_certs)
+                                                     ssl_ca_certs=self._ssl_config.ssl_ca_certs,
+                                                     ssl_ciphers=self._ssl_config.ssl_ciphers)
         else:
             server_adapter = WSGIRefServer(host='localhost', port=self._port)
 

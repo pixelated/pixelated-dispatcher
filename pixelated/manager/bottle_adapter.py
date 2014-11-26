@@ -22,7 +22,7 @@ from bottle import ServerAdapter
 
 class SSLTCPServer(SocketServer.TCPServer):
     def __init__(self, server_address, request_handler_class, bind_and_activate=True, ssl_key_file=None,
-                 ssl_cert_file=None, ssl_version=ssl.PROTOCOL_TLSv1, ca_certs=None):
+                 ssl_cert_file=None, ssl_version=ssl.PROTOCOL_TLSv1, ca_certs=None, ssl_ciphers=None):
         """Constructor. May be extended, do not override."""
         SocketServer.TCPServer.__init__(self, server_address, request_handler_class, False)
 
@@ -31,7 +31,7 @@ class SSLTCPServer(SocketServer.TCPServer):
         else:
             cert_reqs = ssl.CERT_NONE
 
-        self.socket = ssl.wrap_socket(self.socket, keyfile=ssl_key_file, certfile=ssl_cert_file,
+        self.socket = ssl.wrap_socket(self.socket, keyfile=ssl_key_file, certfile=ssl_cert_file, ciphers=ssl_ciphers,
                                       ssl_version=ssl_version, server_side=True, ca_certs=ca_certs, cert_reqs=cert_reqs)
 
         if bind_and_activate:
@@ -100,6 +100,7 @@ class SSLWSGIRefServerAdapter(ServerAdapter):
         ssl_certfile = self.options.get('ssl_cert_file')
         ssl_version = self.options.get('ssl_version', ssl.PROTOCOL_TLSv1)
         ssl_ca_certs = self.options.get('ssl_ca_certs', None)
+        ssl_ciphers = self.options.get('ssl_ciphers', None)
 
         if ':' in self.host:  # Fix wsgiref for IPv6 addresses.
             if getattr(server_cls, 'address_family') == socket.AF_INET:
@@ -107,7 +108,7 @@ class SSLWSGIRefServerAdapter(ServerAdapter):
                     address_family = socket.AF_INET6
 
         srv = SSLWSGIServer((self.host, self.port), handler_cls, ssl_cert_file=ssl_certfile, ssl_key_file=ssl_keyfile,
-                            ssl_version=ssl_version, ca_certs=ssl_ca_certs)
+                            ssl_version=ssl_version, ca_certs=ssl_ca_certs, ssl_ciphers=ssl_ciphers)
 
         self._server = srv
         srv.set_app(app)

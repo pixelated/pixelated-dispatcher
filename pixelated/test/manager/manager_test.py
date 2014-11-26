@@ -28,7 +28,7 @@ from pixelated.test.util import certfile, keyfile, cafile
 from pixelated.exceptions import InstanceAlreadyExistsError, InstanceAlreadyRunningError, UserAlreadyExistsError
 from pixelated.users import Users, UserConfig
 from pixelated.authenticator import Authenticator
-
+from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
 
 class RESTfulServerTest(unittest.TestCase):
     mock_provider = None
@@ -247,6 +247,24 @@ class RESTfulServerTest(unittest.TestCase):
         r = self.get('https://localhost:4443/stats/memory_usage')
 
         self.assertSuccessJson(expected, r)
+
+    @patch('pixelated.manager.SSLWSGIRefServerAdapter')
+    @patch('pixelated.manager.run')    # mock run call to avoid actually startng the server
+    def test_that_ssl_server_adapter_gets_used_when_ssl_config_is_provided(self, run_mock, ssl_adapter_mock):
+        server = RESTfulServer(RESTfulServerTest.ssl_config, RESTfulServerTest.mock_users, RESTfulServerTest.mock_authenticator, RESTfulServerTest.mock_provider)
+
+        # when
+        server.serve_forever()
+
+        expected_ca_certs = None # which means system ciphers
+        expected_ciphers = DEFAULT_CIPHERS
+        expected_ssl_version = latest_available_ssl_version()
+        expected_host = '127.0.0.1'
+        expected_port = 4443
+        expected_certfile = certfile()
+        expected_keyfile = keyfile()
+
+        ssl_adapter_mock.assert_called_once_with(ssl_ca_certs=expected_ca_certs, ssl_ciphers=expected_ciphers, ssl_version=expected_ssl_version, host=expected_host, port=expected_port, ssl_cert_file=expected_certfile, ssl_key_file=expected_keyfile)
 
     @patch('pixelated.manager.WSGIRefServer')
     @patch('pixelated.manager.run')    # mock run call to avoid actually startng the server
