@@ -30,6 +30,8 @@ import tornado.ioloop
 import tornado.web
 import tornado.escape
 import time
+import base64
+import uuid
 import ssl
 
 from tornado import gen
@@ -228,7 +230,7 @@ class DispatcherProxy(object):
                 (r"/dispatcher_static/", web.StaticFileHandler),
                 (r"/.*", MainHandler, dict(client=self._client))
             ],
-            cookie_secret='quwoqwjladsfasdlfjqsdojqwojqofdlsfasofhqwo0qoqsflasdnfaslfjo0324rsd',
+            cookie_secret=base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
             login_url='/auth/login',
             template_path=os.path.join(os.path.dirname(__file__), '..', 'files', "templates"),
             static_path=os.path.join(os.path.dirname(__file__), '..', 'files', "static"),
