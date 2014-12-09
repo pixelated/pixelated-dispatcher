@@ -34,7 +34,12 @@ RUN apt-key adv --keyserver pool.sks-keyservers.net --recv-key 1E34A1828E207901 
 
 # Update packages lists
 RUN apt-get update -y --force-yes
-RUN apt-get install -y --force-yes --allow-unauthenticated soledad-client
+
+# Install pip for taskthread dependency (no backport yet)
+RUN apt-get install python-pip
+RUN pip install taskthread
+
+RUN apt-get install -y --force-yes --allow-unauthenticated soledad-client=0.6.1~509f76c soledad-common=0.6.1~509f76c
 # Install Pixelated User Agent
 RUN apt-get install -y --force-yes pixelated-user-agent
 
