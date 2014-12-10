@@ -29,6 +29,9 @@ class PixelatedDockerAdapter(DockerAdapter):
     def app_name(self):
         return 'pixelated'
 
+    def docker_image_name(self):
+        return 'pixelated/pixelated-user-agent'
+
     def run_command(self):
         return '/bin/bash -l -c "/usr/bin/pixelated-user-agent --host 0.0.0.0 --port 4567 --dispatcher-stdin"'
 

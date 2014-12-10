@@ -128,34 +128,53 @@ class DockerProvider(BaseProvider):
         imgs = self._docker.images()
         found = False
         for img in imgs:
-            if '%s:latest' % self._adapter.app_name() in img['RepoTags']:
+            if '%s:latest' % self._adapter.docker_image_name() in img['RepoTags']:
                 found = True
 
         if not found:
             # build the image
             start = time.time()
             logger.info('No docker image for %s found! Triggering build.' % self._adapter.app_name())
-            if pkg_resources.resource_exists('pixelated.resources', 'init-%s-docker-context.sh' % self._adapter.app_name()):
-                fileobj = None
-                content = pkg_resources.resource_string('pixelated.resources', 'init-%s-docker-context.sh' % self._adapter.app_name())
-                with TempDir() as dir:
-                    filename = join(dir, 'run.sh')
-                    with open(filename, 'w') as fd:
-                        fd.write(content)
-                        fd.close()
-                        os.chmod(filename, stat.S_IRWXU)
-                        subprocess.call([filename], cwd=dir)
-                    path = dir
-                    self._build_image(path, fileobj)
+            if '/' in self._adapter.docker_image_name():
+                self._download_image(self._adapter.docker_image_name())
             else:
-                fileobj = io.StringIO(self._dockerfile())
-                path = None
-                self._build_image(path, fileobj)
-            logger.info('Finished image %s build in %d seconds' % ('%s:latest' % self._adapter.app_name(), time.time() - start))
-        self._initializing = False
+                if pkg_resources.resource_exists('pixelated.resources', 'init-%s-docker-context.sh' % self._adapter.app_name()):
+                    fileobj = None
+                    content = pkg_resources.resource_string('pixelated.resources', 'init-%s-docker-context.sh' % self._adapter.app_name())
+                    with TempDir() as dir:
+                        filename = join(dir, 'run.sh')
+                        with open(filename, 'w') as fd:
+                            fd.write(content)
+                            fd.close()
+                            os.chmod(filename, stat.S_IRWXU)
+                            subprocess.call([filename], cwd=dir)
+                        path = dir
+                        self._build_image(path, fileobj)
+                else:
+                    fileobj = io.StringIO(self._dockerfile())
+                    path = None
+                    self._build_image(path, fileobj)
+                logger.info('Finished image %s build in %d seconds' % ('%s:latest' % self._adapter.docker_image_name(), time.time() - start))
+            self._initializing = False
+
+    def _download_image(self, docker_image_name):
+        stream = self._docker.pull(repository=docker_image_name, tag='latest', stream=True)
+        lines = []
+        for event in stream:
+            data = json.loads(event)
+            if 'status' in data:
+                logger.debug(data['status'])
+                lines.append(data['status'])
+            if 'error' in data:
+                logger.error('Failed to pull image %s: %s' % (docker_image_name, data['error']))
+                logger.error('Replaying docker pull output')
+                for line in lines:
+                    logger.error('Docker output: %s' % line)
+                logger.error('Terminating process by sending TERM signal')
+                os.kill(os.getpid(), signal.SIGTERM)
 
     def _build_image(self, path, fileobj):
-        stream = self._docker.build(path=path, fileobj=fileobj, tag='%s:latest' % self._adapter.app_name())
+        stream = self._docker.build(path=path, fileobj=fileobj, tag='%s:latest' % self._adapter.docker_image_name())
         lines = []
         for event in stream:
             data = json.loads(event)
@@ -194,7 +213,7 @@ class DockerProvider(BaseProvider):
         cm = self._map_container_by_name(all=True)
         if name not in cm:
             self._setup_instance(user_config, cm)
-            c = self._docker.create_container(self._adapter.app_name(), self._adapter.run_command(), name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'), stdin_open=True)
+            c = self._docker.create_container(self._adapter.docker_image_name(), self._adapter.run_command(), name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'), stdin_open=True)
         else:
             c = cm[name]
         data_path = self._data_path(user_config)

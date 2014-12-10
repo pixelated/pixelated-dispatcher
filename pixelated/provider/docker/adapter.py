@@ -21,6 +21,9 @@ class DockerAdapter(object):
     def app_name(self):
         raise NotImplementedError
 
+    def docker_image_name(self):
+        return self.app_name()
+
     def run_command(self):
         raise NotImplementedError
 
