@@ -228,7 +228,7 @@ class DockerProvider(BaseProvider):
 
         container_name = '%s_prepare' % self._adapter.app_name()
         if container_name not in container_map:
-            c = self._docker.create_container(self._adapter.app_name(), self._adapter.setup_command(), name=container_name, volumes=['/mnt/user'], environment=self._adapter.environment('/mnt/user'))
+            c = self._docker.create_container(self._adapter.docker_image_name(), self._adapter.setup_command(), name=container_name, volumes=['/mnt/user'], environment=self._adapter.environment('/mnt/user'))
         else:
             c = container_map[container_name]
 

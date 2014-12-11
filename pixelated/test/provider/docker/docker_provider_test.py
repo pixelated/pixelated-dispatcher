@@ -205,6 +205,7 @@ class DockerProviderTest(unittest.TestCase):
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_that_instance_can_be_started(self, docker_mock):
+        self._adapter.docker_image_name.return_value = 'pixelated/pixelated-user-agent'
         client = docker_mock.return_value
         provider = self._create_initialized_provider(self._adapter, 'some docker url')
         prepare_pixelated_container = MagicMock()
