@@ -277,18 +277,22 @@ class DockerProviderTest(unittest.TestCase):
     @patch('pixelated.provider.docker.docker.Client')
     def test_stop_running_container(self, docker_mock):
         # given
+        user_config = self._user_config('test')
         client = docker_mock.return_value
         container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 4567}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
         client.containers.side_effect = [[], [], [container], [container], [container]]
         client.wait.return_value = 0
         provider = self._create_initialized_provider(self._adapter, 'some docker url')
-        provider.start(self._user_config('test'))
+        provider.pass_credentials_to_agent(user_config, 'test')
+        provider.start(user_config)
+
         # when
         provider.stop('test')
 
         # then
         client.stop.assert_called_once_with(container, timeout=10)
         self.assertFalse(5000 in provider._used_ports())
+        self.assertTrue('test' not in provider._credentials)
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_stop_running_container_calls_kill_if_stop_times_out(self, docker_mock):

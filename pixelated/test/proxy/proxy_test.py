@@ -196,6 +196,16 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self.assertEqual(503, response.code)
         self.assertEqual('Could not connect to instance tester!\n', response.body)
 
+    def test_logout_stops_user_agent_end_resets_session_cookie(self):
+        self._fetch_auth_cookie()
+
+        response = self._get('/auth/logout')
+        cookies = self._get_cookies(response)
+
+        self.assertEqual(200, response.code)
+        self.client.stop.assert_called_once_with('tester')
+        self.assertEqual('', cookies['pixelated_user'].value)
+
     def test_pixelated_not_available_error_raised_on_503(self):
         # given
         self.client.get_agent.side_effect = PixelatedNotAvailableHTTPError

@@ -257,6 +257,8 @@ class DockerProvider(BaseProvider):
 
     def stop(self, name):
         self._stop(name)
+        if name in self._credentials:
+            del self._credentials[name]
 
         for cname, c in self._map_container_by_name().iteritems():
             if name == cname:

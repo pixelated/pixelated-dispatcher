@@ -208,7 +208,12 @@ class AuthLoginHandler(tornado.web.RequestHandler):
 
 
 class AuthLogoutHandler(BaseHandler):
+
+    def initialize(self, client):
+        self._client = client
+
     def get(self):
+        self._client.stop(self.current_user)
         logger.info('User %s logged out' % self.current_user)
         self.clear_cookie(COOKIE_NAME)
         self.write("You are now logged out")
@@ -230,7 +235,7 @@ class DispatcherProxy(object):
         app = tornado.web.Application(
             [
                 (r"/auth/login", AuthLoginHandler, dict(client=self._client)),
-                (r"/auth/logout", AuthLogoutHandler),
+                (r"/auth/logout", AuthLogoutHandler, dict(client=self._client)),
                 (r"/dispatcher_static/", web.StaticFileHandler),
                 (r"/.*", MainHandler, dict(client=self._client))
             ],
