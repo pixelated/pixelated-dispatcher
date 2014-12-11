@@ -155,7 +155,7 @@ class DockerProvider(BaseProvider):
                     path = None
                     self._build_image(path, fileobj)
                 logger.info('Finished image %s build in %d seconds' % ('%s:latest' % self._adapter.docker_image_name(), time.time() - start))
-            self._initializing = False
+        self._initializing = False
 
     def _download_image(self, docker_image_name):
         stream = self._docker.pull(repository=docker_image_name, tag='latest', stream=True)

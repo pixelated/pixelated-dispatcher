@@ -130,12 +130,14 @@ class DockerProviderTest(unittest.TestCase):
         # given
         client = docker_mock.return_value
         client.images.return_value = [{'Created': 1404833111, 'VirtualSize': 297017244, 'ParentId': '57885511c8444c2b89743bef8b89eccb65f302b2a95daa95dfcc9b972807b6db', 'RepoTags': ['pixelated:latest'], 'Id': 'b4f10a2395ab8dfc5e1c0fae26fa56c7f5d2541debe54263105fe5af1d263189', 'Size': 181956643}]
+        provider = DockerProvider(self._adapter, 'leap_provider', 'some docker url')
 
         # when
-        DockerProvider(self._adapter, 'leap_provider', 'some docker url').initialize()
+        provider.initialize()
 
         # then
         self.assertFalse(client.build.called)
+        self.assertFalse(provider.initializing)
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_reports_initializing_while_initialize_is_running(self, docker_mock):
