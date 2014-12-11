@@ -37,6 +37,8 @@ import ssl
 from tornado import gen
 from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
 
+import threading
+
 COOKIE_NAME = 'pixelated_user'
 
 
@@ -207,13 +209,29 @@ class AuthLoginHandler(tornado.web.RequestHandler):
             self.clear_cookie(COOKIE_NAME)
 
 
+class StopServerThread(threading.Thread):
+    def __init__(self, client, agent_name):
+        threading.Thread.__init__(self)
+        self._client = client
+        self._agent_name = agent_name
+
+    def run(self):
+        try:
+            self._client.stop(self._agent_name)
+        except Exception, e:
+            logger.error('Error while stopping user:')
+            logger.error(e)
+            raise
+
+
 class AuthLogoutHandler(BaseHandler):
 
     def initialize(self, client):
         self._client = client
 
     def get(self):
-        self._client.stop(self.current_user)
+        if self.current_user:
+            StopServerThread(self._client, self.current_user).start()
         logger.info('User %s logged out' % self.current_user)
         self.clear_cookie(COOKIE_NAME)
         self.write("You are now logged out")

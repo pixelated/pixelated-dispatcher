@@ -15,7 +15,7 @@
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
 import Cookie
 import urllib
-
+import time
 import tornado.httpserver
 
 from mock import MagicMock, patch, ANY
@@ -202,9 +202,17 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         response = self._get('/auth/logout')
         cookies = self._get_cookies(response)
 
+        time.sleep(0.01)   # wait for background call to client.stop
         self.assertEqual(200, response.code)
         self.client.stop.assert_called_once_with('tester')
         self.assertEqual('', cookies['pixelated_user'].value)
+
+    def test_logout_does_not_stop_agent_if_user_is_none(self):
+        response = self._get('/auth/logout')
+        time.sleep(0.01)   # wait for background call to client.stop
+
+        self.assertEqual(200, response.code)
+        self.assertFalse(self.client.stop.called)
 
     def test_pixelated_not_available_error_raised_on_503(self):
         # given
