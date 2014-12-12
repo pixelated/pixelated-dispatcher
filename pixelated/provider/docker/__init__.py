@@ -123,6 +123,14 @@ class DockerProvider(BaseProvider):
         self._leap_provider_hostname = leap_provider_hostname
         self._leap_provider_ca = leap_provider_ca
         self._credentials = {}
+        self._check_docker_connection()
+
+    def _check_docker_connection(self):
+        try:
+            self._docker.info()
+        except Exception, e:
+            logger.error('Failed to talk to docker: %s' % e.message)
+            raise
 
     def initialize(self):
         imgs = self._docker.images()

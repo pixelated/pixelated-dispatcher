@@ -452,6 +452,13 @@ class DockerProviderTest(unittest.TestCase):
         # then
         credentials_mock.return_value.start.assert_called_once_with()
 
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_provider_checks_working_connection_to_docker(self, docker_mock):
+        client = docker_mock.return_value
+        client.info.side_effect = Exception
+
+        self.assertRaises(Exception, DockerProvider, self._adapter, 'leap_provider', 'some docker url')
+
     def _create_initialized_provider(self, adapter, docker_url=DockerProvider.DEFAULT_DOCKER_URL):
         provider = DockerProvider(adapter, 'leap_provider_hostname', 'leap provider ca', docker_url)
         provider._initializing = False
