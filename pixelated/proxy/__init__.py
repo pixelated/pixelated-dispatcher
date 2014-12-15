@@ -109,21 +109,22 @@ class MainHandler(BaseHandler):
 
     @gen.engine
     def _wait_til_agent_is_up(self, agent_runtime, callback):
-        def _ignore_response(response):
-            pass
-
         max_wait = 10
         waited = 0
+
         while waited < max_wait:
             try:
                 port = agent_runtime['port']
-                yield tornado.httpclient.AsyncHTTPClient().fetch(
+                response = yield tornado.httpclient.AsyncHTTPClient().fetch(
                     tornado.httpclient.HTTPRequest(
                         url='http://127.0.0.1:%d/' % port,
-                        headers=self.request.headers),
-                    _ignore_response)
-                waited = max_wait
+                        headers=self.request.headers))
+                if response.code == 200:
+                    logger.info('Got 200, agent seems to be up')
+                    waited = max_wait
             except tornado.httpclient.HTTPError, e:
+                logger.error('Got exception %s' % e)
+            if waited < max_wait:
                 yield gen.Task(tornado.ioloop.IOLoop.current().add_timeout, time.time() + 1)
             waited += 1
         callback()
