@@ -220,7 +220,7 @@ class DockerProviderTest(unittest.TestCase):
 
         data_path = join(self.root_path, 'test', 'data')
 
-        client.start.assert_any_call(container, binds={data_path: {'bind': '/mnt/user', 'ro': False}}, port_bindings={('127.0.0.1', 4567): 5000})
+        client.start.assert_any_call(container, binds={data_path: {'bind': '/mnt/user', 'ro': False}}, port_bindings={4567: ('127.0.0.1', 5000)})
         client.start.assert_any_call(prepare_pixelated_container, binds={data_path: {'bind': '/mnt/user', 'ro': False}})
 
     @patch('pixelated.provider.docker.docker.Client')

@@ -228,7 +228,7 @@ class DockerProvider(BaseProvider):
         port = self._next_available_port()
         self._ports.add(port)
 
-        self._docker.start(c, binds={data_path: {'bind': '/mnt/user', 'ro': False}}, port_bindings={('127.0.0.1', self._adapter.port()): port})
+        self._docker.start(c, binds={data_path: {'bind': '/mnt/user', 'ro': False}}, port_bindings={self._adapter.port(): ('127.0.0.1', port)})
         self._write_credentials_to_docker_stdin(user_config)
 
     def _setup_instance(self, user_config, container_map):
