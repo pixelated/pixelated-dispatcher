@@ -13,6 +13,7 @@ node default {
   'rng-tools',
   'python-dev',
   'python-setuptools',
+  'python-pycurl',
   'gnupg',
   'libffi-dev']:
     ensure => latest
