@@ -70,7 +70,7 @@ class BaseHandler(tornado.web.RequestHandler):
         except tornado.httpclient.HTTPError, x:
             if hasattr(x, 'response') and x.response:
                 self.handle_response(x.response)
-        except e:
+        except Exception, e:
             logger.error('Error forwarding request %s: %s' % (url, e.message))
             self.set_status(500)
             self.write("Internal server error:\n" + ''.join(traceback.format_exception(*sys.exc_info())))
