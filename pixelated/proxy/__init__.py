@@ -122,6 +122,12 @@ class MainHandler(BaseHandler):
     def put(self):
         self.get()
 
+    @tornado.web.authenticated
+    @tornado.web.asynchronous
+    @gen.engine
+    def delete(self):
+        self.get()
+
     def check_xsrf_cookie(self):
         # agent should do it after user has logged in
         pass
