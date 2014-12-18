@@ -89,7 +89,7 @@ class SmokeTest(unittest.TestCase):
                                      keyfile=keyfile())
         return SmokeTest.Server(dispatcher.serve_forever, dispatcher.shutdown, thread_name='PixelatedDispatcherProxy')
 
-    def _method(self, method, url, form_data=None, json_data=None, timeout=2.0):
+    def _method(self, method, url, form_data=None, json_data=None, timeout=5.0):
         if json_data:
             headers = {'content-type': 'application/json'}
             data = json.dumps(json_data)

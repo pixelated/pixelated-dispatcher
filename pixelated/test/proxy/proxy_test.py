@@ -17,35 +17,72 @@ import Cookie
 import urllib
 import time
 import tornado.httpserver
+from tornado.ioloop import IOLoop
+import threading
 
 from mock import MagicMock, patch, ANY
 import tornado
-from tornado.testing import AsyncHTTPTestCase
+from tornado.testing import AsyncHTTPTestCase, gen_test
 
 from pixelated.client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
 from pixelated.proxy import DispatcherProxy, MainHandler
 from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
+from bottle import request, route, run, ServerAdapter, Bottle
 
 __author__ = 'fbernitt'
 
 
-class TestServer(object):
+class MyWSGIRefServer(ServerAdapter):
+    server = None
+
+    def run(self, handler):
+        from wsgiref.simple_server import make_server, WSGIRequestHandler
+        if self.quiet:
+            class QuietHandler(WSGIRequestHandler):
+                def log_request(*args, **kw):
+                    pass
+            self.options['handler_class'] = QuietHandler
+        self.server = make_server(self.host, self.port, handler, **self.options)
+        self.server.serve_forever()
+
+    def stop(self):
+        self.server.shutdown()
+
+
+class Server(object):
     PORT = 8888
+    HOSTNAME = '127.0.0.1'
 
-    __slots__ = ('_request_handler', '_http_server')
+    def __init__(self, thread_name=None):
+        self._thread_name = thread_name
+        self._thread = None
 
-    def __init__(self, request_handler):
-        self._request_handler = request_handler
-        self._http_server = None
+    def _start_server(self):
+        self._thread = threading.Thread(target=self.run)
+        self._thread.setDaemon(True)
+        if self._thread_name:
+            self._thread.setName(self._thread_name)
+        self._thread.start()
+
+    def run(self):
+        app = Bottle()
+
+        @app.route("/")
+        @app.route("/<url:re:.+>")
+        def catch_all_requests(url=None):
+            return 'You requested %s\n' % request.path
+
+        self._server = MyWSGIRefServer(host=Server.HOSTNAME, port=Server.PORT)
+        app.run(server=self._server)
 
     def __enter__(self):
-        self._http_server = tornado.httpserver.HTTPServer(self._request_handler)
-        self._http_server.listen(TestServer.PORT, '127.0.0.1')
+        self._start_server()
+        time.sleep(0.3)  # let server start
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._http_server.stop()
-        pass
+        self._server.stop()
+        self._thread.join()
 
 
 class DispatcherProxyTest(AsyncHTTPTestCase):
@@ -59,7 +96,9 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self._dispatcher._ioloop = self.io_loop
         return self._dispatcher.create_app()
 
-    def _method(self, method, url, payload=None, auto_xsrf=True, **kwargs):
+    def _method(self, method, url, payload=None, auto_xsrf=True, callback=None, **kwargs):
+        if callback is None:
+            callback = self.stop
         if auto_xsrf and method == 'POST':
             self.cookies['_xsrf'] = '2|7586b241|47c876d965112a2f547c63c95cbc44b1|1402910163'
             if payload and '_xsrf' not in payload:
@@ -74,7 +113,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
 
         self.http_client.fetch(self.get_url(url), self.stop, follow_redirects=False, method=method, headers=headers,
                                body=payload)
-        return self.wait()
+        return self.wait(timeout=2000)
 
     def _get(self, url, **kwargs):
         return self._method('GET', url, **kwargs)
@@ -95,7 +134,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
 
     def test_invalid_login(self):
         self.client.get_agent.return_value = {}
-        self.client.authenticate.side_effect = PixelatedHTTPError
+        self.client.authenticate.side_effect = PixelatedHTTPError(status_code=403)
         payload = {
             'username': 'tester',
             'password': 'invalid'
@@ -110,7 +149,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self.assertEqual('/auth/login', response.headers['Location'])
 
     def test_invalid_agent(self):
-        self.client.get_agent.side_effect = PixelatedHTTPError()
+        self.client.get_agent.side_effect = PixelatedHTTPError(status_code=403)
         payload = {
             'username': 'invalid_agent',
             'password': 'test',
@@ -124,12 +163,29 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self.assertEqual('/auth/login', response.headers['Location'])
 
     def test_successful_login(self):
-        self.client.get_agent.return_value = {}
+        self.client.get_agent_runtime.side_effect = [{'state': 'stopped'}, {'state': 'stopped'}, {'state': 'running', 'port': Server.PORT}, {'state': 'running', 'port': Server.PORT}]
         payload = {
             'username': 'tester',
             'password': 'test',
         }
-        response = self._post('/auth/login', payload=payload)
+        with Server():
+            response = self._post('/auth/login', payload=payload)
+
+        self.assertEqual(302, response.code)
+        self.assertEqual('/', response.headers['Location'])
+        cookies = self._get_cookies(response)
+        self.assertTrue('pixelated_user' in cookies)
+        self.client.start.assert_called_once_with('tester')
+
+    def test_successful_login_with_already_running_agent(self):
+        self.client.start.side_effect = PixelatedHTTPError(status_code=403)
+        self.client.get_agent_runtime.return_value = {'state': 'running', 'port': Server.PORT}
+        payload = {
+            'username': 'tester',
+            'password': 'test',
+        }
+        with Server():
+            response = self._post('/auth/login', payload=payload)
 
         self.assertEqual(302, response.code)
         self.assertEqual('/', response.headers['Location'])
@@ -165,17 +221,11 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
 
     def test_autostart_agent_if_not_running(self):
         # given
-        self.client.get_agent_runtime.side_effect = [{'state': 'stopped'}, {'state': 'stopped'}, {'state': 'running', 'port': TestServer.PORT}]
-        self._fetch_auth_cookie()
-
-        def fake_handle_request(request):
-            message = "You requested %s\n" % request.uri
-            request.write("HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s" % (
-                len(message), message))
-            request.finish()
+        self.client.get_agent_runtime.side_effect = [{'state': 'stopped'}, {'state': 'stopped'}, {'state': 'running', 'port': Server.PORT}, {'state': 'running', 'port': Server.PORT}]
 
         # when
-        with TestServer(fake_handle_request):
+        with Server():
+            self._fetch_auth_cookie()
             response = self._get('/some/url')
 
         # then
@@ -185,8 +235,11 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
 
     def test_autostart_error_message_if_agent_fails_to_start(self):
         # given
+        self.client.get_agent_runtime.side_effect = [{'state': 'stopped'}, {'state': 'stopped'}, {'state': 'running', 'port': Server.PORT}, {'state': 'running', 'port': Server.PORT}]
         self.client.get_agent_runtime.return_value = {'state': 'stopped'}
-        self._fetch_auth_cookie()
+
+        with Server():
+            self._fetch_auth_cookie()
 
         # when
         response = self._get('/some/url')
@@ -194,12 +247,15 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         # then
         self.client.start.assert_called_once_with('tester')
         self.assertEqual(503, response.code)
-        self.assertEqual('Could not connect to instance tester!\n', response.body)
+        self.assertEqual('Could not connect to instance tester: HTTP 599: Failed to connect to 127.0.0.1 port 8888: Connection refused\n', response.body)
 
     def test_logout_stops_user_agent_end_resets_session_cookie(self):
-        self._fetch_auth_cookie()
+        self.client.get_agent_runtime.side_effect = [{'state': 'stopped'}, {'state': 'stopped'}, {'state': 'running', 'port': Server.PORT}, {'state': 'running', 'port': Server.PORT}]
 
-        response = self._get('/auth/logout')
+        with Server():
+            self._fetch_auth_cookie()
+            response = self._get('/auth/logout')
+
         cookies = self._get_cookies(response)
 
         time.sleep(0.01)   # wait for background call to client.stop

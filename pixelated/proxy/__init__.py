@@ -36,10 +36,14 @@ import ssl
 
 from tornado import gen
 from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
-
+from tornado.httpclient import AsyncHTTPClient
 import threading
 
 COOKIE_NAME = 'pixelated_user'
+
+REQUEST_TIMEOUT = 5
+TIMEOUT_WAIT_FOR_AGENT_TO_BE_UP = 5
+TIMEOUT_WAIT_STEP = 0.5
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -50,90 +54,33 @@ class BaseHandler(tornado.web.RequestHandler):
         else:
             return None
 
-
-class MainHandler(BaseHandler):
-    __slots__ = '_client'
-
-    def initialize(self, client):
-        self._client = client
-
-    @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @gen.engine
-    def get(self):
-        runtime = self._client.get_agent_runtime(self.current_user)
-        if runtime['state'] == 'running':
-            port = runtime['port']
-            self.forward(port, '127.0.0.1')
-        else:
-            try:
-                logger.info('Starting agent for %s' % self.current_user)
-                self._client.start(self.current_user)
-                # wait til agent is running
-                runtime = self._client.get_agent_runtime(self.current_user)
-                max_wait_seconds = 3
-                waited = 0
-                while runtime['state'] != 'running' and waited < max_wait_seconds:
-                    yield gen.Task(tornado.ioloop.IOLoop.current().add_timeout, time.time() + 1)
-                    runtime = self._client.get_agent_runtime(self.current_user)
-                    waited += 1
-
-                if runtime['state'] == 'running':
-                    yield gen.Task(self._wait_til_agent_is_up, runtime)
-                    port = runtime['port']
-                    self.forward(port, '127.0.0.1')
-                else:
-                    logger.error('Failed to start agent for %s' % self.current_user)
-                    self.set_status(503)
-                    self.write("Could not connect to instance %s!\n" % self.current_user)
-                    self.finish()
-            except Exception, e:
-                logger.error('Got some exception.... %s' % e)
-                raise
-
-    @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @gen.engine
-    def post(self):
-        self.get()
-
-    @tornado.web.authenticated
-    @tornado.web.asynchronous
-    @gen.engine
-    def put(self):
-        self.get()
-
-    def check_xsrf_cookie(self):
-        # agent should do it after user has logged in
-        pass
-
-    @gen.engine
-    def _wait_til_agent_is_up(self, agent_runtime, callback):
-        max_wait = 10
-        waited = 0
-
-        while waited < max_wait:
-            try:
-                port = agent_runtime['port']
-                response = yield tornado.httpclient.AsyncHTTPClient().fetch(
-                    tornado.httpclient.HTTPRequest(
-                        url='http://127.0.0.1:%d/' % port,
-                        headers=self.request.headers))
-                if response.code == 200:
-                    logger.info('Got 200, agent seems to be up')
-                    waited = max_wait
-            except tornado.httpclient.HTTPError, e:
-                logger.error('Got exception %s' % e)
-            if waited < max_wait:
-                yield gen.Task(tornado.ioloop.IOLoop.current().add_timeout, time.time() + 1)
-            waited += 1
-        callback()
+    def forward(self, port=None, host=None):
+        url = "%s://%s:%s%s" % (
+            'http', host or "127.0.0.1", port or 80, self.request.uri)
+        try:
+            AsyncHTTPClient().fetch(
+                tornado.httpclient.HTTPRequest(
+                    url=url,
+                    method=self.request.method,
+                    body=None if not self.request.body else self.request.body,
+                    headers=self.request.headers,
+                    follow_redirects=False,
+                    request_timeout=REQUEST_TIMEOUT),
+                self.handle_response)
+        except tornado.httpclient.HTTPError, x:
+            if hasattr(x, 'response') and x.response:
+                self.handle_response(x.response)
+        except e:
+            logger.error('Error forwarding request %s: %s' % (url, e.message))
+            self.set_status(500)
+            self.write("Internal server error:\n" + ''.join(traceback.format_exception(*sys.exc_info())))
+            self.finish()
 
     def handle_response(self, response):
-        if response.error and not isinstance(response.error, tornado.httpclient.HTTPError):
+        if response.error:
             logger.error('Got error from user %s agent: %s' % (self.current_user, response.error))
-            self.set_status(500)
-            self.write("Internal server error:\n" + str(response.error))
+            self.set_status(503)
+            self.write("Could not connect to instance %s: %s\n" % (self.current_user, str(response.error)))
             self.finish()
         else:
             self.set_status(response.code)
@@ -145,27 +92,39 @@ class MainHandler(BaseHandler):
                 self.write(response.body)
             self.finish()
 
-    def forward(self, port=None, host=None):
-        url = "%s://%s:%s%s" % (
-            'http', host or "127.0.0.1", port or 80, self.request.uri)
-        try:
-            tornado.httpclient.AsyncHTTPClient().fetch(
-                tornado.httpclient.HTTPRequest(
-                    url=url,
-                    method=self.request.method,
-                    body=None if not self.request.body else self.request.body,
-                    headers=self.request.headers,
-                    follow_redirects=False,
-                    request_timeout=10),
-                self.handle_response)
-        except tornado.httpclient.HTTPError, x:
-            if hasattr(x, 'response') and x.response:
-                self.handle_response(x.response)
-        except e:
-            logger.error('Error forwarding request %s: %s' % (url, e.message))
-            self.set_status(500)
-            self.write("Internal server error:\n" + ''.join(traceback.format_exception(*sys.exc_info())))
-            self.finish()
+
+class MainHandler(BaseHandler):
+    __slots__ = '_client'
+
+    def initialize(self, client):
+        self._client = client
+
+    @tornado.web.authenticated
+    @tornado.web.asynchronous
+    def get(self):
+        runtime = self._client.get_agent_runtime(self.current_user)
+        if runtime['state'] == 'running':
+            port = runtime['port']
+            self.forward(port, '127.0.0.1')
+        else:
+            logger.error('Agent for %s not running - redirecting user to logout' % self.current_user)
+            self.redirect(u'/auth/logout')
+
+    @tornado.web.authenticated
+    @tornado.web.asynchronous
+    @gen.coroutine
+    def post(self):
+        self.get()
+
+    @tornado.web.authenticated
+    @tornado.web.asynchronous
+    @gen.coroutine
+    def put(self):
+        self.get()
+
+    def check_xsrf_cookie(self):
+        # agent should do it after user has logged in
+        pass
 
 
 class AuthLoginHandler(tornado.web.RequestHandler):
@@ -181,8 +140,9 @@ class AuthLoginHandler(tornado.web.RequestHandler):
 
         self.render('login.html', error=error_message)
 
+    @tornado.web.asynchronous
+    @gen.coroutine
     def post(self):
-
         username = self.get_argument("username", "")
         password = self.get_argument("password", "")
 
@@ -192,16 +152,80 @@ class AuthLoginHandler(tornado.web.RequestHandler):
             # now authenticate with server...
             self._client.authenticate(username, password)
             self.set_current_user(username)
-            self.redirect(u'/')
+
             logger.info('Successful login of user %s' % username)
+            logger.info('Starting agent for %s' % username)
+            runtime = self._client.get_agent_runtime(username)
+            if runtime['state'] != 'running':
+                self._client.start(username)
+
+                # wait til agent is running
+                runtime = self._client.get_agent_runtime(username)
+                max_wait_seconds = TIMEOUT_WAIT_FOR_AGENT_TO_BE_UP
+                waited = 0
+                while runtime['state'] != 'running' and waited < max_wait_seconds:
+                    yield gen.Task(tornado.ioloop.IOLoop.current().add_timeout, time.time() + TIMEOUT_WAIT_STEP)
+                    runtime = self._client.get_agent_runtime(username)
+                    waited += TIMEOUT_WAIT_STEP
+
+                # wait till agent is up and serving
+                if runtime['state'] == 'running':
+                    yield gen.Task(self._wait_til_agent_is_up, runtime)
+                    port = runtime['port']
+                    self.redirect(u'/')
+                else:
+                    logger.warn('Agent not running, redirecting user to login page')
+                    self.redirect(u'/auth/login')
+            else:
+                self.redirect(u'/')
         except PixelatedNotAvailableHTTPError:
             logger.error('Login attempt while service not available by user: %s' % username)
             self.set_cookie('error_msg', tornado.escape.url_escape('Service currently not available'))
             self.redirect(u'/auth/login')
-        except PixelatedHTTPError:
+        except PixelatedHTTPError, e:
             logger.warn('Login attempt with invalid credentials by user %s' % username)
             self.set_cookie('error_msg', tornado.escape.url_escape('Invalid credentials'))
             self.redirect(u'/auth/login')
+        except Exception, e:
+            logger.error('Unexpected exception: %s' % e)
+            raise
+
+    @gen.coroutine
+    def _wait_til_agent_is_up(self, agent_runtime):
+        max_wait = TIMEOUT_WAIT_FOR_AGENT_TO_BE_UP
+        waited = 0
+        agent_up = False
+        port = agent_runtime['port']
+        url = 'http://127.0.0.1:%d/' % port
+
+        logger.error('Checking for user agent on url %s' % url)
+        start = time.time()
+        while waited < max_wait:
+            try:
+                # define a callback for older tornado versions
+                def _some_callback(response):
+                    pass
+
+                response = yield AsyncHTTPClient(force_instance=True).fetch(
+                    tornado.httpclient.HTTPRequest(
+                        connect_timeout=REQUEST_TIMEOUT, request_timeout=REQUEST_TIMEOUT,
+                        url=url, allow_ipv6=False), _some_callback)
+                if response.code == 200:
+                    logger.info('Got 200, agent seems to be up')
+                    waited = max_wait
+                    agent_up = True
+                else:
+                    logger.error('Got response with status code %d' % response.code)
+            except tornado.httpclient.HTTPError, e:
+                logger.info('Got exception while checking for agent to be up: %s' % e)
+            except Exception, e:
+                logger.info('Got exception while checking for agent to be up: %s' % e)
+
+            if waited < max_wait:
+                yield gen.Task(tornado.ioloop.IOLoop.current().add_timeout, time.time() + TIMEOUT_WAIT_STEP)
+            waited += TIMEOUT_WAIT_STEP
+        if not agent_up:
+            raise PixelatedNotAvailableHTTPError('Failed to start agent')
 
     def set_current_user(self, username):
         if username:
@@ -249,6 +273,8 @@ class DispatcherProxy(object):
         self._keyfile = keyfile
         self._ioloop = None
         self._server = None
+
+        AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
 
     def create_app(self):
         app = tornado.web.Application(

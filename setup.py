@@ -46,7 +46,8 @@ setup(
         'psutil',
         'docker-py',
         'srp',
-        'leap.common'
+        'leap.common',
+        'pycurl'
     ],
     test_suite='nose.collector',
     tests_require=[

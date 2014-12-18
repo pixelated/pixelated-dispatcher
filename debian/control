@@ -26,7 +26,7 @@ Description: Pixelated-dispatcher dispatches between multiple pixelated user-age
 Package: pixelated-dispatcher-proxy
 Architecture: all
 #Depends: ${misc:Depends}, ${python:Depends}
-Depends: python (>= 2.7), python (<< 2.8), python-gnupg-ng, python-tornado, python-requests (>= 2.0.0), python-urllib3, python-scrypt, python-setuptools,pixelated-dispatcher-common
+Depends: python (>= 2.7), python (<< 2.8), python-gnupg-ng, python-tornado, python-pycurl, python-requests (>= 2.0.0), python-urllib3, python-scrypt, python-setuptools,pixelated-dispatcher-common
 Description: Pixelated-dispatcher dispatches between multiple pixelated user-agents
  Run multiple single user web apps on a server
  .
