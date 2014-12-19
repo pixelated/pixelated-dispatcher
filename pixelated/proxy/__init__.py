@@ -124,7 +124,7 @@ class MainHandler(BaseHandler):
 
     @tornado.web.authenticated
     @tornado.web.asynchronous
-    @gen.engine
+    @gen.coroutine
     def delete(self):
         self.get()
 
