@@ -25,7 +25,7 @@ This repository contains a Vagrantfile that sets up a running pixelated-dispatch
     
     cd /vagrant
     
-It provides a command line interface (CLI) to manage agents:
+It provides a command-line interface (CLI) to manage agents:
 
     # add a new user
     python pixelated/pixelated-dispatcher.py -k add <username>
