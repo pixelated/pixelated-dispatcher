@@ -7,6 +7,7 @@ Exec["apt-update"] -> Package <| |>
 node default {
   package { [
   'build-essential',
+  'libcurl4-openssl-dev',
   'libssl-dev',
   'docker.io',
   'rng-tools',
