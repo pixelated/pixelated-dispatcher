@@ -55,10 +55,11 @@ class BaseHandler(tornado.web.RequestHandler):
             return None
 
     def forward(self, port=None, host=None):
+
         url = "%s://%s:%s%s" % (
             'http', host or "127.0.0.1", port or 80, self.request.uri)
         try:
-            AsyncHTTPClient().fetch(
+            response = AsyncHTTPClient().fetch(
                 tornado.httpclient.HTTPRequest(
                     url=url,
                     method=self.request.method,
@@ -67,6 +68,7 @@ class BaseHandler(tornado.web.RequestHandler):
                     follow_redirects=False,
                     request_timeout=REQUEST_TIMEOUT),
                 self.handle_response)
+            return response
         except tornado.httpclient.HTTPError, x:
             if hasattr(x, 'response') and x.response:
                 self.handle_response(x.response)
@@ -112,19 +114,16 @@ class MainHandler(BaseHandler):
 
     @tornado.web.authenticated
     @tornado.web.asynchronous
-    @gen.coroutine
     def post(self):
         self.get()
 
     @tornado.web.authenticated
     @tornado.web.asynchronous
-    @gen.coroutine
     def put(self):
         self.get()
 
     @tornado.web.authenticated
     @tornado.web.asynchronous
-    @gen.coroutine
     def delete(self):
         self.get()
 
@@ -151,7 +150,6 @@ class AuthLoginHandler(tornado.web.RequestHandler):
     def post(self):
         username = self.get_argument("username", "")
         password = self.get_argument("password", "")
-
         try:
             agent = self._client.get_agent(username)
 
