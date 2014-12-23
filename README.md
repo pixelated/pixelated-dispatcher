@@ -21,11 +21,11 @@ This repository contains a Vagrantfile that sets up a running pixelated-dispatch
     
     # It takes some time to initialize the docker containers so wait until there is no docker job running for
     # a few minutes:
-    docker ps  # list running docker processes
-    
-    cd /vagrant
+    docker ps  # list running docker processes or use "watch docker ps" to see when a new docker image is done.
     
 It provides a command-line interface (CLI) to manage agents:
+
+   	cd /vagrant
 
     # add a new user
     python pixelated/pixelated-dispatcher.py -k add <username>
