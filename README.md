@@ -1,8 +1,6 @@
 pixelated-dispatcher
 ====================
 
-[![Build Status](https://travis-ci.org/pixelated-project/pixelated-dispatcher.svg?branch=master)](https://travis-ci.org/pixelated-project/pixelated-dispatcher)
-
 # Run multiple single user web apps on a server
 
 pixelated-dispatcher allows you to run multiple instances of an application that had been designed for a single user.
@@ -22,10 +20,12 @@ This repository contains a Vagrantfile that sets up a running pixelated-dispatch
     # It takes some time to initialize the docker containers so wait until there is no docker job running for
     # a few minutes:
     docker ps  # list running docker processes or use "watch docker ps" to see when a new docker image is done.
-    
-It provides a command-line interface (CLI) to manage agents:
 
-   	cd /vagrant
+Now you can access the agent using a browser at https://localhost:8080/
+
+# Command line interface (CLI)
+
+The following commands can be used to manage agents:
 
     # add a new user
     python pixelated/pixelated-dispatcher.py -k add <username>
@@ -44,10 +44,6 @@ It provides a command-line interface (CLI) to manage agents:
     # To see all possible commands or the meaning of parameters call
     python pixelated/pixelated-dispatcher.py --help
 
-Now you can [access the agent using a browser](https://localhost:8080/). To logout of a agent just call
-[https://localhost:8080/auth/logout](https://localhost:8080/auth/logout) (currently there is no logout link
-in the mail clients).
-    
 # Overview
 
 pixelated-dispatcher is based on a combination of two deamons to provide the service.
