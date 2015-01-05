@@ -247,7 +247,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         # then
         self.client.start.assert_called_once_with('tester')
         self.assertEqual(503, response.code)
-        self.assertEqual('Could not connect to instance tester: HTTP 599: Failed to connect to 127.0.0.1 port 8888: Connection refused\n', response.body)
+        self.assertRegexpMatches(response.body, 'Could not connect to instance tester: .*')
 
     def test_logout_stops_user_agent_end_resets_session_cookie(self):
         self.client.get_agent_runtime.side_effect = [{'state': 'stopped'}, {'state': 'stopped'}, {'state': 'running', 'port': Server.PORT}, {'state': 'running', 'port': Server.PORT}]
