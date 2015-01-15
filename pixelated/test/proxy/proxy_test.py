@@ -115,6 +115,11 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
                                body=payload)
         return self.wait(timeout=2000)
 
+    def get_url(self, path):
+        return '%s://%s:%s%s' % (self.get_protocol(),
+                                 Server.HOSTNAME,
+                                 self.get_http_port(), path)
+
     def _get(self, url, **kwargs):
         return self._method('GET', url, **kwargs)
 
