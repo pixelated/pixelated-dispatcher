@@ -21,7 +21,7 @@ from pixelated.exceptions import UserNotExistError
 
 from pixelated.bitmask_libraries.leap_config import LeapConfig
 from pixelated.bitmask_libraries.leap_provider import LeapProvider
-from pixelated.bitmask_libraries.leap_srp import LeapSecureRemotePassword, LeapAuthException
+from pixelated.bitmask_libraries.leap_srp import LeapSecureRemotePassword, LeapAuthException, LeapSRPTLSConfig
 from pixelated.bitmask_libraries.leap_certs import which_bundle
 
 
@@ -31,14 +31,15 @@ def str_password(password):
 
 class Authenticator(object):
 
-    __slots__ = ('_users', '_leap_provider_hostname', '_leap_provider_ca')
+    __slots__ = ('_users', '_leap_provider_hostname', '_leap_provider_ca', '_leap_provider_fingerprint')
 
     SALT_HASH_LENGHT = 128
 
-    def __init__(self, users, leap_provider_hostname=None, leap_provider_ca=True):
+    def __init__(self, users, leap_provider_hostname=None, leap_provider_ca=True, leap_provider_fingerprint=None):
         self._users = users
         self._leap_provider_hostname = leap_provider_hostname
         self._leap_provider_ca = leap_provider_ca
+        self._leap_provider_fingerprint = leap_provider_fingerprint
 
     def add_credentials(self, username, password):
         salt = binascii.hexlify(str(random.getrandbits(128)))
@@ -73,7 +74,8 @@ class Authenticator(object):
     def _can_authorize_with_leap_provider(self, username, password):
         config = LeapConfig(ca_cert_bundle=self._leap_provider_ca)
         provider = LeapProvider(self._leap_provider_hostname, config)
-        srp = LeapSecureRemotePassword(ca_bundle=which_bundle(provider))
+        tls_config = LeapSRPTLSConfig(ca_bundle=which_bundle(provider), assert_fingerprint=self._leap_provider_fingerprint)
+        srp = LeapSecureRemotePassword(tls_config=tls_config)
 
         try:
             srp.authenticate(provider.api_uri, username, password)

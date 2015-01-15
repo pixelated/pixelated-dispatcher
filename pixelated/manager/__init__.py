@@ -245,9 +245,9 @@ class RESTfulServer(object):
 
 
 class DispatcherManager(object):
-    __slots__ = ('_root_path', '_mailpile_bin', '_mailpile_virtualenv', '_ssl_config', '_server', '_provider', '_bindaddr', '_leap_provider_hostname', '_leap_provider_ca')
+    __slots__ = ('_root_path', '_mailpile_bin', '_mailpile_virtualenv', '_ssl_config', '_server', '_provider', '_bindaddr', '_leap_provider_hostname', '_leap_provider_ca', '_leap_provider_fingerprint')
 
-    def __init__(self, root_path, mailpile_bin, ssl_config, leap_provider_hostname, leap_provider_ca, mailpile_virtualenv=None, provider='fork', bindaddr='127.0.0.1'):
+    def __init__(self, root_path, mailpile_bin, ssl_config, leap_provider_hostname, leap_provider_ca, leap_provider_fingerprint=None, mailpile_virtualenv=None, provider='fork', bindaddr='127.0.0.1'):
         self._root_path = root_path
         self._mailpile_bin = mailpile_bin
         self._mailpile_virtualenv = mailpile_virtualenv
@@ -257,10 +257,11 @@ class DispatcherManager(object):
         self._bindaddr = bindaddr
         self._leap_provider_hostname = leap_provider_hostname
         self._leap_provider_ca = leap_provider_ca
+        self._leap_provider_fingerprint = leap_provider_fingerprint
 
     def serve_forever(self):
         users = Users(self._root_path)
-        authenticator = Authenticator(users, self._leap_provider_hostname, self._leap_provider_ca)
+        authenticator = Authenticator(users, self._leap_provider_hostname, self._leap_provider_ca, leap_provider_fingerprint=self._leap_provider_fingerprint)
         provider = self._create_provider()
 
         Thread(target=provider.initialize).start()

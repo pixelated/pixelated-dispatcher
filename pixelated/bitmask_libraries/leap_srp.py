@@ -20,7 +20,7 @@ import requests
 from requests import Session
 from srp import User, srp, create_salted_verification_key
 from requests.exceptions import HTTPError, SSLError, Timeout
-
+from pixelated.client.dispatcher_api_client import EnforceTLSv1Adapter, VERIFY_HOSTNAME
 
 REGISTER_USER_LOGIN_KEY = 'user[login]'
 REGISTER_USER_VERIFIER_KEY = 'user[password_verifier]'
@@ -46,18 +46,35 @@ class LeapSRPSession(object):
         return 'LeapSRPSession(%s, %s, %s, %s, %s, %s)' % (self.user_name, self.api_server_name, self.uuid, self.token, self.session_id, self.api_version)
 
 
+class LeapSRPTLSConfig(object):
+    def __init__(self, ca_bundle=SYSTEM_CA_BUNDLE, assert_hostname=VERIFY_HOSTNAME, assert_fingerprint=None):
+        self.ca_bundle = ca_bundle
+        self.assert_hostname = assert_hostname
+        self.assert_fingerprint = assert_fingerprint
+
+    def __eq__(self, other):
+        return isinstance(other, LeapSRPTLSConfig) and self.ca_bundle == other.ca_bundle and self.assert_hostname == other.assert_hostname and self.assert_fingerprint == other.assert_fingerprint
+
+    def __hash__(self):
+        return hash((self.ca_bundle, self.assert_hostname, self.assert_fingerprint))
+
+
+DEFAULT_TLS_CONFIG = LeapSRPTLSConfig()
+
+
 class LeapSecureRemotePassword(object):
-    def __init__(self, hash_alg=srp.SHA256, ng_type=srp.NG_1024, ca_bundle=SYSTEM_CA_BUNDLE, timeout_in_s=15,
+    def __init__(self, hash_alg=srp.SHA256, ng_type=srp.NG_1024, tls_config=DEFAULT_TLS_CONFIG, timeout_in_s=15,
                  leap_api_version='1'):
 
         self.hash_alg = hash_alg
         self.ng_type = ng_type
         self.timeout_in_s = timeout_in_s
-        self.ca_bundle = ca_bundle
+        self.tls_config = tls_config
         self.leap_api_version = leap_api_version
 
     def authenticate(self, api_uri, username, password):
         session = Session()
+        session.mount('https://', EnforceTLSv1Adapter(assert_fingerprint=self.tls_config.assert_fingerprint, assert_hostname=self.tls_config.assert_hostname))
         try:
             return self._authenticate_with_session(session, api_uri, username, password)
         except Timeout, e:
@@ -86,7 +103,7 @@ class LeapSecureRemotePassword(object):
             "A": binascii.hexlify(A)
         }
         session_url = '%s/%s/sessions' % (api_uri, self.leap_api_version)
-        response = session.post(session_url, data=auth_data, verify=self.ca_bundle, timeout=self.timeout_in_s)
+        response = session.post(session_url, data=auth_data, verify=self.tls_config.ca_bundle, timeout=self.timeout_in_s)
         response.raise_for_status()
         json_content = json.loads(response.content)
 
@@ -103,7 +120,7 @@ class LeapSecureRemotePassword(object):
         }
 
         auth_url = '%s/%s/sessions/%s' % (api_uri, self.leap_api_version, user.get_username())
-        response = session.put(auth_url, data=auth_data, verify=self.ca_bundle, timeout=self.timeout_in_s)
+        response = session.put(auth_url, data=auth_data, verify=self.tls_config.ca_bundle, timeout=self.timeout_in_s)
         response.raise_for_status()
         auth_json = json.loads(response.content)
 
@@ -135,7 +152,7 @@ class LeapSecureRemotePassword(object):
             REGISTER_USER_VERIFIER_KEY: binascii.hexlify(verifier)
         }
 
-        response = requests.post(users_url, data=user_data, verify=self.ca_bundle, timeout=self.timeout_in_s)
+        response = requests.post(users_url, data=user_data, verify=self.tls_config.ca_bundle, timeout=self.timeout_in_s)
         response.raise_for_status()
         reg_json = json.loads(response.content)
 

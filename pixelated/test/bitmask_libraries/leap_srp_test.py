@@ -17,11 +17,13 @@ import json
 import unittest
 import binascii
 from urlparse import parse_qs
+from mock import MagicMock, patch, ANY
+from requests import Session
 
 from httmock import urlmatch, all_requests, HTTMock, response
 from requests.exceptions import Timeout
 import srp
-from pixelated.bitmask_libraries.leap_srp import LeapSecureRemotePassword, LeapAuthException
+from pixelated.bitmask_libraries.leap_srp import LeapSecureRemotePassword, LeapAuthException, LeapSRPTLSConfig
 
 
 (salt_bytes, verification_key_bytes) = srp.create_salted_verification_key('username', 'password', hash_alg=srp.SHA256, ng_type=srp.NG_1024)
@@ -155,3 +157,18 @@ class LeapSRPTest(unittest.TestCase):
         with HTTMock(timeout_mock):
             lsrp = LeapSecureRemotePassword()
             self.assertRaises(LeapAuthException, lsrp.register, 'https://api.leap.local', 'username', 'password')
+
+    def test_specify_tls_config(self):
+        tls_config = LeapSRPTLSConfig(ca_bundle=None, assert_hostname='hostname', assert_fingerprint='fingerprint')
+
+        with HTTMock(srp_login_server_simulator_mock):
+            session = Session()
+            session_mock = MagicMock(wraps=session)
+            with patch('pixelated.bitmask_libraries.leap_srp.Session', return_value=session_mock):
+                lsrp = LeapSecureRemotePassword(tls_config=tls_config)
+                lsrp.authenticate('https://api.leap.local', 'username', 'password')
+
+            session_mock.mount.assert_called_once_with('https://', ANY)
+            adapter = session_mock.mount.call_args[0][1]
+            self.assertEqual('hostname', adapter._assert_hostname)
+            self.assertEqual('fingerprint', adapter._assert_fingerprint)

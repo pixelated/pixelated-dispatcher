@@ -303,3 +303,18 @@ class RESTfulServerTest(unittest.TestCase):
         # then
         thread_mock.assert_called_with(target=self.mock_provider.initialize)
         self.assertFalse(self.mock_provider.initialize.called)
+
+    @patch('pixelated.manager.Authenticator')
+    @patch('pixelated.manager.DockerProvider')
+    @patch('pixelated.manager.RESTfulServer')
+    @patch('pixelated.manager.Thread')
+    @patch('pixelated.manager.Users')
+    def test_that_tls_config_gets_passed_to_authenticator(self, users_mock, thread_mock, server_mock, docker_provider_mock, authenticator_mock):
+        # given
+        manager = DispatcherManager(None, None, None, None, 'some ca bundle', leap_provider_fingerprint='some fingerprint', provider='docker')
+
+        # when
+        manager.serve_forever()
+
+        # then
+        authenticator_mock.assert_called_once_with(users_mock.return_value, None, 'some ca bundle', leap_provider_fingerprint='some fingerprint')

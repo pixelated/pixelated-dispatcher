@@ -21,7 +21,7 @@ from pixelated.exceptions import UserNotExistError
 from pixelated.users import Users, UserConfig
 from pixelated.authenticator import Authenticator
 from pixelated.bitmask_libraries.leap_config import LeapConfig
-from pixelated.bitmask_libraries.leap_srp import LeapAuthException
+from pixelated.bitmask_libraries.leap_srp import LeapAuthException, LeapSRPTLSConfig
 
 
 class AuthenticatorTest(unittest.TestCase):
@@ -89,7 +89,7 @@ class AuthenticatorTest(unittest.TestCase):
         provider_mock.return_value.api_uri = '/1/some/uri'
 
         # when
-        auth = Authenticator(self.users, 'leap provider hostname', 'some bundle')
+        auth = Authenticator(self.users, 'leap provider hostname', 'some bundle', leap_provider_fingerprint='some fingerprint')
         result = auth.authenticate('name', 'password')
 
         # then
@@ -98,7 +98,7 @@ class AuthenticatorTest(unittest.TestCase):
 
         provider_mock.assert_called_once_with('leap provider hostname', leap_config_mock.return_value)
         leap_config_mock.assert_called_once_with(ca_cert_bundle='some bundle')
-        srp_mock.assert_called_once_with(ca_bundle='some bundle')
+        srp_mock.assert_called_once_with(tls_config=LeapSRPTLSConfig(ca_bundle='some bundle', assert_fingerprint='some fingerprint'))
         srp_mock.return_value.authenticate.assert_called_once_with('/1/some/uri', 'name', 'password')
         self.users.update_config.assert_called_once_with(user_config)
         self.assertTrue(result)
