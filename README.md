@@ -1,6 +1,8 @@
 pixelated-dispatcher
 ====================
 
+[![Build Status](https://travis-ci.org/pixelated-project/pixelated-dispatcher.svg?branch=master)](https://travis-ci.org/pixelated-project/pixelated-dispatcher)
+
 # Run multiple single user web apps on a server
 
 pixelated-dispatcher allows you to run multiple instances of an application that had been designed for a single user.
