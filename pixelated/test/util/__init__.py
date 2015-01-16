@@ -20,12 +20,13 @@ import os
 
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
+from pixelated.common import latest_available_ssl_version
 
 
 class EnforceTLSv1Adapter(HTTPAdapter):
     def init_poolmanager(self, connections, maxsize, block=False):
         self.poolmanager = PoolManager(num_pools=connections, maxsize=maxsize,
-                                       block=block, ssl_version=ssl.PROTOCOL_TLSv1)
+                                       block=block, ssl_version=latest_available_ssl_version())
 
 
 def relative_resource(name):
