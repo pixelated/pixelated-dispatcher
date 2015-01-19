@@ -21,7 +21,7 @@ from pixelated.bitmask_libraries.leap_config import AUTO_DETECT_CA_BUNDLE
 
 
 def which_bundle(provider):
-    return str(LeapCertificate(provider).auto_detect_ca_bundle())
+    return _unicode_to_str(LeapCertificate(provider).auto_detect_ca_bundle())
 
 
 class LeapCertificate(object):
@@ -46,3 +46,10 @@ class LeapCertificate(object):
             return cert_file
         else:
             return None
+
+
+def _unicode_to_str(value):
+    if isinstance(value, unicode):
+        return str(value)
+    else:
+        return value
