@@ -9,7 +9,7 @@ X-Python-Version: >= 2.7
 Package: pixelated-dispatcher
 Architecture: all
 #Depends: ${misc:Depends}, ${python:Depends}
-Depends: pixelated-dispatcher-proxy, pixelated-dispatcher-manager, docker.io | lxc-docker
+Depends: pixelated-dispatcher-proxy, pixelated-dispatcher-manager, docker.io | lxc-docker-1.2.0
 Description: Pixelated-dispatcher dispatches between multiple pixelated user-agents
  Run multiple single user web apps on a server
  .
