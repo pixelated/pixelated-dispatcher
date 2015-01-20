@@ -51,6 +51,9 @@ class ForkProvider(BaseProvider):
         self._running[name].terminate()
         del self._running[name]
 
+    def reset_data(self, user_config):
+        raise Exception('Not yet implemented')
+
     def _agent_port(self, name):
         return self._running[name].port
 

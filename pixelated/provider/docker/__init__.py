@@ -36,6 +36,7 @@ import json
 from pixelated.provider.base_provider import BaseProvider, _mkdir_if_not_exists
 from pixelated.common import Watchdog
 from pixelated.common import logger
+from pixelated.exceptions import InstanceAlreadyRunningError
 
 __author__ = 'fbernitt'
 
@@ -221,7 +222,8 @@ class DockerProvider(BaseProvider):
         cm = self._map_container_by_name(all=True)
         if name not in cm:
             self._setup_instance(user_config, cm)
-            c = self._docker.create_container(self._adapter.docker_image_name(), self._adapter.run_command(), name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'), stdin_open=True)
+            uid = os.getuid()
+            c = self._docker.create_container(self._adapter.docker_image_name(), self._adapter.run_command(), user=uid, name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'), stdin_open=True)
         else:
             c = cm[name]
         data_path = self._data_path(user_config)
@@ -279,6 +281,19 @@ class DockerProvider(BaseProvider):
                 return
 
         raise ValueError
+
+    def reset_data(self, user_config):
+        self._ensure_initialized()
+
+        if user_config.username in self.list_running():
+            raise InstanceAlreadyRunningError('Container %s is currently running. Please stop before resetting data!' % user_config.username)
+
+        if path.exists(user_config.path):
+            data_path = self._data_path(user_config)
+            if path.exists(data_path):
+                shutil.rmtree(data_path)
+        else:
+            raise ValueError('No agent with name %s' % user_config.username)
 
     def _agent_port(self, name):
         return self._docker_container_port(name)

@@ -204,6 +204,32 @@ class RESTfulServerTest(unittest.TestCase):
         self.assertSuccessJson({'state': 'stopped'}, r)
         self.mock_provider.stop.assert_called_with('first')
 
+    def test_reset_agent_data(self):
+        # given
+        user_config = UserConfig('first', None)
+        self.mock_users.config.return_value = user_config
+        self.mock_provider.status.return_value = {'state': 'stopped'}
+
+        # when
+        r = self.put('https://localhost:4443/agents/first/reset_data', data={})
+
+        # then
+        self.assertSuccessJson({'state': 'stopped'}, r)
+        self.mock_provider.reset_data.assert_called_with(user_config)
+
+    def test_reset_agent_data_returns_conflict_if_agent_is_running(self):
+        # given
+        user_config = UserConfig('first', None)
+        self.mock_users.config.return_value = user_config
+        self.mock_provider.status.return_value = {'state': 'running'}
+        self.mock_provider.reset_data.side_effect = InstanceAlreadyRunningError
+
+        # when
+        r = self.put('https://localhost:4443/agents/first/reset_data', data={})
+
+        # then
+        self.assertEqual(409, r.status_code)
+
     def test_get_agent_runtime_info(self):
         # given
         self.mock_provider.status.return_value = {'state': 'running', 'port': 1234}

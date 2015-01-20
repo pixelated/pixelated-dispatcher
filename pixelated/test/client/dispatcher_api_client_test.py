@@ -126,7 +126,6 @@ class MultipileClientTest(unittest.TestCase):
             if request.body == '{"state": "running"}':
                 return {'status_code': 200, 'content': expected}
             else:
-                print 'woha %s' % request.body
                 return {'status_code': 400}
 
         with HTTMock(start_agent, not_found_handler):
@@ -164,6 +163,17 @@ class MultipileClientTest(unittest.TestCase):
 
         with HTTMock(add_agent, not_found_handler):
             self.client.add('first', 'password')
+
+    def test_reset_data(self):
+        expected = {'name': 'first', 'state': 'stopped', 'uri': 'https://localhost:12345/agents/first'}
+
+        @urlmatch(path=r'^/agents/first/reset_data', method='PUT')
+        def reset_agent_data(url, request):
+            return {'status_code': 200, 'content': expected}
+
+        with HTTMock(reset_agent_data, not_found_handler):
+            response = self.client.reset_data('first')
+            return self.assertEqual(expected, response)
 
     def test_memory_usage(self):
         expected = {'total_usage': 1234, 'average_usage': 1234, 'agents': [{'name': 'test', 'memory_usage': 1234}]}

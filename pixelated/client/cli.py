@@ -53,6 +53,8 @@ class Cli(object):
         infoparser = subparsers.add_parser('info', help='Show agent info')
         infoparser.add_argument('name', help='name of user')
         subparsers.add_parser('memory_usage', help='show memory usage')
+        resetparser = subparsers.add_parser('reset_data', help='Reset user agent data')
+        resetparser.add_argument('name', help='name of user')
         return parser
 
     def run(self):
@@ -86,6 +88,9 @@ class Cli(object):
             elif 'stop' == args.cmd:
                 name = args.name
                 cli.stop(name)
+            elif 'reset_data' == args.cmd:
+                name = args.name
+                cli.reset_data(name)
             elif 'info' == args.cmd:
                 name = args.name
                 info = cli.get_agent_runtime(name)

@@ -53,6 +53,9 @@ class Provider(object):  # pragma: no cover
     def stop(self, name):
         pass
 
+    def reset_data(self, name):
+        pass
+
     def status(self, name):
         pass
 

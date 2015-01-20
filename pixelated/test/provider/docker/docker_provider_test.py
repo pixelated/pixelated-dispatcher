@@ -23,6 +23,7 @@ from mock import patch, MagicMock
 import pkg_resources
 import requests
 import json
+import shutil
 from tempdir import TempDir
 from psutil._common import pmem
 from threading import Thread
@@ -205,6 +206,7 @@ class DockerProviderTest(unittest.TestCase):
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_that_instance_can_be_started(self, docker_mock):
+        uid = os.getuid()
         self._adapter.docker_image_name.return_value = 'pixelated/pixelated-user-agent'
         client = docker_mock.return_value
         provider = self._create_initialized_provider(self._adapter, 'some docker url')
@@ -215,7 +217,7 @@ class DockerProviderTest(unittest.TestCase):
 
         provider.start(self._user_config('test'))
 
-        client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --home /mnt/user --host 0.0.0.0 --port 4567 --dispatcher-stdin"', name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'}, stdin_open=True)
+        client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --home /mnt/user --host 0.0.0.0 --port 4567 --dispatcher-stdin"', user=uid, name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'}, stdin_open=True)
         client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/true', name='pixelated_prepare', volumes=['/mnt/user'], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
 
         data_path = join(self.root_path, 'test', 'data')
@@ -394,6 +396,64 @@ class DockerProviderTest(unittest.TestCase):
 
         # when/then
         self.assertRaises(ValueError, provider.remove, user_config)
+
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_reset_data(self, docker_mock):
+        # given
+        user_config = self._user_config('test')
+        os.makedirs(join(user_config.path, 'data'))
+        client = docker_mock.return_value
+        client.containers.return_value = []
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+
+        # when
+        provider.reset_data(user_config)
+
+        # then
+        self.assertTrue(exists(user_config.path))
+        self.assertFalse(exists(join(user_config.path, 'data')))
+
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_reset_data_does_not_complain_if_there_is_no_data(self, docker_mock):
+        # given
+        user_config = self._user_config('test')
+        client = docker_mock.return_value
+        client.containers.return_value = []
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+
+        # when
+        provider.reset_data(user_config)
+
+        # then
+        self.assertTrue(exists(user_config.path))
+        self.assertFalse(exists(join(user_config.path, 'data')))
+
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_reset_data_fails_if_user_does_not_exist(self, docker_mock):
+        # given
+        user_config = self._user_config('test')
+        shutil.rmtree(user_config.path)
+        client = docker_mock.return_value
+        client.containers.return_value = []
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+
+        # when/then
+        self.assertRaises(ValueError, provider.reset_data, user_config)
+
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_reset_data_fails_if_agent_is_running(self, docker_mock):
+        # given
+        client = docker_mock.return_value
+        container = {u'Status': u'Up 20 seconds', u'Created': 1404904929, u'Image': u'pixelated:latest', u'Ports': [{u'IP': u'0.0.0.0', u'Type': u'tcp', u'PublicPort': 5000, u'PrivatePort': 4567}], u'Command': u'sleep 100', u'Names': [u'/test'], u'Id': u'f59ee32d2022b1ab17eef608d2cd617b7c086492164b8c411f1cbcf9bfef0d87'}
+        client.containers.side_effect = [[], [], [container]]
+        client.wait.return_value = 0
+
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+        user_config = self._user_config('test')
+        provider.start(user_config)
+
+        # when/then
+        self.assertRaises(InstanceAlreadyRunningError, provider.reset_data, user_config)
 
     @patch('pixelated.provider.docker.TempDir')
     @patch('pixelated.provider.docker.pkg_resources')

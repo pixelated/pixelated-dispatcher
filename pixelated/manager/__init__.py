@@ -95,6 +95,7 @@ class RESTfulServer(object):
         app.route('/agents/<name>/state', method='PUT', callback=self._put_agent_state)
         app.route('/agents/<name>/runtime', method='GET', callback=self._get_agent_runtime)
         app.route('/agents/<name>/authenticate', method='POST', callback=self._authenticate_agent)
+        app.route('/agents/<name>/reset_data', method='PUT', callback=self._reset_agent_data)
 
         app.route('/stats/memory_usage', method='GET', callback=self._memory_usage)
 
@@ -211,6 +212,18 @@ class RESTfulServer(object):
             response.status = '403 Forbidden'
             logger.warn('Authentication failed for user %s!' % name)
         return {}
+
+    def _reset_agent_data(self, name):
+        try:
+            user_config = self._users.config(name)
+            self._provider.reset_data(user_config)
+            return self._get_agent_state(name)
+        except UserNotExistError as error:
+            logger.warn(error.message)
+            response.status = '404 Not Found - %s' % error.message
+        except InstanceAlreadyRunningError as error:
+            logger.warn(error.message)
+            response.status = '409 Conflict - %s' % error.message
 
     def _memory_usage(self):
         return self._provider.memory_usage()

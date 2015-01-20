@@ -150,6 +150,13 @@ class PixelatedDispatcherClient(object):
         }
         self._post('/agents', json_data=payload)
 
+    def reset_data(self, agent_name):
+        payload = {
+            'name': agent_name
+        }
+
+        return self._put('/agents/%s/reset_data' % agent_name, json_data=payload)
+
     def memory_usage(self):
         return self._get('/stats/memory_usage')
 
