@@ -96,9 +96,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self._dispatcher._ioloop = self.io_loop
         return self._dispatcher.create_app()
 
-    def _method(self, method, url, payload=None, auto_xsrf=True, callback=None, **kwargs):
-        if callback is None:
-            callback = self.stop
+    def _method(self, method, url, payload=None, auto_xsrf=True, follow_redirects=False, **kwargs):
         if auto_xsrf and method == 'POST':
             self.cookies['_xsrf'] = '2|7586b241|47c876d965112a2f547c63c95cbc44b1|1402910163'
             if payload and '_xsrf' not in payload:
@@ -111,7 +109,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
             'Cookie': self.cookies.output(header='').strip()
         }
 
-        self.http_client.fetch(self.get_url(url), self.stop, follow_redirects=False, method=method, headers=headers,
+        self.http_client.fetch(self.get_url(url), self.stop, follow_redirects=follow_redirects, method=method, headers=headers,
                                body=payload)
         return self.wait(timeout=2000)
 
@@ -127,14 +125,17 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         return self._method('POST', url, **kwargs)
 
     def test_redirect_to_login(self):
-        response = self._get('/', follow_redirects=False)
+        response = self._get('/')
 
         self.assertEqual(302, response.code)
         self.assertEqual('/auth/login?next=%2F', response.headers['Location'])
 
     def _get_cookies(self, response):
         cookies = Cookie.SimpleCookie()
-        cookies.load(response.headers['Set-Cookie'])
+
+        for cookie in response.headers.get_list("set-cookie"):
+            cookies.load(cookie)
+
         return cookies
 
     def test_invalid_login(self):
@@ -254,7 +255,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self.assertEqual(503, response.code)
         self.assertRegexpMatches(response.body, 'Could not connect to instance tester: .*')
 
-    def test_logout_stops_user_agent_end_resets_session_cookie(self):
+    def test_logout_stops_user_agent_and_resets_session_cookie(self):
         self.client.get_agent_runtime.side_effect = [{'state': 'stopped'}, {'state': 'stopped'}, {'state': 'running', 'port': Server.PORT}, {'state': 'running', 'port': Server.PORT}]
 
         with Server():
@@ -264,7 +265,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         cookies = self._get_cookies(response)
 
         time.sleep(0.01)   # wait for background call to client.stop
-        self.assertEqual(200, response.code)
+        self.assertEqual(302, response.code)
         self.client.stop.assert_called_once_with('tester')
         self.assertEqual('', cookies['pixelated_user'].value)
 
@@ -272,8 +273,16 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         response = self._get('/auth/logout')
         time.sleep(0.01)   # wait for background call to client.stop
 
-        self.assertEqual(200, response.code)
+        self.assertEqual(302, response.code)
         self.assertFalse(self.client.stop.called)
+
+    def test_successful_logout_redirects_to_login(self):
+        response = self._get('/auth/logout')
+        cookies = self._get_cookies(response)
+
+        self.assertEqual(302, response.code)
+        self.assertEqual('/', response.headers['Location'])
+        self.assertEqual('Logout+successful.', cookies['status_msg'].value)
 
     def test_pixelated_not_available_error_raised_on_503(self):
         # given
@@ -312,3 +321,14 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
             'ciphers': DEFAULT_CIPHERS
         }
         http_server_mock.assert_called_once_with(ANY, ssl_options=expected_ssl_options)
+
+    def test_status_msg(self):
+        # given
+        self.cookies['status_msg'] = 'some status msg'
+
+        # when
+        response = self._get('/', follow_redirects=True)
+
+        # then
+        self.assertEqual(200, response.code)
+        self.assertTrue('<p class="status">\nsome status msg\n</p>' in response.body)

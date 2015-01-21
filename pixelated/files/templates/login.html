@@ -20,6 +20,12 @@
             </p>
         {% end %}
 
+        {% if status is not None %}
+        <p class="status">
+                {{ status }}
+        </p>
+        {% end %}
+
         <form class="standard" id="login_form" action="/auth/login" method="post" style="padding: 10px">
             <input type="text" name="username" id="email" class="text-field" placeholder="username">
             <input type="password" name="password" id="password" class="text-field" placeholder="password">

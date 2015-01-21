@@ -18,6 +18,20 @@ body {
     margin: 0;
 }
 
+.status {
+    background-color: #F7E8AF;
+    margin: 0 auto;
+    padding: 1em;
+    width: 50%;
+    font-weight: bold;
+    font-size: 0.8rem;
+    display: block;
+    box-shadow: 5px 5px 5px #8F8048;
+    text-align: center;
+    color: #987B0F;
+
+}
+
 .login {
     display: block;
     width: 240px;

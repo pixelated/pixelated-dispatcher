@@ -143,7 +143,12 @@ class AuthLoginHandler(tornado.web.RequestHandler):
             error_message = tornado.escape.url_unescape(error_message)
             self.clear_cookie('error_msg')
 
-        self.render('login.html', error=error_message)
+        status_message = self.get_cookie('status_msg')
+        if status_message:
+            status_message = tornado.escape.url_unescape(status_message)
+            self.clear_cookie('status_msg')
+
+        self.render('login.html', error=error_message, status=status_message)
 
     @tornado.web.asynchronous
     @gen.coroutine
@@ -263,7 +268,8 @@ class AuthLogoutHandler(BaseHandler):
             StopServerThread(self._client, self.current_user).start()
         logger.info('User %s logged out' % self.current_user)
         self.clear_cookie(COOKIE_NAME)
-        self.write("You are now logged out")
+        self.set_cookie('status_msg', tornado.escape.url_escape('Logout successful.'))
+        self.redirect(u'/')
 
 
 class DispatcherProxy(object):
