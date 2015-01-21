@@ -69,7 +69,7 @@ def run_manager():
     parser.add_argument('--sslkey', help='The SSL key to use', default=None)
     parser.add_argument('--debug', help='Set log level to debug', default=False, action='store_true')
     parser.add_argument('--log-config', help='Provide a python logging config file', default=None)
-    parser.add_argument('--provider', help='Specify the provider this dispatcher will connect to', default='127.0.0.1')
+    parser.add_argument('--provider', help='Specify the provider this dispatcher will connect to', default='localhost')
     parser.add_argument('--provider-ca', dest='provider_ca', help='Specify the provider CA to use to validate connections', default=True)
     parser.add_argument('--provider-fingerprint', dest='provider_fingerprint', help='Pin provider certifcate to fingerprint', default=None)
     group = parser.add_mutually_exclusive_group()
