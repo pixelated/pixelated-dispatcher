@@ -98,7 +98,7 @@ class Users(object):
     def add(self, username):
         if not Users.validate_username.match(username):
             raise ValueError('Username %s contains invalid chars' % username)
-        if username in self._users:
+        if self.has_user_config(username):
             raise UserAlreadyExistsError('User with name %s already exists' % username)
 
         user_folder = self._user_folder(username)
