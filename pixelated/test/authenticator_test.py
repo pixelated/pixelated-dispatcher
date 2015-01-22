@@ -84,7 +84,7 @@ class AuthenticatorTest(unittest.TestCase):
         # given
         user_config = UserConfig('name', None)
         which_bundle_mock.return_value = 'some bundle'
-        self.users.has_user.return_value = False
+        self.users.has_user_config.return_value = False
         self.users.config.return_value = user_config
         provider_mock.return_value.api_uri = '/1/some/uri'
 
@@ -120,3 +120,31 @@ class AuthenticatorTest(unittest.TestCase):
 
         self.assertFalse(self.users.add.called)
         self.assertFalse(result)
+
+    @patch('pixelated.authenticator.which_bundle')
+    @patch('pixelated.authenticator.LeapConfig')
+    @patch('pixelated.authenticator.LeapProvider')
+    @patch('pixelated.authenticator.LeapSecureRemotePassword')
+    def test_authenticate_with_missing_user_config(self, srp_mock, provider_mock, leap_config_mock, which_bundle_mock):
+        # given
+        user_config = UserConfig('name', None)
+        which_bundle_mock.return_value = 'some bundle'
+        self.users.has_user.return_value = True
+        self.users.has_user_config.return_value = False
+        self.users.config.return_value = user_config
+        provider_mock.return_value.api_uri = '/1/some/uri'
+
+        # when
+        auth = Authenticator(self.users, 'leap provider hostname', 'some bundle', leap_provider_fingerprint='some fingerprint')
+        result = auth.authenticate('name', 'password')
+
+        # then
+        srp_mock.return_value.authenticate.assert_called_once_with('/1/some/uri', 'name', 'password')
+        self.users.add.assert_called_once_with('name')
+
+        provider_mock.assert_called_once_with('leap provider hostname', leap_config_mock.return_value)
+        leap_config_mock.assert_called_once_with(ca_cert_bundle='some bundle')
+        srp_mock.assert_called_once_with(tls_config=LeapSRPTLSConfig(ca_bundle='some bundle', assert_fingerprint='some fingerprint'))
+        srp_mock.return_value.authenticate.assert_called_once_with('/1/some/uri', 'name', 'password')
+        self.users.update_config.assert_called_once_with(user_config)
+        self.assertTrue(result)

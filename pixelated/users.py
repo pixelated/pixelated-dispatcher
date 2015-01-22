@@ -101,18 +101,27 @@ class Users(object):
         if username in self._users:
             raise UserAlreadyExistsError('User with name %s already exists' % username)
 
-        user_folder = join(self._root_path, username)
+        user_folder = self._user_folder(username)
 
         if not exists(user_folder):
             mkdir(user_folder)
         self._create_user_config(username)
         self._users.append(username)
 
+    def _user_folder(self, username):
+        return join(self._root_path, username)
+
     def _create_user_config(self, username):
-        config_file = join(self._root_path, username, 'user.cfg')
+        config_file = self._config_file(username)
         if not exists(config_file):
             with open(config_file, 'w') as fd:
-                UserConfig(username, join(self._root_path, username)).write_to(fd)
+                UserConfig(username, self._user_folder(username)).write_to(fd)
+
+    def _config_file(self, username):
+        return join(self._user_folder(username), 'user.cfg')
+
+    def _data_path(self, username):
+        return join(self._user_folder(username), 'data')
 
     def list(self):
         return self._users
@@ -120,12 +129,15 @@ class Users(object):
     def has_user(self, username):
         return username in self._users
 
+    def has_user_config(self, username):
+        return self.has_user(username) and exists(self._config_file(username))
+
     def config(self, username):
         if username in self._users:
-            data_path = join(self._root_path, username)
-            user_config = join(data_path, 'user.cfg')
+            user_folder = self._user_folder(username)
+            user_config = self._config_file(username)
             with open(user_config, 'r') as fd:
-                return UserConfig.read_from(username, data_path, fd)
+                return UserConfig.read_from(username, user_folder, fd)
         raise UserNotExistError('User with name %s does not exist' % username)
 
     def update_config(self, config):

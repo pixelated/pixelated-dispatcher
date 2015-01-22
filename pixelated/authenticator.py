@@ -52,7 +52,7 @@ class Authenticator(object):
         self._users.update_config(cfg)
 
     def authenticate(self, username, password):
-        if self._users.has_user(username):
+        if self._users.has_user_config(username):
             return self._is_valid_credentials(username, password)
         else:
             if self._can_authorize_with_leap_provider(username, password):

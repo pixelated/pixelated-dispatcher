@@ -22,6 +22,7 @@ from tempdir import TempDir
 from os.path import join, exists
 from os import mkdir
 from tempfile import NamedTemporaryFile
+import shutil
 
 
 class UserConfigTest(unittest.TestCase):
@@ -101,23 +102,21 @@ class UsersTest(unittest.TestCase):
     def test_add_user_creates_data_folder_and_config(self):
         self.users.add('name')
 
-        data_path = join(self.root_path, 'name')
-        config_file = join(data_path, 'user.cfg')
+        data_path = self._data_path('name')
+        config_file = self._config_file('name')
         self.assertTrue(exists(data_path))
         self.assertTrue(exists(config_file))
 
     def test_add_user_does_not_override_existing_config(self):
-        data_path = join(self.root_path, 'name')
-        config_file = join(data_path, 'user.cfg')
+        data_path = self._data_path('name')
+        config_file = self._config_file('name')
         mkdir(data_path)
         with open(config_file, 'w') as fd:
             fd.write('[section]\none = first value\ntwo = second value\n\n')
 
         self.users.add('name')
 
-        data_path = join(self.root_path, 'name')
-        config_file = join(data_path, 'user.cfg')
-        with open(config_file, 'r') as fd:
+        with open(self._config_file('name'), 'r') as fd:
             self.assertEqual('[section]\none = first value\ntwo = second value\n\n', fd.read())
 
     def test_add_validates_username(self):
@@ -135,9 +134,9 @@ class UsersTest(unittest.TestCase):
             self.users.add('name=with%&')
 
     def test_loads_all_existing_users_on_startup(self):
-        user1_data_path = join(self.root_path, 'user1')
+        user1_data_path = self._data_path('user1')
         mkdir(user1_data_path)
-        user1_config_path = join(self.root_path, 'user1', 'user.cfg')
+        user1_config_path = self._config_file('user1')
         with open(user1_config_path, 'w') as fd:
             fd.write('[section]\none = first value\ntwo = second value\n\n')
 
@@ -161,3 +160,20 @@ class UsersTest(unittest.TestCase):
 
         self.assertTrue(self.users.has_user('name'))
         self.assertFalse(self.users.has_user('other'))
+
+    def test_has_user_config(self):
+        self.users.add('name')
+
+        self.assertTrue(self.users.has_user('name'))
+        self.assertTrue(self.users.has_user_config('name'))
+
+        shutil.rmtree(self._data_path('name'))
+
+        self.assertTrue(self.users.has_user('name'))
+        self.assertFalse(self.users.has_user_config('name'))
+
+    def _data_path(self, username):
+        return join(self.root_path, username)
+
+    def _config_file(self, username):
+        return join(self._data_path(username), 'user.cfg')
