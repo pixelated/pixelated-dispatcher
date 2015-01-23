@@ -21,9 +21,11 @@
         {% end %}
 
         {% if status is not None %}
-        <p class="status">
+        <div class="message-panel">
+            <span>
                 {{ status }}
-        </p>
+            </span>
+        </div>
         {% end %}
 
         <form class="standard" id="login_form" action="/auth/login" method="post" style="padding: 10px">

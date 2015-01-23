@@ -18,18 +18,19 @@ body {
     margin: 0;
 }
 
-.status {
-    background-color: #F7E8AF;
-    margin: 0 auto;
-    padding: 1em;
-    width: 50%;
-    font-weight: bold;
-    font-size: 0.8rem;
-    display: block;
-    box-shadow: 5px 5px 5px #8F8048;
-    text-align: center;
-    color: #987B0F;
+.message-panel {
+  width: 100%;
+  margin: 10px auto;
+  z-index: 10000;
+  text-align: center;
+  }
 
+.message-panel span{
+    background: #F7E8AF;
+    padding: 5px 60px;
+    border: 1px solid #f2db81;
+    color: #987b0f;
+    box-shadow: 1px 1px 3px #69560b;
 }
 
 .login {
