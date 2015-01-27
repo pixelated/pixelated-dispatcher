@@ -19,6 +19,8 @@ from leap.common.certs import get_digest
 import requests
 from .leap_certs import which_bundle
 
+from pixelated.client.dispatcher_api_client import EnforceTLSv1Adapter, VERIFY_HOSTNAME
+
 
 class LeapProvider(object):
     def __init__(self, server_name, config):
@@ -76,6 +78,7 @@ class LeapProvider(object):
 
     def _fetch_certificate(self):
         session = requests.session()
+        session.mount('https://', EnforceTLSv1Adapter(assert_fingerprint=self.config.assert_fingerprint))
         try:
             cert_url = '%s/ca.crt' % self._provider_base_url()
             response = session.get(cert_url, verify=which_bundle(self), timeout=self.config.timeout_in_s)

@@ -29,6 +29,8 @@ from pixelated.exceptions import InstanceAlreadyExistsError, InstanceAlreadyRunn
 from pixelated.users import Users, UserConfig
 from pixelated.authenticator import Authenticator
 from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
+from tempdir import TempDir
+from os.path import join
 
 
 class RESTfulServerTest(unittest.TestCase):
@@ -63,6 +65,12 @@ class RESTfulServerTest(unittest.TestCase):
 
         self.ssl_request = requests.Session()
         self.ssl_request.mount('https://', EnforceTLSv1Adapter())
+
+        self._tmpdir = TempDir()
+        self._root_path = self._tmpdir.name
+
+    def tearDown(self):
+        self._tmpdir.dissolve()
 
     def get(self, url):
         return self.ssl_request.get(url, verify=cafile())
@@ -318,10 +326,11 @@ class RESTfulServerTest(unittest.TestCase):
     @patch('pixelated.manager.RESTfulServer')
     @patch('pixelated.manager.Thread')
     @patch('pixelated.manager.Users')
-    def test_that_initialize_happens_in_background_thread(self, users_mock, thread_mock, server_mock, docker_provider_mock):
+    @patch('pixelated.manager.LeapProvider')
+    def test_that_initialize_happens_in_background_thread(self, leap_provider_mock, users_mock, thread_mock, server_mock, docker_provider_mock):
         # given
         docker_provider_mock.return_value = self.mock_provider
-        manager = DispatcherManager(None, None, None, None, None, provider='docker')
+        manager = DispatcherManager(self._root_path, None, None, None, None, provider='docker')
 
         # when
         manager.serve_forever()
@@ -335,12 +344,30 @@ class RESTfulServerTest(unittest.TestCase):
     @patch('pixelated.manager.RESTfulServer')
     @patch('pixelated.manager.Thread')
     @patch('pixelated.manager.Users')
-    def test_that_tls_config_gets_passed_to_authenticator(self, users_mock, thread_mock, server_mock, docker_provider_mock, authenticator_mock):
+    @patch('pixelated.manager.LeapProvider')
+    def test_that_tls_config_gets_passed_to_authenticator(self, leap_provider_mock, users_mock, thread_mock, server_mock, docker_provider_mock, authenticator_mock):
         # given
-        manager = DispatcherManager(None, None, None, None, 'some ca bundle', leap_provider_fingerprint='some fingerprint', provider='docker')
+        manager = DispatcherManager(self._root_path, None, None, None, 'some ca bundle', leap_provider_fingerprint='some fingerprint', provider='docker')
 
         # when
         manager.serve_forever()
 
         # then
         authenticator_mock.assert_called_once_with(users_mock.return_value, None, 'some ca bundle', leap_provider_fingerprint='some fingerprint')
+
+    @patch('pixelated.manager.Authenticator')
+    @patch('pixelated.manager.DockerProvider')
+    @patch('pixelated.manager.RESTfulServer')
+    @patch('pixelated.manager.Thread')
+    @patch('pixelated.manager.Users')
+    @patch('pixelated.manager.LeapProvider')
+    def test_that_leap_certificate_gets_downloaded_on_serve_forever(self, leap_provider_mock, users_mock, thread_mock, server_mock, docker_provider_mock, authenticator_mock):
+        # given
+        cert_file = join(self._root_path, 'ca.crt')
+        manager = DispatcherManager(self._root_path, None, None, None, 'some ca bundle', leap_provider_fingerprint='some fingerprint', provider='docker')
+
+        # when
+        manager.serve_forever()
+
+        # then
+        leap_provider_mock.return_value.download_certificate_to.assert_called_once_with(cert_file)

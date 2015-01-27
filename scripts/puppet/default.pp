@@ -65,7 +65,7 @@ node default {
     mode => '0755'
   }
 
-  $manager_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py manager -b docker --provider try.pixelated-project.org --provider-ca /vagrant/pixelated/resources/try.pixelated-project.org.ca.crt --bind 0.0.0.0"
+  $manager_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py manager -b docker --provider staging.pixelated-project.org --provider-fingerprint 57:02:29:C3:A3:01:12:D0:14:B0:B2:B8:09:1F:45:32:1D:EE:29:DF  --bind 0.0.0.0"
   $ssl_options = "--sslcert /vagrant/pixelated/test/util/server.crt --sslkey /vagrant/pixelated/test/util/server.key"
 
   service { 'dispatcher-proxy':

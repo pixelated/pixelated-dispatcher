@@ -16,7 +16,7 @@
 import io
 import os
 import signal
-from os.path import join
+from os.path import join, exists
 from os import path
 import stat
 import subprocess
@@ -227,6 +227,9 @@ class DockerProvider(BaseProvider):
         else:
             c = cm[name]
         data_path = self._data_path(user_config)
+
+        self._add_leap_ca_to_user_data_path(data_path)
+
         port = self._next_available_port()
         self._ports.add(port)
 
@@ -246,6 +249,11 @@ class DockerProvider(BaseProvider):
         s = self._docker.wait(c)
         if s != 0:
             raise Exception('Failed to initialize mailbox: %d!' % s)
+
+    def _add_leap_ca_to_user_data_path(self, data_path):
+        cert_file = join(data_path, '..', '..', 'ca.crt')
+        if exists(cert_file):
+            shutil.copyfile(cert_file, join(data_path, 'dispatcher-leap-provider-ca.crt'))
 
     def list_running(self):
         self._ensure_initialized()

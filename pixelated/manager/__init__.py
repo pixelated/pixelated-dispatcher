@@ -23,6 +23,7 @@ from pixelated.provider.docker.pixelated_adapter import PixelatedDockerAdapter
 from pixelated.exceptions import InstanceAlreadyRunningError, UserNotExistError, InstanceNotRunningError, UserAlreadyExistsError, InstanceNotFoundError
 from pixelated.users import Users
 from pixelated.authenticator import Authenticator
+from os.path import join
 
 __author__ = 'fbernitt'
 
@@ -35,6 +36,9 @@ from pixelated.provider.fork import ForkProvider
 from pixelated.provider.fork.fork_runner import ForkRunner
 from pixelated.provider.fork.mailpile_adapter import MailpileAdapter
 from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
+
+from pixelated.bitmask_libraries.leap_config import LeapConfig
+from pixelated.bitmask_libraries.leap_provider import LeapProvider
 
 DEFAULT_PORT = 4443
 
@@ -273,6 +277,7 @@ class DispatcherManager(object):
         self._leap_provider_fingerprint = leap_provider_fingerprint
 
     def serve_forever(self):
+        self._download_leap_certificate_to_root_path()
         users = Users(self._root_path)
         authenticator = Authenticator(users, self._leap_provider_hostname, self._leap_provider_ca, leap_provider_fingerprint=self._leap_provider_fingerprint)
         provider = self._create_provider()
@@ -293,6 +298,14 @@ class DispatcherManager(object):
             self._server.shutdown()
             self._server = None
             logger.info('Stopped server')
+
+    def _download_leap_certificate_to_root_path(self):
+        cfg = LeapConfig(ca_cert_bundle=self._leap_provider_ca, assert_fingerprint=self._leap_provider_fingerprint)
+        provider = LeapProvider(self._leap_provider_hostname, cfg)
+
+        cert_file = join(self._root_path, 'ca.crt')
+
+        provider.download_certificate_to(cert_file)
 
     def _create_provider(self):
         if self._provider == 'docker':
