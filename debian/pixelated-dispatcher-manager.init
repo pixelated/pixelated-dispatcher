@@ -35,6 +35,9 @@ if [ -n "$PIXELATED_PROVIDER_FINGERPRINT" ] ; then
   EXTRA_OPTS="$EXTRA_OPTS --provider-fingerprint $PIXELATED_PROVIDER_FINGERPRINT"
 fi
 
+if [ -n "$PIXELATED_PROVIDER_CA" ] ; then
+  EXTRA_OPTS="$EXTRA_OPTS --provider-ca $PIXELATED_PROVIDER_CA"
+fi
 
 case "$1" in
 start)	log_daemon_msg "Starting pixelated-dispatcher manager" "pixelated-manager"

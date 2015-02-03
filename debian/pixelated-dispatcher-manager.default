@@ -7,3 +7,6 @@ PIXELATED_SSLCERT=/etc/ssl/certs/ssl-cert-snakeoil.pem
 PIXELATED_SSLKEY=/etc/ssl/private/ssl-cert-snakeoil.key
 PIXELATED_MANAGER_EXTRA_OPTS="--bind 0.0.0.0"
 PIXELATED_ROOT=/var/lib/pixelated/dispatcher
+# You need to supply at least one of these two
+#PIXELATED_PROVIDER_CA=/path/to/ca
+#PIXELATED_PROVIDER_FINTERPRINT= SHA1 Fingerprint of cert used by https://provider:443/
