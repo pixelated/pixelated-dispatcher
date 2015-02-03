@@ -27,7 +27,9 @@ test -f $DAEMON || exit 0
 
 [ -r /etc/default/pixelated-dispatcher-manager ] && . /etc/default/pixelated-dispatcher-manager
 
-
+if [ -z "$PIXELATED_PROVIDER" ] ; then
+  PIXELATED_PROVIDER=$(hostname -d) 
+fi
 
 EXTRA_OPTS="manager -b $PIXELATED_BACKEND --provider $PIXELATED_PROVIDER -r $PIXELATED_ROOT --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_MANAGER_EXTRA_OPTS"
 
