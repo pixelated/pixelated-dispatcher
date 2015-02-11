@@ -24,6 +24,8 @@ from pixelated.bitmask_libraries.leap_provider import LeapProvider
 from pixelated.bitmask_libraries.leap_srp import LeapSecureRemotePassword, LeapAuthException, LeapSRPTLSConfig
 from pixelated.bitmask_libraries.leap_certs import which_bundle
 
+from pixelated.common import logger
+
 
 def str_password(password):
     return password if type(password) != unicode else password.encode('utf8')
@@ -80,5 +82,6 @@ class Authenticator(object):
         try:
             srp.authenticate(provider.api_uri, username, password)
             return True
-        except LeapAuthException:
+        except LeapAuthException, e:
+            logger.error('Failure while authenticating with LEAP: %s' % e)
             return False
