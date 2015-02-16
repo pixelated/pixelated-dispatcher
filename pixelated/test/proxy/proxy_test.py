@@ -331,4 +331,4 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
 
         # then
         self.assertEqual(200, response.code)
-        self.assertTrue('<div class="message-panel">\n<span>\nsome status msg\n</span>' in response.body)
+        self.assertTrue('<div class="message-panel message-panel-small">\n<span>\nsome status msg\n</span>' in response.body)
