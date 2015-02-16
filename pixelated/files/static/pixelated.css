@@ -33,6 +33,12 @@ body {
     box-shadow: 1px 1px 3px #69560b;
 }
 
+.message-panel.message-panel-small span{
+    padding: 5px 0px;
+    display: inline-block;
+    width: 100%;
+}
+
 .login {
     display: block;
     width: 240px;
