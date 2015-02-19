@@ -37,8 +37,10 @@
         </form>
     </div>
     <div class="warning">
-  {% include _login_screen_message.html %} 
-   </div>
+        {% if banner is not None %}
+          {% module Template(banner) %}
+        {% end %}
+    </div>
 </div>
 </body>
 

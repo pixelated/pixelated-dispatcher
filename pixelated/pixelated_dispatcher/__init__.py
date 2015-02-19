@@ -109,6 +109,7 @@ def run_proxy():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', help='The port the dispatcher runs on')
     parser.add_argument('-m', '--manager', help="hostname:port of the manager")
+    parser.add_argument('--banner', help='Banner file to show on login screen', default='_login_screen_message.html')
     parser.add_argument('--bind', help="bind to interface. Default 127.0.0.1", default='127.0.0.1')
     parser.add_argument('--sslcert', help='The SSL certficate to use', default=None)
     parser.add_argument('--sslkey', help='The SSL key to use', default=None)
@@ -131,7 +132,7 @@ def run_proxy():
     client.validate_connection()
 
     dispatcher = DispatcherProxy(client, bindaddr=args.bind, keyfile=keyfile,
-                                 certfile=certfile)
+                                 certfile=certfile, banner=args.banner)
     dispatcher.serve_forever()
 
 

@@ -38,6 +38,7 @@ from tornado import gen
 from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
 from tornado.httpclient import AsyncHTTPClient
 import threading
+from os.path import exists
 
 COOKIE_NAME = 'pixelated_user'
 
@@ -134,8 +135,9 @@ class MainHandler(BaseHandler):
 
 class AuthLoginHandler(tornado.web.RequestHandler):
 
-    def initialize(self, client):
+    def initialize(self, client, banner):
         self._client = client
+        self._banner = banner
 
     def get(self):
         error_message = self.get_cookie('error_msg')
@@ -148,7 +150,7 @@ class AuthLoginHandler(tornado.web.RequestHandler):
             status_message = tornado.escape.url_unescape(status_message)
             self.clear_cookie('status_msg')
 
-        self.render('login.html', error=error_message, status=status_message)
+        self.render('login.html', error=error_message, status=status_message, banner=self._banner)
 
     @tornado.web.asynchronous
     @gen.coroutine
@@ -273,14 +275,15 @@ class AuthLogoutHandler(BaseHandler):
 
 
 class DispatcherProxy(object):
-    __slots__ = ('_port', '_client', '_bindaddr', '_ioloop', '_certfile', '_keyfile', '_server')
+    __slots__ = ('_port', '_client', '_bindaddr', '_ioloop', '_certfile', '_keyfile', '_server', '_banner')
 
-    def __init__(self, dispatcher_client, bindaddr='127.0.0.1', port=8080, certfile=None, keyfile=None):
+    def __init__(self, dispatcher_client, bindaddr='127.0.0.1', port=8080, certfile=None, keyfile=None, banner=None):
         self._port = port
         self._client = dispatcher_client
         self._bindaddr = bindaddr
         self._certfile = certfile
         self._keyfile = keyfile
+        self._banner = banner
         self._ioloop = None
         self._server = None
 
@@ -289,7 +292,7 @@ class DispatcherProxy(object):
     def create_app(self):
         app = tornado.web.Application(
             [
-                (r"/auth/login", AuthLoginHandler, dict(client=self._client)),
+                (r"/auth/login", AuthLoginHandler, dict(client=self._client, banner=self._banner)),
                 (r"/auth/logout", AuthLogoutHandler, dict(client=self._client)),
                 (r"/dispatcher_static/", web.StaticFileHandler),
                 (r"/.*", MainHandler, dict(client=self._client))
