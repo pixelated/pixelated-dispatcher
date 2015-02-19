@@ -10,8 +10,11 @@ before_install:
 install:
     - pip install -r requirements.txt --use-mirrors
     - pip install -r test-requirements.txt --use-mirrors
+    - pip install coveralls --use-mirrors
 before_script:
     - sudo /usr/sbin/rngd -r /dev/urandom
 script:
-    - nosetests
+    - coverage run --source pixelated setup.py test
+after_success:
+    - coveralls
 
