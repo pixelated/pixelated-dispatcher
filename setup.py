@@ -18,12 +18,12 @@ import os
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
+
 class write_login_banner(install):
     """Customized setuptools install command - prints a friendly greeting."""
     def run(self):
         os.system("git log -5 > dispatcher_banner.html")
         install.run(self)
-
 
 
 # Utility function to read the README file.
@@ -32,6 +32,7 @@ class write_login_banner(install):
 # string in below ...
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
 
 setup(
     name="pixelated-dispatcher",
