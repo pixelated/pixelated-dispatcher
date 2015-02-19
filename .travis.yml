@@ -14,7 +14,7 @@ install:
 before_script:
     - sudo /usr/sbin/rngd -r /dev/urandom
 script:
-    - coverage run --source pixelated setup.py test
+    - nosetests --with-coverage --cover-package=pixelated  --cover-erase
 after_success:
     - coveralls
 
