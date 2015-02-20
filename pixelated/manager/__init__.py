@@ -69,7 +69,7 @@ def log_all_exceptions(callback):
         try:
             return callback(*args, **kwargs)
         except Exception, e:
-            logger.error('Error during request: %s' % e.message)
+            logger.exception('Unhandled Error during request: %s' % e)
             raise
     return wrapper
 

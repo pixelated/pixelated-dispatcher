@@ -93,6 +93,9 @@ class RESTfulServerTest(unittest.TestCase):
         self.assertEquals('application/json', response.headers['content-type'])
         self.assertEqual(dict, response.json())
 
+    def assertInternalError(self, response):
+        self.assertEqual(500, response.status_code)
+
     def test_list_empty_agents(self):
         # given
         self.mock_provider.status.return_value = {'state': 'stopped'}
@@ -282,6 +285,21 @@ class RESTfulServerTest(unittest.TestCase):
         r = self.get('https://localhost:4443/stats/memory_usage')
 
         self.assertSuccessJson(expected, r)
+
+    def test_catch_all_exceptions(self):
+        try:
+            # given
+            self.mock_provider.memory_usage.side_effect = Exception('some message')
+
+            # when
+            with patch('pixelated.manager.logger') as logger:
+                r = self.get('https://localhost:4443/stats/memory_usage')
+
+                # then
+                logger.exception.assert_called_once_with('Unhandled Error during request: some message')
+                self.assertInternalError(r)
+        finally:
+            self.mock_provider.memory_usage.side_effect = None  # we need to reset this manually
 
     @patch('pixelated.manager.SSLWSGIRefServerAdapter')
     @patch('pixelated.manager.run')    # mock run call to avoid actually startng the server
