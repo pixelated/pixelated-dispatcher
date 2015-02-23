@@ -22,7 +22,7 @@ from setuptools.command.install import install
 class write_login_banner(install):
     """Customized setuptools install command - prints a friendly greeting."""
     def run(self):
-        os.system("git log -5 > dispatcher_banner.html")
+        os.system("echo '<pre>' > disptacher_banner.html; git log -5 >> dispatcher_banner.html echo '</pre>' > dispatcher_banner.html")
         install.run(self)
 
 
