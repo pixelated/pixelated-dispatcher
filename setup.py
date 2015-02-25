@@ -56,7 +56,7 @@ setup(
         'requests',
         'scrypt',
         'psutil',
-        'docker-py',
+        'docker-py==0.5.0', # same version as available in debian backports
         'srp',
         'leap.common',
         'pycurl'
