@@ -250,7 +250,7 @@ class DockerProvider(BaseProvider):
         else:
             c = container_map[container_name]
 
-        self._docker.start(c, binds={data_path: {'bind': '/mnt/user', 'ro': False}})
+        self._docker.start(c, binds={data_path: {'bind': '/mnt/user', 'ro': False}, '/tmp': {'bind': '/tmp', 'ro': False}})
         s = self._docker.wait(c)
         if s != 0:
             raise Exception('Failed to initialize mailbox: %d!' % s)
