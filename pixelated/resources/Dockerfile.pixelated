@@ -29,7 +29,7 @@ RUN echo "deb http://packages.pixelated-project.org/debian wheezy-backports main
 RUN echo "deb http://packages.pixelated-project.org/debian wheezy main" >> /etc/apt/sources.list
 RUN echo "deb http://deb.bitmask.net/debian/ wheezy main" >> /etc/apt/sources.list
 RUN echo "deb http://deb.leap.se/experimental wheezy main" >> /etc/apt/sources.list
-RUN apt-key adv --keyserver pool.sks-keyservers.net --recv-key 1E34A1828E207901 && \
+RUN apt-key adv --keyserver pool.sks-keyservers.net --recv-key 837C1AD5367429D9 && \
     apt-key adv --keyserver pool.sks-keyservers.net --recv-key 287A1542472DC0E3
 
 # Update packages lists
