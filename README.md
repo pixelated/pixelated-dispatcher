@@ -94,9 +94,12 @@ For that to work you need to have the python-setuptools (>= 0.6b3), python-all (
 
 ## Installing our packages on your server
 
-	apt-key adv --keyserver pool.sks-keyservers.net --recv-keys 0x287A1542472DC0E3
-	echo "deb http://debian.mirror.iphh.net/debian wheezy-backports main" >> /etc/apt/sources.list.d/backports.list
-	echo "deb http://packages.pixelated-project.org/debian wheezy-snapshots main" >> /etc/apt/sources.list.d/pixelated.list
-	echo "deb http://packages.pixelated-project.org/debian wheezy main" >> /etc/apt/sources.list.d/pixelated.list
-	apt-get update
-	apt-get install pixelated-dispatcher
+  apt-key adv --keyserver pool.sks-keyservers.net --recv-keys 0x287A1542472DC0E3
+  apt-key adv --keyserver pool.sks-keyservers.net --recv-keys 0x8B48AD6246925553
+  apt-key adv --keyserver pool.sks-keyservers.net --recv-keys 0x837C1AD5367429D9
+  echo "deb http://debian.mirror.iphh.net/debian wheezy-backports main" >> /etc/apt/sources.list.d/backports.list
+  echo "deb http://packages.pixelated-project.org/debian wheezy-snapshots main" >> /etc/apt/sources.list.d/pixelated.list
+  echo "deb http://packages.pixelated-project.org/debian wheezy main" >> /etc/apt/sources.list.d/pixelated.list
+  echo "deb http://deb.leap.se/experimental wheezy main" >> /etc/apt/sources.list
+  apt-get update
+  apt-get install pixelated-dispatcher
