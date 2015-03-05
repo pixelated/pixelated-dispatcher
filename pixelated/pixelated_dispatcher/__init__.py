@@ -108,15 +108,15 @@ def run_manager():
 def run_proxy():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', help='The port the dispatcher runs on')
-    parser.add_argument('-m', '--manager', help="hostname:port of the manager")
-    parser.add_argument('--banner', help='Banner file to show on login screen', default='_login_screen_message.html')
-    parser.add_argument('--bind', help="bind to interface. Default 127.0.0.1", default='127.0.0.1')
-    parser.add_argument('--sslcert', help='The SSL certficate to use', default=None)
-    parser.add_argument('--sslkey', help='The SSL key to use', default=None)
-    parser.add_argument('--fingerprint', help='Pin certifcate to fingerprint', default=None)
-    parser.add_argument('--disable-verifyhostname', help='Disable hostname verification. If fingerprint is specified it gets precedence', dest="verify_hostname", action='store_false', default=None)
-    parser.add_argument('--debug', help='Set log level to debug', default=False, action='store_true')
-    parser.add_argument('--log-config', help='Provide a python logging config file', default=None)
+    parser.add_argument('-m', '--manager', help='hostname:port of the manager')
+    parser.add_argument('--banner', help='banner file to show on login screen', default='_login_screen_message.html')
+    parser.add_argument('--bind', help="interface to bind to (default: 127.0.0.1)", default='127.0.0.1')
+    parser.add_argument('--sslcert', help='proxy HTTP server SSL certificate', default=None)
+    parser.add_argument('--sslkey', help='proxy HTTP server SSL key', default=None)
+    parser.add_argument('--fingerprint', help='pin certificate to fingerprint', default=None) # TODO: check this more deeply
+    parser.add_argument('--disable-verifyhostname', help='disable hostname verification; if fingerprint is specified it gets precedence', dest="verify_hostname", action='store_false', default=None)
+    parser.add_argument('--debug', help='set log level to debug', default=False, action='store_true')
+    parser.add_argument('--log-config', help='provide a python logging config file', default=None)
 
     args = parser.parse_args(args=filter_args())
 
