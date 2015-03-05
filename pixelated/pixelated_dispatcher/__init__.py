@@ -123,11 +123,11 @@ def run_proxy():
     manager_hostname, manager_port = args.manager.split(':')
     certfile = args.sslcert if args.sslcert else None
     keyfile = args.sslkey if args.sslcert else None
+    manager_cafile = certfile if args.fingerprint is None else False
 
     log_level = logging.DEBUG if args.debug else logging.INFO
     log_config = args.log_config
     init_logging('dispatcher', level=log_level, config_file=log_config)
-    manager_cafile = certfile if args.fingerprint is None else False
     client = PixelatedDispatcherClient(manager_hostname, manager_port, cacert=manager_cafile, fingerprint=args.fingerprint, assert_hostname=args.verify_hostname)
     client.validate_connection()
 
