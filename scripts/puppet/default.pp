@@ -65,10 +65,10 @@ node default {
     mode => '0755'
   }
 
-  $manager_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py manager -b docker --provider try.pixelated-project.org --provider-ca /vagrant/pixelated/resources/try.pixelated-project.org.ca.crt --bind 0.0.0.0" 
+  $manager_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py manager -b docker --provider try.pixelated-project.org --provider-ca /vagrant/pixelated/resources/try.pixelated-project.org.ca.crt --bind 0.0.0.0"
   $ssl_options = "--sslcert /vagrant/pixelated/test/util/server.crt --sslkey /vagrant/pixelated/test/util/server.key"
 
-  service { 'dispatcher-proxy':
+  service { 'dispatcher-manager':
     ensure => running,
     provider => 'base',
     binary => '/bin/false',
@@ -81,7 +81,7 @@ node default {
 
   $proxy_cmd = "/usr/bin/python /vagrant/pixelated/pixelated-dispatcher.py proxy"
 
-  service { 'pixelated-dispatcher':
+  service { 'dispatcher-proxy':
     ensure => running,
     provider => 'base',
     binary => '/bin/false',
@@ -89,6 +89,6 @@ node default {
     stop => "/usr/bin/pkill -x -f \"${proxy_cmd} -m localhost:4443 --bind 0.0.0.0 ${ssl_options}\"",
     status => "/usr/bin/pgrep -x -f \"${proxy_cmd} -m localhost:4443 --bind 0.0.0.0 ${ssl_options}\"",
     hasstatus => true,
-    require => [Service['docker'], Service['dispatcher-proxy'], File[$dispatcher_path]]
+    require => [Service['docker'], Service['dispatcher-manager'], File[$dispatcher_path]]
   }
 }
