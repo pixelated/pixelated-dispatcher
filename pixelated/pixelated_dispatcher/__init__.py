@@ -107,7 +107,6 @@ def run_manager():
 
 def run_proxy():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--port', help='The port the dispatcher runs on')
     parser.add_argument('-m', '--manager', help='hostname:port of the manager')
     parser.add_argument('--banner', help='banner file to show on login screen', default='_login_screen_message.html')
     parser.add_argument('--bind', help="interface to bind to (default: 127.0.0.1)", default='127.0.0.1')
