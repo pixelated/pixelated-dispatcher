@@ -112,7 +112,7 @@ def run_proxy():
     parser.add_argument('--bind', help="interface to bind to (default: 127.0.0.1)", default='127.0.0.1')
     parser.add_argument('--sslcert', help='proxy HTTP server SSL certificate', default=None)
     parser.add_argument('--sslkey', help='proxy HTTP server SSL key', default=None)
-    parser.add_argument('--fingerprint', help='pin certificate to fingerprint', default=None) # TODO: check this more deeply
+    parser.add_argument('--fingerprint', help='pin certificate to fingerprint', default=None)
     parser.add_argument('--disable-verifyhostname', help='disable hostname verification; if fingerprint is specified it gets precedence', dest="verify_hostname", action='store_false', default=None)
     parser.add_argument('--debug', help='set log level to debug', default=False, action='store_true')
     parser.add_argument('--log-config', help='provide a python logging config file', default=None)
