@@ -4,8 +4,7 @@ pixelated-dispatcher
 [![Build Status](https://travis-ci.org/pixelated-project/pixelated-dispatcher.svg?branch=master)](https://travis-ci.org/pixelated-project/pixelated-dispatcher)
 [![Coverage Status](https://coveralls.io/repos/pixelated-project/pixelated-dispatcher/badge.svg?branch=master)](https://coveralls.io/r/pixelated-project/pixelated-dispatcher?branch=master)
 
-
-The `pixelated-dispatcher` allows you to run, manage and restrict access (using a login form) to multiple instances of the pixelated user agent, since each instance of the user agent serves only a single user.
+The `pixelated-dispatcher` is what you will need to host Pixelated for more than one user. It allows you to run, manage and restrict access (using a login form) to multiple instances of the pixelated user agent, since each instance of the user agent serves only a single user.
 
 
 **The Pixelated Dispatcher is still in early development state! Hence the setup is sometimes still less straight forward than expected. You will find more details as you go through this README.**
