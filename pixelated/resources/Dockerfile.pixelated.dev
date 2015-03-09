@@ -1,0 +1,42 @@
+# DOCKER-VERSION 1.1.0
+#
+# Copyright (c) 2014 ThoughtWorks Deutschland GmbH
+#
+# Pixelated is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Pixelated is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
+
+
+FROM debian:wheezy
+
+MAINTAINER bwagner@thoughtworks.com
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN echo deb http://http.debian.net/debian wheezy-backports main >> /etc/apt/sources.list
+
+RUN apt-get update -qq && \
+  apt-get install -y -q --no-install-recommends \
+    git python2.7 curl ca-certificates \
+    python-pip python-dev python-virtualenv \
+    libffi-dev build-essential libsqlite3-dev \
+    libpng-dev ruby-dev libfontconfig1 nodejs-legacy
+
+RUN gem install compass
+
+RUN curl -L https://www.npmjs.org/install.sh | /bin/sh
+
+RUN git clone --depth=1 https://github.com/pixelated-project/pixelated-user-agent.git /pixelated-user-agent
+
+RUN cd /pixelated-user-agent/service && ./go setup
+
+EXPOSE 3333
