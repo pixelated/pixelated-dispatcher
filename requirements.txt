@@ -6,7 +6,7 @@ requests==2.4.3
 scrypt==0.6.1
 tornado==3.2.2
 pycurl==7.19.5
-docker-py==0.5.0
+docker-py>=0.6.0
 srp==1.0.5
 --allow-external dirspec
 --allow-unverified dirspec

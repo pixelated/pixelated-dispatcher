@@ -41,6 +41,9 @@ from pixelated.exceptions import InstanceAlreadyRunningError
 __author__ = 'fbernitt'
 
 
+DOCKER_API_VERSION='1.14'
+
+
 class CredentialsToDockerStdinWriter(object):
 
     __slots__ = ('_docker_url', '_container_id', '_leap_provider', '_user', '_password', '_process')
@@ -65,7 +68,7 @@ class CredentialsToDockerStdinWriter(object):
                 'stdout': False,
                 'stderr': False}
 
-            client = docker.Client(base_url=self._docker_url)
+            client = docker.Client(base_url=self._docker_url, version=DOCKER_API_VERSION)
 
             s = client.attach_socket(container=self._container_id, params=params)
             s.send("%s\n" % json.dumps({'leap_provider_hostname': self._leap_provider, 'user': self._user, 'password': self._password}))
@@ -118,7 +121,7 @@ class DockerProvider(BaseProvider):
     def __init__(self, adapter, leap_provider_hostname, leap_provider_ca, docker_url=DEFAULT_DOCKER_URL):
         super(DockerProvider, self).__init__()
         self._docker_url = docker_url
-        self._docker = docker.Client(base_url=docker_url)
+        self._docker = docker.Client(base_url=docker_url, version=DOCKER_API_VERSION)
         self._ports = set()
         self._adapter = adapter
         self._leap_provider_hostname = leap_provider_hostname

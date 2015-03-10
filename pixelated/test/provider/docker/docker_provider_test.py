@@ -28,7 +28,7 @@ from tempdir import TempDir
 from psutil._common import pmem
 from threading import Thread
 from pixelated.provider.base_provider import ProviderInitializingException
-from pixelated.provider.docker import DockerProvider, CredentialsToDockerStdinWriter
+from pixelated.provider.docker import DockerProvider, CredentialsToDockerStdinWriter, DOCKER_API_VERSION
 from pixelated.provider.docker.pixelated_adapter import PixelatedDockerAdapter
 from pixelated.test.util import StringIOMatcher
 from pixelated.exceptions import *
@@ -63,7 +63,7 @@ class CredentialsToDockerStdinWriterTest(unittest.TestCase):
         cw.run()
 
         # then
-        docker_mock.assert_called_once_with(base_url='some docker url')
+        docker_mock.assert_called_once_with(base_url='some docker url', version=DOCKER_API_VERSION)
         expected_params = {
             'stdin': True,
             'stderr': False,
@@ -95,6 +95,10 @@ class DockerProviderTest(unittest.TestCase):
     def tearDown(self):
         self._tmpdir.dissolve()
 
+
+    def test_that_docker_api_version_is_pinned_to_v1_14(self):
+        self.assertEqual('1.14', DOCKER_API_VERSION)
+
     @patch('pixelated.provider.docker.docker.Client')
     def test_constructor_expects_docker_url(self, docker_mock):
         DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some docker url')
@@ -110,7 +114,7 @@ class DockerProviderTest(unittest.TestCase):
         DockerProvider(self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
 
         # then
-        docker_mock.assert_called_once_with(base_url="some docker url")
+        docker_mock.assert_called_once_with(base_url="some docker url", version=DOCKER_API_VERSION)
         client.build.assert_called_once_with(path=None, fileobj=StringIOMatcher(dockerfile), tag='pixelated:latest')
 
     @patch('pixelated.provider.docker.docker.Client')
@@ -123,7 +127,7 @@ class DockerProviderTest(unittest.TestCase):
         # when
         DockerProvider(self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
         # then
-        docker_mock.assert_called_once_with(base_url='some docker url')
+        docker_mock.assert_called_once_with(base_url='some docker url', version=DOCKER_API_VERSION)
         client.pull.assert_called_once_with(tag='latest', repository='pixelated/pixelated-user-agent', stream=True)
 
     @patch('pixelated.provider.docker.docker.Client')
