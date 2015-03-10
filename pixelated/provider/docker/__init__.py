@@ -41,7 +41,7 @@ from pixelated.exceptions import InstanceAlreadyRunningError
 __author__ = 'fbernitt'
 
 
-DOCKER_API_VERSION='1.14'
+DOCKER_API_VERSION = '1.14'
 
 
 class CredentialsToDockerStdinWriter(object):

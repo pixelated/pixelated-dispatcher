@@ -95,7 +95,6 @@ class DockerProviderTest(unittest.TestCase):
     def tearDown(self):
         self._tmpdir.dissolve()
 
-
     def test_that_docker_api_version_is_pinned_to_v1_14(self):
         self.assertEqual('1.14', DOCKER_API_VERSION)
 
