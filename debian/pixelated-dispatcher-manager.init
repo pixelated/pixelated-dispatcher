@@ -31,7 +31,7 @@ if [ -z "$PIXELATED_PROVIDER" ] ; then
   PIXELATED_PROVIDER=$(hostname -d) 
 fi
 
-EXTRA_OPTS="manager -b $PIXELATED_BACKEND --provider $PIXELATED_PROVIDER -r $PIXELATED_ROOT --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_MANAGER_EXTRA_OPTS"
+EXTRA_OPTS="manager -b $PIXELATED_BACKEND --provider $PIXELATED_PROVIDER -r $PIXELATED_ROOT --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_MANAGER_EXTRA_OPTS --daemon"
 
 if [ -n "$PIXELATED_PROVIDER_FINGERPRINT" ] ; then
   EXTRA_OPTS="$EXTRA_OPTS --provider-fingerprint $PIXELATED_PROVIDER_FINGERPRINT"
@@ -43,7 +43,7 @@ fi
 
 case "$1" in
 start)	log_daemon_msg "Starting pixelated-dispatcher manager" "pixelated-manager"
-        start-stop-daemon --start --quiet --oknodo -b -m -c $PIXELATED_USER --pidfile $PIDFILE --exec $DAEMON -- $EXTRA_OPTS
+        start-stop-daemon --start --quiet --oknodo -m -c $PIXELATED_USER --pidfile $PIDFILE --exec $DAEMON -- $EXTRA_OPTS
         log_end_msg $?
 	;;
 stop)	log_daemon_msg "Stopping pixelated-dispatcher manager" "pixelated-manager"

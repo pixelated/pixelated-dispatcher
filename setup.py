@@ -59,7 +59,8 @@ setup(
         'docker-py>=0.6.0',  # same version as available in debian backports
         'srp',
         'leap.common',
-        'pycurl'
+        'pycurl',
+        'python-daemon>=1.5.5'
     ],
     test_suite='nose.collector',
     tests_require=[

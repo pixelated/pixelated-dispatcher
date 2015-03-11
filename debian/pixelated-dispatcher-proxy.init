@@ -27,14 +27,14 @@ test -f $DAEMON || exit 0
 
 [ -r /etc/default/pixelated-dispatcher-proxy ] && . /etc/default/pixelated-dispatcher-proxy
 
-EXTRA_OPTS="proxy --manager $PIXELATED_MANAGER --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_PROXY_EXTRA_OPTS"
+EXTRA_OPTS="proxy --manager $PIXELATED_MANAGER --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_PROXY_EXTRA_OPTS --daemon"
 if [ -n "$PIXELATED_MANAGER_FINGERPRINT" ] ; then
   EXTRA_OPTS="$EXTRA_OPTS --fingerprint $PIXELATED_MANAGER_FINGERPRINT"
 fi
 
 case "$1" in
 start)	log_daemon_msg "Starting pixelated-dispatcher proxy" "pixelated-proxy"
-        start-stop-daemon --start --quiet --oknodo -b -m -c $PIXELATED_USER --pidfile $PIDFILE --exec $DAEMON -- $EXTRA_OPTS
+        start-stop-daemon --start --quiet --oknodo -m -c $PIXELATED_USER --pidfile $PIDFILE --exec $DAEMON -- $EXTRA_OPTS
         log_end_msg $?
 	;;
 stop)	log_daemon_msg "Stopping pixelated-dispatcher proxy" "pixelated-proxy"
