@@ -19,6 +19,11 @@ import sys
 import logging
 import daemon
 
+
+try:
+    from daemon.pidfile import TimeoutPIDLockFile
+except ImportError:
+    from daemon.pidlockfile import TimeoutPIDLockFile
 from pixelated.client.cli import Cli
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
 from pixelated.proxy import DispatcherProxy
@@ -70,6 +75,7 @@ def run_manager():
     parser.add_argument('--sslkey', help='The SSL key to use', default=None)
     parser.add_argument('--debug', help='Set log level to debug', default=False, action='store_true')
     parser.add_argument('--daemon', help='start in daemon mode and put process into background', default=False, action='store_true')
+    parser.add_argument('--pidfile', help='path for pid file. By default none is created', default=None)
     parser.add_argument('--log-config', help='Provide a python logging config file', default=None)
     parser.add_argument('--provider', help='Specify the provider this dispatcher will connect to', default='localhost')
     parser.add_argument('--provider-ca', dest='provider_ca', help='Specify the provider CA to use to validate connections', default=True)
@@ -105,7 +111,8 @@ def run_manager():
     manager = DispatcherManager(args.root_path, mailpile_bin, ssl_config, args.provider, mailpile_virtualenv=venv, provider=args.backend, leap_provider_ca=provider_ca, leap_provider_fingerprint=args.provider_fingerprint, bindaddr=args.bind)
 
     if args.daemon:
-        with daemon.DaemonContext():
+        pidfile = TimeoutPIDLockFile(args.pidfile) if args.pidfile else None
+        with daemon.DaemonContext(pidfile=pidfile):
             manager.serve_forever()
     else:
         manager.serve_forever()
@@ -123,6 +130,7 @@ def run_proxy():
     parser.add_argument('--debug', help='set log level to debug', default=False, action='store_true')
     parser.add_argument('--log-config', help='provide a python logging config file', default=None)
     parser.add_argument('--daemon', help='start in daemon mode and put process into background', default=False, action='store_true')
+    parser.add_argument('--pidfile', help='path for pid file. By default none is created', default=None)
 
     args = parser.parse_args(args=filter_args())
 
@@ -141,7 +149,8 @@ def run_proxy():
                                  certfile=certfile, banner=args.banner)
 
     if args.daemon:
-        with daemon.DaemonContext():
+        pidfile = TimeoutPIDLockFile(args.pidfile) if args.pidfile else None
+        with daemon.DaemonContext(pidfile=pidfile):
             dispatcher.serve_forever()
     else:
         dispatcher.serve_forever()

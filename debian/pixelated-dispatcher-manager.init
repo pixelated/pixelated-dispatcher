@@ -18,7 +18,7 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin
 DESC="pixelated-dispatcher manager daemon"
 NAME=pixelated-manager
 DAEMON=/usr/bin/pixelated-dispatcher
-PIDFILE=/var/run/pixelated-dispatcher-manager.pid
+PIDFILE=/var/run/pixelated/pixelated-dispatcher-manager.pid
 SCRIPTNAME=/etc/init.d/"$NAME"
 
 test -f $DAEMON || exit 0
@@ -28,10 +28,10 @@ test -f $DAEMON || exit 0
 [ -r /etc/default/pixelated-dispatcher-manager ] && . /etc/default/pixelated-dispatcher-manager
 
 if [ -z "$PIXELATED_PROVIDER" ] ; then
-  PIXELATED_PROVIDER=$(hostname -d) 
+  PIXELATED_PROVIDER=$(hostname -d)
 fi
 
-EXTRA_OPTS="manager -b $PIXELATED_BACKEND --provider $PIXELATED_PROVIDER -r $PIXELATED_ROOT --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_MANAGER_EXTRA_OPTS --daemon"
+EXTRA_OPTS="manager -b $PIXELATED_BACKEND --provider $PIXELATED_PROVIDER -r $PIXELATED_ROOT --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_MANAGER_EXTRA_OPTS --daemon --pidfile $PIDFILE"
 
 if [ -n "$PIXELATED_PROVIDER_FINGERPRINT" ] ; then
   EXTRA_OPTS="$EXTRA_OPTS --provider-fingerprint $PIXELATED_PROVIDER_FINGERPRINT"
@@ -43,7 +43,9 @@ fi
 
 case "$1" in
 start)	log_daemon_msg "Starting pixelated-dispatcher manager" "pixelated-manager"
-        start-stop-daemon --start --quiet --oknodo -m -c $PIXELATED_USER --pidfile $PIDFILE --exec $DAEMON -- $EXTRA_OPTS
+	mkdir -p /var/run/pixelated
+	chown $PIXELATED_USER /var/run/pixelated
+        start-stop-daemon --start --quiet --oknodo -c $PIXELATED_USER --pidfile $PIDFILE --exec $DAEMON -- $EXTRA_OPTS
         log_end_msg $?
 	;;
 stop)	log_daemon_msg "Stopping pixelated-dispatcher manager" "pixelated-manager"

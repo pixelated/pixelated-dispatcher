@@ -18,7 +18,7 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin
 DESC="pixelated-dispatcher proxy daemon"
 NAME=pixelated-proxy
 DAEMON=/usr/bin/pixelated-dispatcher
-PIDFILE=/var/run/pixelated-dispatcher-proxy.pid
+PIDFILE=/var/run/pixelated/pixelated-dispatcher-proxy.pid
 SCRIPTNAME=/etc/init.d/"$NAME"
 
 test -f $DAEMON || exit 0
@@ -27,14 +27,16 @@ test -f $DAEMON || exit 0
 
 [ -r /etc/default/pixelated-dispatcher-proxy ] && . /etc/default/pixelated-dispatcher-proxy
 
-EXTRA_OPTS="proxy --manager $PIXELATED_MANAGER --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_PROXY_EXTRA_OPTS --daemon"
+EXTRA_OPTS="proxy --manager $PIXELATED_MANAGER --sslcert $PIXELATED_SSLCERT --sslkey $PIXELATED_SSLKEY $PIXELATED_PROXY_EXTRA_OPTS --daemon --pidfile $PIDFILE"
 if [ -n "$PIXELATED_MANAGER_FINGERPRINT" ] ; then
   EXTRA_OPTS="$EXTRA_OPTS --fingerprint $PIXELATED_MANAGER_FINGERPRINT"
 fi
 
 case "$1" in
 start)	log_daemon_msg "Starting pixelated-dispatcher proxy" "pixelated-proxy"
-        start-stop-daemon --start --quiet --oknodo -m -c $PIXELATED_USER --pidfile $PIDFILE --exec $DAEMON -- $EXTRA_OPTS
+	mkdir -p /var/run/pixelated
+	chown $PIXELATED_USER /var/run/pixelated
+        start-stop-daemon --start --quiet --oknodo -c $PIXELATED_USER --pidfile $PIDFILE --exec $DAEMON -- $EXTRA_OPTS
         log_end_msg $?
 	;;
 stop)	log_daemon_msg "Stopping pixelated-dispatcher proxy" "pixelated-proxy"
