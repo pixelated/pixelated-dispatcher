@@ -1,31 +1,36 @@
-pixelated-dispatcher
+Pixelated Dispatcher
 ====================
 
 [![Build Status](https://travis-ci.org/pixelated-project/pixelated-dispatcher.svg?branch=master)](https://travis-ci.org/pixelated-project/pixelated-dispatcher)
 [![Coverage Status](https://coveralls.io/repos/pixelated-project/pixelated-dispatcher/badge.svg?branch=master)](https://coveralls.io/r/pixelated-project/pixelated-dispatcher?branch=master)
 
-The `pixelated-dispatcher` is what you will need to host Pixelated for more than one user. It allows you to run, manage and restrict access (using a login form) to different instances of the [pixelated-user-agent](https://github.com/pixelated-project/pixelated-user-agent).
+The Pixelated Dispatcher is used to host Pixelated for more than one user. It allows you to run, manage and restrict access (using a login form) to different instances of the [pixelated-user-agent](https://github.com/pixelated-project/pixelated-user-agent).
 
+By default, the Pixelated Dispatcher will connect to our test provider, `try.pixelated-project.org`. In order to run your own provider, see [pixelated-platform](https://github.com/pixelated-project/pixelated-platform).
 
 **The Pixelated Dispatcher is still in early development state! Hence the setup is sometimes still less straight forward than expected. You will find more details as you go through this README.**
 
 ![High level architecture pixelated-dispatcher](https://pixelated-project.org/assets/images/pixelated-dispatcher.png)
 
 
-# Try it!
+# Getting started
 
-## Vagrant
-
-This repository contains a `Vagrantfile` that helps set up a running pixelated-dispatcher installation within a virtual machine in case you just want to look around. Just [install vagrant](https://www.vagrantup.com/downloads.html), fork/clone this repository and, in the project's root folder, run:
+This repository contains a `Vagrantfile` that helps set up a running pixelated-dispatcher installation within a virtual machine. Just [install vagrant](https://www.vagrantup.com/downloads.html), fork/clone this repository and, in the project's root folder, run:
 
     vagrant up
 
-After all the dependencies are downloaded and the service is running, you can access the login page at [https://localhost:8080/](https://localhost:8080/).
-To login to the virtual machine, use `vagrant ssh`.
+After all the dependencies are downloaded and the service is running, you can access the login page at [https://localhost:8080/](https://localhost:8080/). By default, the dispatcher will connect to our test provider at `try.pixelated-project.org`.
 
-## Debian packages
+Now that the service is running, you can login to the virtual machine with `vagrant ssh` and run our suite of automated tests:
 
-We have debian packages available in our repository. Use these commands to install them:
+    cd /vagrant
+    python setup.py test
+
+
+
+# Debian packages
+
+We have Debian packages available in our repositories. Use these commands to install them:
 
 ```bash
 apt-key adv --keyserver pool.sks-keyservers.net --recv-keys 0x287A1542472DC0E3
@@ -39,6 +44,7 @@ echo "deb http://deb.leap.se/0.6 wheezy main" >> /etc/apt/sources.list.d/leap.li
 apt-get update
 apt-get install -t wheezy-backports pixelated-dispatcher
 ```
+
 
 # Command line interface (CLI)
 
@@ -62,32 +68,3 @@ It handles authentication and acts as a proxy for the agents. The intention is f
 The `manager` is responsible for managing the lifecycle of the user agent instances. It is not accessible from the web, but provides a REST-ful API to create/start/stop/delete agents. It uses [docker](https://github.com/dotcloud/docker) to isolate the user-agent's processes from each other and to provide the necessary runtime environment.
 
 Both the `proxy` and the `manager` need to be running for the pixelated-dispatcher to work correctly.
-
-
-# Development Environment (if you're not using Vagrant)
-
-As the default provider is based on docker you need a running docker daemon somewhere. So you have to set DOCKER_HOST to the according value, e.g.
-
-    export DOCKER_HOST=tcp://192.168.59.103:2375
-
-If you are working on OS X, we recommend [boot2docker](http://boot2docker.io/) as there is no native docker support.
-
-To setup a dev environment, call:
-
-    git clone git@github.com:pixelated-project/pixelated-dispatcher.git
-    virtualenv pixelated_dispatcher_venv   # or created elsewhere
-    source pixelated_dispatcher_venv/bin/activate
-    cd pixelated-dispatcher
-    pip install -r requirements.txt
-
-    python setup.py test
-
-
-# Packages
-
-You can build a debian package from sources by running
-
-	./package/debian-package.sh
-
-For that to work you need to have the `python-setuptools (>= 0.6b3)`, `python-all (>= 2.6.6-3)` and `debhelper (>= 7.4.3)` installed.
-
