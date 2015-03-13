@@ -8,7 +8,7 @@ The Pixelated Dispatcher is used to host Pixelated for more than one user. It al
 
 By default, the Pixelated Dispatcher will connect to our test provider, `try.pixelated-project.org`. In order to run your own provider, see [pixelated-platform](https://github.com/pixelated-project/pixelated-platform).
 
-**The Pixelated Dispatcher is still in early development state!**
+**The Pixelated Dispatcher is  still in early development state!**
 
 ![High level architecture pixelated-dispatcher](https://pixelated-project.org/assets/images/pixelated-dispatcher.png)
 
