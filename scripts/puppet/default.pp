@@ -67,18 +67,6 @@ node default {
     require => Package['rng-tools']
   }
 
-  exec { 'docker-pull-logspout':
-    command => '/usr/bin/docker pull gliderlabs/logspout',
-    unless => '/usr/bin/docker images | grep logspout',
-    require => Service['docker']
-  }
-
-  exec { 'docker-run-logspout':
-    command => '/usr/bin/docker run --volume=/var/run/docker.sock:/tmp/docker.sock --net=host --detach gliderlabs/logspout syslog://localhost:514',
-    unless => '/usr/bin/docker ps | grep logspout',
-    require => [Exec['docker-pull-logspout'], Service['rsyslog']]
-  }
-
   service { 'rsyslog':
     ensure => running,
     require => File['/etc/rsyslog.d/udp.conf']
