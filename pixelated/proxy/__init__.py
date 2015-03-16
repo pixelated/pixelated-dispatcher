@@ -319,18 +319,22 @@ class DispatcherProxy(object):
             return None
 
     def serve_forever(self):
-        app = self.create_app()
-        # app.listen(port=self._port, address=self._bindaddr, ssl_options=self.ssl_options)
-        if self.ssl_options:
-            logger.info('Using SSL certfile %s and keyfile %s' % (self.ssl_options['certfile'], self.ssl_options['keyfile']))
-        else:
-            logger.warn('No SSL configured!')
-        logger.info('Listening on %s:%d' % (self._bindaddr, self._port))
-        self._server = HTTPServer(app, ssl_options=self.ssl_options)
-        self._server.listen(port=self._port, address=self._bindaddr)
-        self._ioloop = tornado.ioloop.IOLoop.instance()
-        self._ioloop.start()  # this is a blocking call, server has stopped on next line
-        self._ioloop = None
+        try:
+            app = self.create_app()
+            # app.listen(port=self._port, address=self._bindaddr, ssl_options=self.ssl_options)
+            if self.ssl_options:
+                logger.info('Using SSL certfile %s and keyfile %s' % (self.ssl_options['certfile'], self.ssl_options['keyfile']))
+            else:
+                logger.warn('No SSL configured!')
+            logger.info('Listening on %s:%d' % (self._bindaddr, self._port))
+            self._server = HTTPServer(app, ssl_options=self.ssl_options)
+            self._server.listen(port=self._port, address=self._bindaddr)
+            self._ioloop = tornado.ioloop.IOLoop.instance()
+            self._ioloop.start()  # this is a blocking call, server has stopped on next line
+            self._ioloop = None
+        except Exception, e:
+            logger.exception("Error while running manager: %s" % e)
+            raise  # re-raise
 
     def shutdown(self):
         if self._ioloop:

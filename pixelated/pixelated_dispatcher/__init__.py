@@ -69,7 +69,7 @@ def run_manager():
     parser = argparse.ArgumentParser(description='Multipile', )
     parser.add_argument('-r', '--root_path', help='The rootpath for mailpile')
     parser.add_argument('-m', '--mailpile_bin', help='The mailpile executable', default='mailpile')
-    parser.add_argument('-b', '--backend', help='the backend to use (fork|docker)', default='fork')
+    parser.add_argument('-b', '--backend', help='the backend to use', default='fork', choices=['fork', 'docker'])
     parser.add_argument('--bind', help="bind to interface. Default 127.0.0.1", default='127.0.0.1')
     parser.add_argument('--sslcert', help='The SSL certficate to use', default=None)
     parser.add_argument('--sslkey', help='The SSL key to use', default=None)

@@ -277,21 +277,25 @@ class DispatcherManager(object):
         self._leap_provider_fingerprint = leap_provider_fingerprint
 
     def serve_forever(self):
-        self._download_leap_certificate_to_root_path()
-        users = Users(self._root_path)
-        authenticator = Authenticator(users, self._leap_provider_hostname, self._leap_provider_ca, leap_provider_fingerprint=self._leap_provider_fingerprint)
-        provider = self._create_provider()
+        try:
+            self._download_leap_certificate_to_root_path()
+            users = Users(self._root_path)
+            authenticator = Authenticator(users, self._leap_provider_hostname, self._leap_provider_ca, leap_provider_fingerprint=self._leap_provider_fingerprint)
+            provider = self._create_provider()
 
-        Thread(target=provider.initialize).start()
+            Thread(target=provider.initialize).start()
 
-        logger.info('Starting REST api')
-        self._server = RESTfulServer(self._ssl_config, users, authenticator, provider, bindaddr=self._bindaddr, port=DEFAULT_PORT)
-        if self._ssl_config:
-            logger.info('Using SSL certfile %s and keyfile %s' % (self._ssl_config.ssl_certfile, self._ssl_config.ssl_keyfile))
-        else:
-            logger.warn('No SSL configured')
-        logger.info('Listening on %s:%d' % ('localhost', DEFAULT_PORT))
-        self._server.serve_forever()
+            logger.info('Starting REST api')
+            self._server = RESTfulServer(self._ssl_config, users, authenticator, provider, bindaddr=self._bindaddr, port=DEFAULT_PORT)
+            if self._ssl_config:
+                logger.info('Using SSL certfile %s and keyfile %s' % (self._ssl_config.ssl_certfile, self._ssl_config.ssl_keyfile))
+            else:
+                logger.warn('No SSL configured')
+            logger.info('Listening on %s:%d' % ('localhost', DEFAULT_PORT))
+            self._server.serve_forever()
+        except Exception, e:
+            logger.exception("Error while running manager: %s" % e)
+            raise  # re-raise
 
     def shutdown(self):
         if self._server:
