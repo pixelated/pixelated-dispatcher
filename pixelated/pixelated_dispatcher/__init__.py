@@ -35,6 +35,9 @@ __author__ = 'fbernitt'
 import argparse
 
 
+PID_ACQUIRE_TIMEOUT_IN_S = 1
+
+
 def is_proxy():
     for arg in sys.argv:
         if arg == 'proxy':
@@ -63,6 +66,11 @@ def prepare_venv(root_path):
     subprocess.call([script, venv_path])
     mailpile_path = os.path.join(venv_path, 'bin', 'mailpile')
     return venv_path, mailpile_path
+
+
+def can_use_pidfile(pidfile):
+    pidfile.acquire()
+    pidfile.release()
 
 
 def run_manager():
@@ -111,7 +119,8 @@ def run_manager():
     manager = DispatcherManager(args.root_path, mailpile_bin, ssl_config, args.provider, mailpile_virtualenv=venv, provider=args.backend, leap_provider_ca=provider_ca, leap_provider_fingerprint=args.provider_fingerprint, bindaddr=args.bind)
 
     if args.daemon:
-        pidfile = TimeoutPIDLockFile(args.pidfile) if args.pidfile else None
+        pidfile = TimeoutPIDLockFile(args.pidfile, timeout=PID_ACQUIRE_TIMEOUT_IN_S) if args.pidfile else None
+        can_use_pidfile(pidfile)
         with daemon.DaemonContext(pidfile=pidfile):
             manager.serve_forever()
     else:
@@ -149,7 +158,8 @@ def run_proxy():
                                  certfile=certfile, banner=args.banner)
 
     if args.daemon:
-        pidfile = TimeoutPIDLockFile(args.pidfile) if args.pidfile else None
+        pidfile = TimeoutPIDLockFile(args.pidfile, timeout=PID_ACQUIRE_TIMEOUT_IN_S) if args.pidfile else None
+        can_use_pidfile(pidfile)
         with daemon.DaemonContext(pidfile=pidfile):
             dispatcher.serve_forever()
     else:
