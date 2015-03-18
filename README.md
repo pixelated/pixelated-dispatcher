@@ -1,7 +1,7 @@
 Pixelated Dispatcher
 ====================
 
-[![Build Status](https://travis-ci.org/pixelated-project/pixelated-dispatcher.svg?branch=master)](https://travis-ci.org/pixelated-project/pixelated-dispatcher)
+[![Build Status](https://snap-ci.com/pixelated-project/pixelated-dispatcher/branch/master/build_image)](https://snap-ci.com/pixelated-project/pixelated-dispatcher/branch/master)
 [![Coverage Status](https://coveralls.io/repos/pixelated-project/pixelated-dispatcher/badge.svg?branch=master)](https://coveralls.io/r/pixelated-project/pixelated-dispatcher?branch=master)
 
 The Pixelated Dispatcher is used to host Pixelated for more than one user. It allows you to run, manage and restrict access (using a login form) to different instances of the [pixelated-user-agent](https://github.com/pixelated-project/pixelated-user-agent).
