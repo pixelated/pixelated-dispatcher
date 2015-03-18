@@ -15,7 +15,7 @@ By default, the Pixelated Dispatcher will connect to our test provider, `try.pix
 
 # Getting started
 
-This repository contains a `Vagrantfile` that helps set up a running pixelated-dispatcher installation within a virtual machine. Just [install vagrant](https://www.vagrantup.com/downloads.html), fork/clone this repository and, in the project's root folder, run:
+This repository contains a `Vagrantfile` that helps set up a running pixelated-dispatcher installation within a virtual machine. Just [install vagrant](https://www.vagrantup.com/downloads.html) and a Vagrant provider (such as [VirtualBox](https://www.virtualbox.org/wiki/Downloads)), fork/clone this repository and, in the project's root folder, run:
 
     vagrant up
 
