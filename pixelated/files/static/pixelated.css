@@ -50,6 +50,10 @@ body {
     margin-bottom: 2%;
 }
 
+form#login_form {
+  padding: 10px 0;
+}
+
 .warning {
     display: block;
     margin-top: 10%;
@@ -67,13 +71,17 @@ body {
 }
 
 .logo {
-    width:90%;
-    height: auto;
+  width: 100%;
+  height: auto;
 }
 
 input {
     display: block;
     margin: 10px 0;
+}
+
+input.text-field {
+  width: 97%;
 }
 
 button, .button, input[type=button] {

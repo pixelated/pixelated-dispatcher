@@ -28,11 +28,11 @@
         </div>
         {% end %}
 
-        <form class="standard" id="login_form" action="/auth/login" method="post" style="padding: 10px">
-            <input type="text" name="username" id="email" class="text-field" placeholder="username">
-            <input type="password" name="password" id="password" class="text-field" placeholder="password">
+        <form class="standard" id="login_form" action="/auth/login" method="post">
+            <input type="text" name="username" id="email" class="text-field" placeholder="  username" tabindex="1" autofocus>
+            <input type="password" name="password" id="password" class="text-field" placeholder="  password" tabindex="2">
 
-            <input type="submit" name="login" value="Login" class="button">
+            <input type="submit" name="login" value="Login" class="button" tabindex="3">
             {% raw xsrf_form_html() %}
         </form>
     </div>
