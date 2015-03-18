@@ -18,9 +18,6 @@ import getpass
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient, PixelatedHTTPError
 import pixelated.manager
 
-
-__author__ = 'fbernitt'
-
 import sys
 import argparse
 

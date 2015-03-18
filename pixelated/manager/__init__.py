@@ -25,8 +25,6 @@ from pixelated.users import Users
 from pixelated.authenticator import Authenticator
 from os.path import join
 
-__author__ = 'fbernitt'
-
 import ssl
 
 from bottle import run, Bottle, request, response, WSGIRefServer

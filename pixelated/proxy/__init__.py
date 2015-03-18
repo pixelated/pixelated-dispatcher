@@ -23,8 +23,6 @@ from tornado.httpserver import HTTPServer
 from pixelated.client.dispatcher_api_client import PixelatedHTTPError, PixelatedNotAvailableHTTPError
 from pixelated.common import logger
 
-__author__ = 'fbernitt'
-
 import os
 import tornado.ioloop
 import tornado.web

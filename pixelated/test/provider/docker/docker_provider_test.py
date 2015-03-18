@@ -34,9 +34,6 @@ from pixelated.test.util import StringIOMatcher
 from pixelated.exceptions import *
 from pixelated.users import UserConfig, Users
 
-
-__author__ = 'fbernitt'
-
 import unittest
 
 

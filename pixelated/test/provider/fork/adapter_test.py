@@ -19,9 +19,6 @@ from psutil._common import pmem
 
 from pixelated.provider.fork.adapter import ForkedProcess
 
-
-__author__ = 'fbernitt'
-
 import unittest
 
 

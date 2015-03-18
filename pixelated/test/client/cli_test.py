@@ -20,9 +20,6 @@ from mock import MagicMock, patch
 from pixelated.client.cli import Cli
 from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
 
-
-__author__ = 'fbernitt'
-
 import unittest
 
 

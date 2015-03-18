@@ -15,8 +15,6 @@
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
 from pixelated.provider.fork.mailpile_adapter import MailpileAdapter
 
-__author__ = 'fbernitt'
-
 from tempfile import NamedTemporaryFile
 import unittest
 

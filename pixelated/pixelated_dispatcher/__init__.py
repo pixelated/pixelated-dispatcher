@@ -19,7 +19,6 @@ import sys
 import logging
 import daemon
 
-
 try:
     from daemon.pidfile import TimeoutPIDLockFile
 except ImportError:
@@ -29,8 +28,6 @@ from pixelated.client.dispatcher_api_client import PixelatedDispatcherClient
 from pixelated.proxy import DispatcherProxy
 from pixelated.manager import SSLConfig, DispatcherManager
 from pixelated.common import init_logging, latest_available_ssl_version
-
-__author__ = 'fbernitt'
 
 import argparse
 

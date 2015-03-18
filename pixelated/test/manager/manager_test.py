@@ -16,7 +16,6 @@
 from pixelated.provider.base_provider import ProviderInitializingException
 from pixelated.test.util import EnforceTLSv1Adapter
 
-__author__ = 'fbernitt'
 import unittest
 import time
 import json

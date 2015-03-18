@@ -15,8 +15,6 @@
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
 import os
 
-__author__ = 'fbernitt'
-
 import subprocess
 from pixelated.provider.fork.adapter import ForkedProcess, Adapter
 

@@ -17,12 +17,10 @@
 import sys
 import os.path
 
-__author__ = 'fbernitt'
+from pixelated.pixelated_dispatcher import main
 
 sys.path.append('%s/..' % os.path.dirname(os.path.realpath(__file__)))
 
-from pixelated.pixelated_dispatcher import main
 
 if __name__ == '__main__':
-
     main()

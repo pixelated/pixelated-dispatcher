@@ -13,8 +13,6 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
-__author__ = 'fbernitt'
-
 import unittest
 import subprocess
 import os.path
