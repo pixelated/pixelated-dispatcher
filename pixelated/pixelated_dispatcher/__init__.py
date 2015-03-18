@@ -119,7 +119,7 @@ def run_manager():
     manager = DispatcherManager(args.root_path, mailpile_bin, ssl_config, args.provider, mailpile_virtualenv=venv, provider=args.backend, leap_provider_ca=provider_ca, leap_provider_fingerprint=args.provider_fingerprint, bindaddr=args.bind)
 
     if args.daemon:
-        pidfile = TimeoutPIDLockFile(args.pidfile, timeout=PID_ACQUIRE_TIMEOUT_IN_S) if args.pidfile else None
+        pidfile = TimeoutPIDLockFile(args.pidfile, acquire_timeout=PID_ACQUIRE_TIMEOUT_IN_S) if args.pidfile else None
         can_use_pidfile(pidfile)
         with daemon.DaemonContext(pidfile=pidfile):
             manager.serve_forever()
@@ -158,7 +158,7 @@ def run_proxy():
                                  certfile=certfile, banner=args.banner)
 
     if args.daemon:
-        pidfile = TimeoutPIDLockFile(args.pidfile, timeout=PID_ACQUIRE_TIMEOUT_IN_S) if args.pidfile else None
+        pidfile = TimeoutPIDLockFile(args.pidfile, acquire_timeout=PID_ACQUIRE_TIMEOUT_IN_S) if args.pidfile else None
         can_use_pidfile(pidfile)
         with daemon.DaemonContext(pidfile=pidfile):
             dispatcher.serve_forever()

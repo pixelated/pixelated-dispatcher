@@ -11,4 +11,4 @@ srp==1.0.5
 --allow-external dirspec
 --allow-unverified dirspec
 leap.common==0.3.8
-python-daemon>=1.5.5
+python-daemon>=1.5.5, < 2.0.0

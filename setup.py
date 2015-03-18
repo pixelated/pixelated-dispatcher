@@ -60,7 +60,7 @@ setup(
         'srp',
         'leap.common',
         'pycurl',
-        'python-daemon>=1.5.5'
+        'python-daemon>=1.5.5, < 2.0.0'
     ],
     test_suite='nose.collector',
     tests_require=[
