@@ -109,7 +109,6 @@ def run_manager():
 
     log_level = logging.DEBUG if args.debug else logging.INFO
     log_config = args.log_config
-    init_logging('manager', level=log_level, config_file=log_config)
 
     provider_ca = args.provider_ca if args.provider_fingerprint is None else False
 
@@ -119,8 +118,11 @@ def run_manager():
         pidfile = TimeoutPIDLockFile(args.pidfile, acquire_timeout=PID_ACQUIRE_TIMEOUT_IN_S) if args.pidfile else None
         can_use_pidfile(pidfile)
         with daemon.DaemonContext(pidfile=pidfile):
+            # init logging only after we have spawned the sub process. Otherwise there might be some hickups
+            init_logging('manager', level=log_level, config_file=log_config)
             manager.serve_forever()
     else:
+        init_logging('manager', level=log_level, config_file=log_config)
         manager.serve_forever()
 
 
@@ -147,7 +149,7 @@ def run_proxy():
 
     log_level = logging.DEBUG if args.debug else logging.INFO
     log_config = args.log_config
-    init_logging('dispatcher', level=log_level, config_file=log_config)
+
     client = PixelatedDispatcherClient(manager_hostname, manager_port, cacert=manager_cafile, fingerprint=args.fingerprint, assert_hostname=args.verify_hostname)
     client.validate_connection()
 
@@ -158,8 +160,11 @@ def run_proxy():
         pidfile = TimeoutPIDLockFile(args.pidfile, acquire_timeout=PID_ACQUIRE_TIMEOUT_IN_S) if args.pidfile else None
         can_use_pidfile(pidfile)
         with daemon.DaemonContext(pidfile=pidfile):
+            # init logging only after we have spawned the sub process. Otherwise there might be some hickups
+            init_logging('dispatcher', level=log_level, config_file=log_config)
             dispatcher.serve_forever()
     else:
+        init_logging('dispatcher', level=log_level, config_file=log_config)
         dispatcher.serve_forever()
 
 
