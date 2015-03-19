@@ -331,7 +331,7 @@ class DispatcherProxy(object):
             self._ioloop.start()  # this is a blocking call, server has stopped on next line
             self._ioloop = None
         except Exception, e:
-            logger.exception("Error while running manager: %s" % e)
+            logger.exception("Error while running proxy: %s" % e)
             raise  # re-raise
 
     def shutdown(self):

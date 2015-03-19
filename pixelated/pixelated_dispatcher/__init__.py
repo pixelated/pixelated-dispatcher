@@ -161,10 +161,10 @@ def run_proxy():
         can_use_pidfile(pidfile)
         with daemon.DaemonContext(pidfile=pidfile):
             # init logging only after we have spawned the sub process. Otherwise there might be some hickups
-            init_logging('dispatcher', level=log_level, config_file=log_config)
+            init_logging('proxy', level=log_level, config_file=log_config)
             dispatcher.serve_forever()
     else:
-        init_logging('dispatcher', level=log_level, config_file=log_config)
+        init_logging('proxy', level=log_level, config_file=log_config)
         dispatcher.serve_forever()
 
 
