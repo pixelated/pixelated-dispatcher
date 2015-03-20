@@ -49,7 +49,7 @@ node default {
   }
 
   exec { 'install-dispatcher':
-    command => '/usr/bin/python setup.py'
+    command => '/usr/bin/python setup.py develop',
     cwd => '/vagrant',
     require => [Exec['install-dispatcher-dependencies'], Exec['install-pip'], Package['python-dev'], Package['libffi-dev']]
   }
