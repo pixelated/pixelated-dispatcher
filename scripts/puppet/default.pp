@@ -48,6 +48,12 @@ node default {
     require => [Exec['install-pip'], Package['python-dev'], Package['libffi-dev']]
   }
 
+  exec { 'install-dispatcher':
+    command => '/usr/bin/python setup.py'
+    cwd => '/vagrant',
+    require => [Exec['install-dispatcher-dependencies'], Exec['install-pip'], Package['python-dev'], Package['libffi-dev']]
+  }
+
   service { 'rngd':
     ensure => running,
     provider => 'base',
