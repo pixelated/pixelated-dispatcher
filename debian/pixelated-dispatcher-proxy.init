@@ -3,7 +3,7 @@
 #
 ### BEGIN INIT INFO
 # Provides:          pixelated-proxy
-# Required-Start:    $remote_fs $syslog $time
+# Required-Start:    $remote_fs $syslog $time pixelated-dispatcher-manager
 # Required-Stop:     $remote_fs $syslog $time
 # Should-Start:      $network $named slapd autofs ypbind nscd nslcd
 # Should-Stop:       $network $named slapd autofs ypbind nscd nslcd
