@@ -15,7 +15,7 @@ body {
 
 .error {
     color: #D72A25;
-    margin: 0;
+    margin: 10px 0 0 0;
 }
 
 .message-panel {
@@ -64,6 +64,7 @@ form#login_form {
     font-weight: 300;
     font-size: 0.8rem;
     padding: 1em;
+    margin-bottom: 20px;
 }
 
 .warning li {
