@@ -42,9 +42,8 @@ body {
 .login {
     display: block;
     width: 240px;
-    height: 220px;
     margin: auto;
-    padding: 45px 40px;
+    padding: 45px 40px 35px 40px;
     background-color: #FFF;
     margin-top: 2%;
     margin-bottom: 2%;
