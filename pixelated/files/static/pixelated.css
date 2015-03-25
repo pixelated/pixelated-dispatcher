@@ -54,7 +54,7 @@ form#login_form {
   padding: 10px 0;
 }
 
-.warning {
+.disclaimer {
     display: block;
     margin-top: 10%;
     width: 50%;
@@ -67,7 +67,7 @@ form#login_form {
     margin-bottom: 20px;
 }
 
-.warning li {
+.disclaimer li {
     margin-top: 1em;
 }
 
