@@ -137,13 +137,9 @@ class DockerProvider(BaseProvider):
             raise
 
     def initialize(self):
-        imgs = self._docker.images()
-        found = False
-        for img in imgs:
-            if '%s:latest' % self._adapter.docker_image_name() in img['RepoTags']:
-                found = True
+        self._initialize_logger_container()
 
-        if not found:
+        if not self._image_exists(self._adapter.docker_image_name()):
             # build the image
             start = time.time()
             logger.info('No docker image for %s found! Triggering build.' % self._adapter.app_name())
@@ -168,6 +164,15 @@ class DockerProvider(BaseProvider):
                     self._build_image(path, fileobj)
                 logger.info('Finished image %s build in %d seconds' % ('%s:latest' % self._adapter.docker_image_name(), time.time() - start))
         self._initializing = False
+
+    def _image_exists(self, docker_image_name):
+        imgs = self._docker.images()
+        repo_tag = docker_image_name + ':latest'
+        for img in imgs:
+            if repo_tag in img['RepoTags']:
+                return True
+
+        return False
 
     def _download_image(self, docker_image_name):
         stream = self._docker.pull(repository=docker_image_name, tag='latest', stream=True)
@@ -200,6 +205,27 @@ class DockerProvider(BaseProvider):
                     logger.error('Docker output: %s' % line)
                 logger.error('Terminating process by sending TERM signal')
                 os.kill(os.getpid(), signal.SIGTERM)
+
+    def _initialize_logger_container(self):
+        LOGGER_CONTAINER_NAME = 'gliderlabs/logspout'
+
+        if not self._image_exists(LOGGER_CONTAINER_NAME):
+            self._download_image(LOGGER_CONTAINER_NAME)
+
+        logger_container = self._docker.create_container(
+            image=LOGGER_CONTAINER_NAME + ':latest',
+            command='syslog://localhost:514',
+            volumes='/tmp/docker.sock'
+        )
+
+        self._docker.start(
+            container=logger_container.get('Id'),
+            network_mode='host',
+            binds={'/var/run/docker.sock': {
+                'bind': '/tmp/docker.sock',
+                'ro': False
+            }}
+        )
 
     def pass_credentials_to_agent(self, user_config, password):
         self._credentials[user_config.username] = password  # remember crendentials until agent gets started
