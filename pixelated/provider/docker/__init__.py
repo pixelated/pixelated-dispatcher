@@ -143,8 +143,6 @@ class DockerProvider(BaseProvider):
             if '%s:latest' % self._adapter.docker_image_name() in img['RepoTags']:
                 found = True
 
-        self._initialize_logger_container()
-
         if not found:
             # build the image
             start = time.time()
@@ -202,35 +200,6 @@ class DockerProvider(BaseProvider):
                     logger.error('Docker output: %s' % line)
                 logger.error('Terminating process by sending TERM signal')
                 os.kill(os.getpid(), signal.SIGTERM)
-
-    def _initialize_logger_container(self):
-        LOGGER_CONTAINER_NAME = 'gliderlabs/logspout'
-
-        imgs = self._docker.images()
-        found = False
-        for img in imgs:
-            if '%s:latest' % LOGGER_CONTAINER_NAME in img['RepoTags']:
-                found = True
-
-        if not found:
-            self._download_image(LOGGER_CONTAINER_NAME)
-
-
-        logger_container = self._docker.create_container(image=LOGGER_CONTAINER_NAME + ':latest',
-                                                         command='syslog://localhost:514',
-                                                         volumes='/tmp/docker.sock')
-
-        self._docker.start(container=logger_container.get('Id'),
-                           network_mode='host',
-                           binds={
-                               '/var/run/docker.sock':
-                                   {
-                                       'bind': '/tmp/docker.sock',
-                                       'ro': False
-                                   }
-                           })
-
-
 
     def pass_credentials_to_agent(self, user_config, password):
         self._credentials[user_config.username] = password  # remember crendentials until agent gets started
