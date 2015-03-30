@@ -139,7 +139,6 @@ class DockerProviderTest(unittest.TestCase):
         docker_mock.assert_called_once_with(base_url='some docker url', version=DOCKER_API_VERSION)
         client.pull.assert_called_with(tag='latest', repository='gliderlabs/logspout', stream=True)
 
-
     @patch('pixelated.provider.docker.docker.Client')
     def test_initialize_skips_image_build_or_download_if_already_available(self, docker_mock):
         # given
@@ -177,7 +176,6 @@ class DockerProviderTest(unittest.TestCase):
         # then
         docker_mock.assert_called_once_with(base_url='some docker url', version=DOCKER_API_VERSION)
         client.pull.assert_never_called_with(tag='latest', repository='gliderlabs/logspout', stream=True)
-
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_reports_initializing_while_initialize_is_running(self, docker_mock):
