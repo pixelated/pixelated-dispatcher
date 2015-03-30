@@ -17,7 +17,7 @@
 from selenium import webdriver
 
 
-def before_feature(context, feature):
+def before_scenario(context, scenario):
     context.browser = webdriver.Firefox()
     # context.browser = webdriver.PhantomJS()
     context.browser.set_window_size(1280, 1024)
@@ -25,10 +25,8 @@ def before_feature(context, feature):
     context.browser.set_page_load_timeout(60)  # wait for data
     context.browser.get('https://try.pixelated-project.org:8080/')
 
-
-def after_feature(context, feature):
+def after_scenario(context, scenario):
     context.browser.quit()
-
 
 def take_screenshot(context):
     context.browser.save_screenshot('/tmp/screenshot.jpeg')

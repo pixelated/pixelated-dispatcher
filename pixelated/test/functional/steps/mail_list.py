@@ -21,4 +21,4 @@ from .page_objects import PixelatedPage
 @then('I see the email on the mail list')
 def impl(context):
     pixelated_page = PixelatedPage(context)
-    pixelated_page.is_mail_on_list('alice@try.pixelated-project.org', 'Automated test, TBD (To Be Deleted)', 240)
+    pixelated_page.is_mail_on_list(context.pixelated_email, 'Automated test, TBD (To Be Deleted)', 240)

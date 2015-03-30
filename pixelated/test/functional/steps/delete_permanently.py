@@ -22,9 +22,9 @@ from .page_objects import PixelatedPage
 def impl(context):
     pixelated_page = PixelatedPage(context)
     pixelated_page.go_to_trash()
-    assert(pixelated_page.is_mail_on_list('alice@try.pixelated-project.org', 'Automated test, TBD (To Be Deleted)'))
-
+    pixelated_page.is_mail_on_list(context.pixelated_email, 'Automated test, TBD (To Be Deleted)')
 
 @then('I delete it permanently')
 def impl(context):
     pixelated_page = PixelatedPage(context)
+    pixelated_page.delete_mail(context.pixelated_email, 'Automated test, TBD (To Be Deleted)')

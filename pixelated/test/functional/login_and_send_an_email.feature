@@ -16,11 +16,16 @@
 
 Feature: login and send mail
 
-
-  Scenario: user logs in, composes and send an email
-    Given I login on an organization install of pixelated
+  Scenario Outline: user logs in, composes and send an email, then deletes it
+    Given I login as "<user>" with password "<password>" to an organization install of pixelated
     When I send an email to myself
     Then I see the email on the mail list
     Then I delete the email
     Then I see it in the trash box
-      And I delete it permanently
+    And I delete it permanently
+
+    Examples:
+    | user  | password   |
+    | alice | WuSh3ohse4 |
+    | eve   | Voh0ohghai |
+    | bob   | quuojoo1Su |

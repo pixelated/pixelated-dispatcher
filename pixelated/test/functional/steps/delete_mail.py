@@ -21,4 +21,8 @@ from .page_objects import PixelatedPage
 @then('I delete the email')
 def impl(context):
     pixelated_page = PixelatedPage(context)
-    pixelated_page.delete_mail('alice@try.pixelated-project.org', 'Automated test, TBD (To Be Deleted)', 240)
+    pixelated_page.delete_mail(
+        context.pixelated_email,
+        'Automated test, TBD (To Be Deleted)',
+        240
+    )

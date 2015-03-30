@@ -18,8 +18,9 @@ from behave import given
 from .page_objects import LoginPage
 
 
-@given('I login on an organization install of pixelated')
-def impl(context):
+@given('I login as "{user}" with password "{password}" to an organization install of pixelated')
+def impl(context, user, password):
+    context.pixelated_email = user + '@try.pixelated-project.org'
     login_page = LoginPage(context)
-    login_page.enter_username("alice").enter_password("WuSh3ohse4").login()
+    login_page.enter_username(user).enter_password(password).login()
     login_page.wait_intersitial_page()

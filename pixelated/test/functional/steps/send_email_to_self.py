@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
 
-from behave import when  # , then
+from behave import when
 from .page_objects import PixelatedPage
 
 
@@ -24,5 +24,5 @@ def impl(context):
     pixelated_page.compose_and_send_email({
         'subject': 'Automated test, TBD (To Be Deleted)',
         'body': 'This is an automated test of Pixelated. Please do not delete this, it will be deleted automatically.',
-        'recipients': 'alice@try.pixelated-project.org'
+        'recipients': context.pixelated_email
     })
