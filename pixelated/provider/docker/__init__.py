@@ -262,12 +262,11 @@ class DockerProvider(BaseProvider):
         port = self._next_available_port()
         self._ports.add(port)
 
-        self._docker.start(c,
-                           binds={
-                               data_path: {'bind': '/mnt/user', 'ro': False},
-                               '/tmp': {'bind': '/tmp', 'ro': False}
-                           },
-                           port_bindings={self._adapter.port(): ('127.0.0.1', port)})
+        self._docker.start(
+            c,
+            binds={data_path: {'bind': '/mnt/user', 'ro': False}},
+            port_bindings={self._adapter.port(): ('127.0.0.1', port)})
+
         self._write_credentials_to_docker_stdin(user_config)
 
     def _setup_instance(self, user_config, container_map):
@@ -279,7 +278,7 @@ class DockerProvider(BaseProvider):
         else:
             c = container_map[container_name]
 
-        self._docker.start(c, binds={data_path: {'bind': '/mnt/user', 'ro': False}, '/tmp': {'bind': '/tmp', 'ro': False}})
+        self._docker.start(c, binds={data_path: {'bind': '/mnt/user', 'ro': False}})
         s = self._docker.wait(c)
         if s != 0:
             raise Exception('Failed to initialize mailbox: %d!' % s)
