@@ -124,13 +124,33 @@ class DockerProviderTest(unittest.TestCase):
         DockerProvider(self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
         # then
         docker_mock.assert_called_once_with(base_url='some docker url', version=DOCKER_API_VERSION)
-        client.pull.assert_called_once_with(tag='latest', repository='pixelated/pixelated-user-agent', stream=True)
+        client.pull.assert_called_with(tag='latest', repository='pixelated/pixelated-user-agent', stream=True)
+
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_initialize_downloads_logger_docker_image_if_not_yet_available(self, docker_mock):
+        # given
+        client = docker_mock.return_value
+        client.images.return_value = []
+
+        # when
+        DockerProvider(self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
+
+        # then
+        docker_mock.assert_called_once_with(base_url='some docker url', version=DOCKER_API_VERSION)
+        client.pull.assert_called_with(tag='latest', repository='gliderlabs/logspout', stream=True)
+
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_initialize_skips_image_build_or_download_if_already_available(self, docker_mock):
         # given
         client = docker_mock.return_value
-        client.images.return_value = [{'Created': 1404833111, 'VirtualSize': 297017244, 'ParentId': '57885511c8444c2b89743bef8b89eccb65f302b2a95daa95dfcc9b972807b6db', 'RepoTags': ['pixelated:latest'], 'Id': 'b4f10a2395ab8dfc5e1c0fae26fa56c7f5d2541debe54263105fe5af1d263189', 'Size': 181956643}]
+        client.images.return_value = [
+            {'Created': 1404833111,
+             'VirtualSize': 297017244,
+             'ParentId': '57885511c8444c2b89743bef8b89eccb65f302b2a95daa95dfcc9b972807b6db',
+             'RepoTags': ['pixelated:latest'],
+             'Id': 'b4f10a2395ab8dfc5e1c0fae26fa56c7f5d2541debe54263105fe5af1d263189',
+             'Size': 181956643}]
         provider = DockerProvider(self._adapter, 'leap_provider', 'some docker url')
 
         # when
@@ -139,6 +159,25 @@ class DockerProviderTest(unittest.TestCase):
         # then
         self.assertFalse(client.build.called)
         self.assertFalse(provider.initializing)
+
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_initialize_doesnt_download_logger_image_if_already_available(self, docker_mock):
+        # given
+        client = docker_mock.return_value
+        client.images.return_value = [
+            {'Created': 1404833111,
+             'VirtualSize': 297017244,
+             'ParentId': '57885511c8444c2b89743bef8b89eccb65f302b2a95daa95dfcc9b972807b6db',
+             'RepoTags': ['gliderlabs/logspout:latest'],
+             'Id': 'b4f10a2395ab8dfc5e1c0fae26fa56c7f5d2541debe54263105fe5af1d263189', 'Size': 181956643}]
+
+        # when
+        DockerProvider(self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
+
+        # then
+        docker_mock.assert_called_once_with(base_url='some docker url', version=DOCKER_API_VERSION)
+        client.pull.assert_never_called_with(tag='latest', repository='gliderlabs/logspout', stream=True)
+
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_reports_initializing_while_initialize_is_running(self, docker_mock):
