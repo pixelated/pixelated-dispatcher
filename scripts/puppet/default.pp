@@ -9,7 +9,6 @@ node default {
   'build-essential',
   'libcurl4-openssl-dev',
   'libssl-dev',
-  'docker.io',
   'rng-tools',
   'python-dev',
   'python-setuptools',
@@ -19,14 +18,20 @@ node default {
     ensure => latest
   }
 
+  exec { 'install docker':
+    command => '/bin/bash -c "/usr/bin/curl -sSL https://get.docker.com/ | /bin/bash"',
+    /* creates => '/usr/bin/docker' */
+  }
+
   service { 'docker':
     ensure => running,
-    require => Package['docker.io']
+    require => Exec['install docker'],
   }
 
   user { 'vagrant':
     ensure => present,
-    groups => 'docker'
+    groups => 'docker',
+    require => Exec['install docker'],
   }
 
   exec { 'install-pip':
@@ -108,6 +113,8 @@ node default {
     require => [Service['docker'], File[$dispatcher_path]]
   }
 
+  notify { "${manager_cmd} -r ${$dispatcher_path} ${ssl_options}": }
+
   $proxy_cmd = "/usr/bin/python /vagrant/pixelated-dispatcher.py proxy"
 
   service { 'dispatcher-proxy':
@@ -119,5 +126,8 @@ node default {
     status => "/usr/bin/pgrep -x -f \"${proxy_cmd} -m localhost:4443 --bind 0.0.0.0 ${ssl_options}\"",
     hasstatus => true,
     require => [Service['docker'], Service['dispatcher-manager'], File[$dispatcher_path]]
+  }
+
+  notify { "nohup ${proxy_cmd} -m localhost:4443 --bind 0.0.0.0 ${ssl_options}":
   }
 }
