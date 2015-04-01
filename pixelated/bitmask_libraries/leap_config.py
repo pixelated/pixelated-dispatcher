@@ -82,3 +82,20 @@ class LeapConfig(object):
         self.gpg_binary = gpg_binary
         self.fetch_interval_in_s = fetch_interval_in_s
         self.assert_fingerprint = assert_fingerprint
+
+
+class LeapProviderX509Info(object):
+    __slots__ = ['ca_bundle', 'fingerprint']
+
+    def __init__(self, ca_bundle=None, fingerprint=None):
+        self.ca_bundle = ca_bundle
+        self.fingerprint = fingerprint
+
+    def __str__(self):
+        return 'LeapProviderX509Info' + str([self.ca_bundle, self.fingerprint])
+
+    def has_fingerprint(self):
+        return self.fingerprint is not None
+
+    def has_ca_bundle(self):
+        return isinstance(self.ca_bundle, basestring) and not self.has_fingerprint()

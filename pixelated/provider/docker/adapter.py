@@ -24,7 +24,7 @@ class DockerAdapter(object):
     def docker_image_name(self):
         return self.app_name()
 
-    def run_command(self):
+    def run_command(self, leap_provider_x509):
         raise NotImplementedError
 
     def after_run(self):

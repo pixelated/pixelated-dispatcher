@@ -32,8 +32,14 @@ class PixelatedDockerAdapter(DockerAdapter):
     def docker_image_name(self):
         return 'pixelated/pixelated-user-agent'
 
-    def run_command(self):
-        return '/bin/bash -l -c "/usr/bin/pixelated-user-agent --home /mnt/user --host 0.0.0.0 --port 4567 --leap-cert /mnt/user/dispatcher-leap-provider-ca.crt --dispatcher-stdin"'
+    def run_command(self, leap_provider_x509):
+        extra_args = ""
+        if leap_provider_x509.has_ca_bundle():
+            extra_args = ' --leap-cert /mnt/user/dispatcher-leap-provider-ca.crt'
+        if leap_provider_x509.has_fingerprint():
+            extra_args = ' --leap-cert-fingerprint %s' % leap_provider_x509.fingerprint
+
+        return '/bin/bash -l -c "/usr/bin/pixelated-user-agent --home /mnt/user --host 0.0.0.0 --port 4567 --dispatcher-stdin%s"' % extra_args
 
     def setup_command(self):
         return '/bin/true'

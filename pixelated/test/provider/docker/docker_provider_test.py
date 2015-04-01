@@ -33,6 +33,7 @@ from pixelated.provider.docker.pixelated_adapter import PixelatedDockerAdapter
 from pixelated.test.util import StringIOMatcher
 from pixelated.exceptions import *
 from pixelated.users import UserConfig, Users
+from pixelated.bitmask_libraries.leap_config import LeapProviderX509Info
 
 import unittest
 
@@ -88,6 +89,7 @@ class DockerProviderTest(unittest.TestCase):
         self.root_path = self._tmpdir.name
         self._adapter = MagicMock(wraps=PixelatedDockerAdapter())
         self._adapter.docker_image_name.return_value = 'pixelated'
+        self._leap_provider_x509 = LeapProviderX509Info()
 
     def tearDown(self):
         self._tmpdir.dissolve()
@@ -97,7 +99,7 @@ class DockerProviderTest(unittest.TestCase):
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_constructor_expects_docker_url(self, docker_mock):
-        DockerProvider(self.root_path, self._adapter, 'leap_provider', 'some docker url')
+        DockerProvider(self.root_path, self._adapter, self._leap_provider_x509, 'some docker url')
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_initialize_builds_docker_image(self, docker_mock):
@@ -107,7 +109,7 @@ class DockerProviderTest(unittest.TestCase):
         dockerfile = pkg_resources.resource_string('pixelated.resources', 'Dockerfile.pixelated')
 
         # when
-        DockerProvider(self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
+        DockerProvider(self._adapter, 'leap_provider', self._leap_provider_x509, 'some docker url').initialize()
 
         # then
         docker_mock.assert_called_once_with(base_url="some docker url", version=DOCKER_API_VERSION)
@@ -121,7 +123,7 @@ class DockerProviderTest(unittest.TestCase):
         self._adapter.docker_image_name.return_value = 'pixelated/pixelated-user-agent'
 
         # when
-        DockerProvider(self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
+        DockerProvider(self._adapter, 'leap_provider', self._leap_provider_x509, 'some docker url').initialize()
         # then
         docker_mock.assert_called_once_with(base_url='some docker url', version=DOCKER_API_VERSION)
         client.pull.assert_called_with(tag='latest', repository='pixelated/pixelated-user-agent', stream=True)
@@ -133,7 +135,7 @@ class DockerProviderTest(unittest.TestCase):
         client.images.return_value = []
 
         # when
-        DockerProvider(self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
+        DockerProvider(self._adapter, 'leap_provider', self._leap_provider_x509, 'some docker url').initialize()
 
         # then
         docker_mock.assert_called_once_with(base_url='some docker url', version=DOCKER_API_VERSION)
@@ -150,7 +152,7 @@ class DockerProviderTest(unittest.TestCase):
              'RepoTags': ['pixelated:latest'],
              'Id': 'b4f10a2395ab8dfc5e1c0fae26fa56c7f5d2541debe54263105fe5af1d263189',
              'Size': 181956643}]
-        provider = DockerProvider(self._adapter, 'leap_provider', 'some docker url')
+        provider = DockerProvider(self._adapter, 'leap_provider', self._leap_provider_x509)
 
         # when
         provider.initialize()
@@ -171,7 +173,7 @@ class DockerProviderTest(unittest.TestCase):
              'Id': 'b4f10a2395ab8dfc5e1c0fae26fa56c7f5d2541debe54263105fe5af1d263189', 'Size': 181956643}]
 
         # when
-        DockerProvider(self._adapter, 'leap_provider', 'some leap ca', 'some docker url').initialize()
+        DockerProvider(self._adapter, 'leap_provider', self._leap_provider_x509, 'some docker url').initialize()
 
         # then
         docker_mock.assert_called_once_with(base_url='some docker url', version=DOCKER_API_VERSION)
@@ -188,7 +190,7 @@ class DockerProviderTest(unittest.TestCase):
             return []
 
         client.build.side_effect = build
-        provider = DockerProvider(self._adapter, 'some provider', 'some provider ca', 'some docker url')
+        provider = DockerProvider(self._adapter, 'some provider', self._leap_provider_x509, 'some docker url')
 
         self.assertTrue(provider.initializing)
 
@@ -214,7 +216,7 @@ class DockerProviderTest(unittest.TestCase):
             return []
 
         client.pull.side_effect = download
-        provider = DockerProvider(self._adapter, 'some provider', 'some provider ca', 'some docker url')
+        provider = DockerProvider(self._adapter, 'some provider', self._leap_provider_x509, 'some docker url')
 
         self.assertTrue(provider.initializing)
 
@@ -231,7 +233,7 @@ class DockerProviderTest(unittest.TestCase):
     @patch('pixelated.provider.docker.docker.Client')
     def test_throws_initializing_exception_while_initializing(self, docker_mock):
         # given
-        provider = DockerProvider(self._adapter, 'provider url', 'provider ca', 'some docker url')
+        provider = DockerProvider(self._adapter, 'provider url', self._leap_provider_x509, 'some docker url')
 
         # when/then
         self.assertRaises(ProviderInitializingException, provider.start, 'test')
@@ -251,10 +253,11 @@ class DockerProviderTest(unittest.TestCase):
         container = MagicMock()
         client.create_container.side_effect = [prepare_pixelated_container, container]
         client.wait.return_value = 0
+        self._leap_provider_x509.ca_bundle = 'some ca bundle'
 
         provider.start(self._user_config('test'))
 
-        client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --home /mnt/user --host 0.0.0.0 --port 4567 --leap-cert /mnt/user/dispatcher-leap-provider-ca.crt --dispatcher-stdin"', user=uid, name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'}, stdin_open=True)
+        client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --home /mnt/user --host 0.0.0.0 --port 4567 --dispatcher-stdin --leap-cert /mnt/user/dispatcher-leap-provider-ca.crt"', user=uid, name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'}, stdin_open=True)
         client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/true', name='pixelated_prepare', volumes=['/mnt/user'], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
 
         data_path = join(self.root_path, 'test', 'data')
@@ -497,7 +500,7 @@ class DockerProviderTest(unittest.TestCase):
     @patch('pixelated.provider.docker.docker.Client')
     def test_use_build_script_instead_of_docker_file_if_available(self, docker_mock, res_mock, tempDir_mock):
         # given
-        provider = DockerProvider(self._adapter, 'leap_provider', 'some docker url')
+        provider = DockerProvider(self._adapter, 'leap_provider', self._leap_provider_x509)
 
         tempBuildDir = TempDir()
         try:
@@ -554,10 +557,10 @@ class DockerProviderTest(unittest.TestCase):
         client = docker_mock.return_value
         client.info.side_effect = Exception
 
-        self.assertRaises(Exception, DockerProvider, self._adapter, 'leap_provider', 'some docker url')
+        self.assertRaises(Exception, DockerProvider, self._adapter, 'leap_provider', self._leap_provider_x509)
 
     def _create_initialized_provider(self, adapter, docker_url=DockerProvider.DEFAULT_DOCKER_URL):
-        provider = DockerProvider(adapter, 'leap_provider_hostname', 'leap provider ca', docker_url)
+        provider = DockerProvider(adapter, 'leap_provider_hostname', self._leap_provider_x509, docker_url)
         provider._initializing = False
         return provider
 

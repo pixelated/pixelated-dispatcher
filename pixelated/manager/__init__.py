@@ -35,7 +35,7 @@ from pixelated.provider.fork.fork_runner import ForkRunner
 from pixelated.provider.fork.mailpile_adapter import MailpileAdapter
 from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
 
-from pixelated.bitmask_libraries.leap_config import LeapConfig
+from pixelated.bitmask_libraries.leap_config import LeapConfig, LeapProviderX509Info
 from pixelated.bitmask_libraries.leap_provider import LeapProvider
 
 DEFAULT_PORT = 4443
@@ -313,7 +313,7 @@ class DispatcherManager(object):
         if self._provider == 'docker':
             docker_host = os.environ['DOCKER_HOST'] if os.environ.get('DOCKER_HOST') else None
             adapter = PixelatedDockerAdapter()
-            return DockerProvider(adapter, self._leap_provider_hostname, self._leap_provider_ca, docker_host)
+            return DockerProvider(adapter, self._leap_provider_hostname, LeapProviderX509Info(ca_bundle=self._leap_provider_ca, fingerprint=self._leap_provider_fingerprint), docker_host)
         else:
             adapter = MailpileAdapter(self._mailpile_bin, mailpile_virtualenv=self._mailpile_virtualenv)
             runner = ForkRunner(self._root_path, adapter)

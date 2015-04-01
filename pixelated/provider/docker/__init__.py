@@ -114,18 +114,18 @@ class TempDir(object):
 
 
 class DockerProvider(BaseProvider):
-    __slots__ = ('_docker_host', '_docker', '_ports', '_adapter', '_leap_provider_hostname', '_leap_provider_ca', '_credentials')
+    __slots__ = ('_docker_url', '_docker', '_ports', '_adapter', '_leap_provider_hostname', '_leap_provider_x509', '_credentials')
 
     DEFAULT_DOCKER_URL = 'http+unix://var/run/docker.sock'
 
-    def __init__(self, adapter, leap_provider_hostname, leap_provider_ca, docker_url=DEFAULT_DOCKER_URL):
+    def __init__(self, adapter, leap_provider_hostname, leap_provider_x509, docker_url=DEFAULT_DOCKER_URL):
         super(DockerProvider, self).__init__()
         self._docker_url = docker_url
         self._docker = docker.Client(base_url=docker_url, version=DOCKER_API_VERSION)
         self._ports = set()
         self._adapter = adapter
         self._leap_provider_hostname = leap_provider_hostname
-        self._leap_provider_ca = leap_provider_ca
+        self._leap_provider_x509 = leap_provider_x509
         self._credentials = {}
         self._check_docker_connection()
 
@@ -252,7 +252,7 @@ class DockerProvider(BaseProvider):
         if name not in cm:
             self._setup_instance(user_config, cm)
             uid = os.getuid()
-            c = self._docker.create_container(self._adapter.docker_image_name(), self._adapter.run_command(), user=uid, name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'), stdin_open=True)
+            c = self._docker.create_container(self._adapter.docker_image_name(), self._adapter.run_command(self._leap_provider_x509), user=uid, name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'), stdin_open=True)
         else:
             c = cm[name]
         data_path = self._data_path(user_config)
@@ -284,9 +284,10 @@ class DockerProvider(BaseProvider):
             raise Exception('Failed to initialize mailbox: %d!' % s)
 
     def _add_leap_ca_to_user_data_path(self, data_path):
-        cert_file = join(data_path, '..', '..', 'ca.crt')
-        if exists(cert_file):
-            shutil.copyfile(cert_file, join(data_path, 'dispatcher-leap-provider-ca.crt'))
+        if self._leap_provider_x509.has_ca_bundle():
+            cert_file = join(data_path, '..', '..', 'ca.crt')
+            if exists(cert_file):
+                shutil.copyfile(cert_file, join(data_path, 'dispatcher-leap-provider-ca.crt'))
 
     def list_running(self):
         self._ensure_initialized()

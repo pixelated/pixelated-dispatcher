@@ -25,7 +25,7 @@ class MailpileDockerAdapter(DockerAdapter):
     def app_name(self):
         return 'mailpile'
 
-    def run_command(self):
+    def run_command(self, leap_provider_x509):
         return '/Mailpile.git/mp --www'
 
     def setup_command(self):
