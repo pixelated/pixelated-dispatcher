@@ -87,8 +87,7 @@ node default {
     mode => '0755'
   }
 
-  /* $manager_cmd = "/usr/bin/python /vagrant/pixelated-dispatcher.py manager -b docker --provider try.pixelated-project.org --provider-ca /vagrant/pixelated/resources/try.pixelated-project.org.ca.crt --bind 0.0.0.0" */
-  $manager_cmd = "/usr/bin/python /vagrant/pixelated-dispatcher.py manager -b docker --provider staging.pixelated-project.org --provider-fingerprint 0E:31:E3:86:94:5A:CE:97:70:20:7A:EE:BD:1F:F1:1B:E4:35:9C:44 --bind 0.0.0.0"
+  $manager_cmd = "/usr/bin/python /vagrant/pixelated-dispatcher.py manager -b docker --provider try.pixelated-project.org --provider-ca /vagrant/pixelated/resources/try.pixelated-project.org.ca.crt --bind 0.0.0.0"
   $ssl_options = "--sslcert /vagrant/pixelated/test/util/server.crt --sslkey /vagrant/pixelated/test/util/server.key"
 
   service { 'dispatcher-manager':
