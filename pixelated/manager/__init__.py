@@ -276,9 +276,9 @@ class DispatcherManager(object):
 
     def serve_forever(self):
         try:
-            self._download_leap_certificate_to_root_path()
+            provider, api_cert_file = self._download_leap_certificate_to_root_path()
             users = Users(self._root_path)
-            authenticator = Authenticator(users, self._leap_provider_hostname, self._leap_provider_ca, leap_provider_fingerprint=self._leap_provider_fingerprint)
+            authenticator = Authenticator(users, provider, api_cert_file)
             provider = self._create_provider()
 
             Thread(target=provider.initialize).start()
@@ -308,6 +308,7 @@ class DispatcherManager(object):
         cert_file = join(self._root_path, 'ca.crt')
 
         provider.download_certificate_to(cert_file)
+        return provider, cert_file
 
     def _create_provider(self):
         if self._provider == 'docker':

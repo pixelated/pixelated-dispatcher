@@ -33,15 +33,14 @@ def str_password(password):
 
 class Authenticator(object):
 
-    __slots__ = ('_users', '_leap_provider_hostname', '_leap_provider_ca', '_leap_provider_fingerprint')
+    __slots__ = ('_users', 'provider', 'leap_api_cert_file')
 
     SALT_HASH_LENGHT = 128
 
-    def __init__(self, users, leap_provider_hostname=None, leap_provider_ca=True, leap_provider_fingerprint=None):
+    def __init__(self, users, provider, leap_api_cert_file):
         self._users = users
-        self._leap_provider_hostname = leap_provider_hostname
-        self._leap_provider_ca = leap_provider_ca
-        self._leap_provider_fingerprint = leap_provider_fingerprint
+        self.provider = provider
+        self.leap_api_cert_file = leap_api_cert_file
 
     def add_credentials(self, username, password):
         salt = binascii.hexlify(str(random.getrandbits(128)))
@@ -74,13 +73,11 @@ class Authenticator(object):
             return False
 
     def _can_authorize_with_leap_provider(self, username, password):
-        config = LeapConfig(ca_cert_bundle=self._leap_provider_ca)
-        provider = LeapProvider(self._leap_provider_hostname, config)
-        tls_config = LeapSRPTLSConfig(ca_bundle=which_bundle(provider), assert_fingerprint=self._leap_provider_fingerprint)
+        tls_config = LeapSRPTLSConfig(ca_bundle=self.leap_api_cert_file)
         srp = LeapSecureRemotePassword(tls_config=tls_config)
 
         try:
-            srp.authenticate(provider.api_uri, username, password)
+            srp.authenticate(self.provider.api_uri, username, password)
             return True
         except LeapAuthException, e:
             logger.error('Failure while authenticating with LEAP: %s' % e)
