@@ -145,6 +145,7 @@ class DockerProvider(BaseProvider):
             logger.info('No docker image for %s found! Triggering build.' % self._adapter.app_name())
             if '/' in self._adapter.docker_image_name():
                 self._download_image(self._adapter.docker_image_name())
+                logger.info('Finished downloading docker image')
             else:
                 if pkg_resources.resource_exists('pixelated.resources', 'init-%s-docker-context.sh' % self._adapter.app_name()):
                     fileobj = None
@@ -207,10 +208,12 @@ class DockerProvider(BaseProvider):
                 os.kill(os.getpid(), signal.SIGTERM)
 
     def _initialize_logger_container(self):
-        LOGGER_CONTAINER_NAME = 'gliderlabs/logspout'
+        LOGGER_CONTAINER_NAME = 'pixelated/logspout'
 
         if not self._image_exists(LOGGER_CONTAINER_NAME):
+            logger.info('Logger container not found. Downloading...')
             self._download_image(LOGGER_CONTAINER_NAME)
+            logger.info('Finished downloading logger container')
 
         logger_container = self._docker.create_container(
             image=LOGGER_CONTAINER_NAME + ':latest',
@@ -226,6 +229,8 @@ class DockerProvider(BaseProvider):
                 'ro': False
             }}
         )
+
+        logger.info('Logger container initialized successfully')
 
     def pass_credentials_to_agent(self, user_config, password):
         self._credentials[user_config.username] = password  # remember crendentials until agent gets started
