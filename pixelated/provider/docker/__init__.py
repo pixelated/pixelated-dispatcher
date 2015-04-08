@@ -290,7 +290,7 @@ class DockerProvider(BaseProvider):
 
     def _add_leap_ca_to_user_data_path(self, data_path):
         if self._leap_provider_x509.has_ca_bundle():
-            cert_file = join(data_path, '..', '..', 'ca.crt')
+            cert_file = self._leap_provider_x509.ca_bundle
             if exists(cert_file):
                 shutil.copyfile(cert_file, join(data_path, 'dispatcher-leap-provider-ca.crt'))
 

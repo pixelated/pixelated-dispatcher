@@ -22,7 +22,7 @@ from pixelated.exceptions import UserNotExistError
 from pixelated.bitmask_libraries.leap_config import LeapConfig
 from pixelated.bitmask_libraries.leap_provider import LeapProvider
 from pixelated.bitmask_libraries.leap_srp import LeapSecureRemotePassword, LeapAuthException, LeapSRPTLSConfig
-from pixelated.bitmask_libraries.leap_certs import which_bundle
+from pixelated.bitmask_libraries.leap_certs import which_api_CA_bundle
 
 from pixelated.common import logger
 
@@ -33,14 +33,13 @@ def str_password(password):
 
 class Authenticator(object):
 
-    __slots__ = ('_users', 'provider', 'leap_api_cert_file')
+    __slots__ = ('_users', 'provider')
 
     SALT_HASH_LENGHT = 128
 
-    def __init__(self, users, provider, leap_api_cert_file):
+    def __init__(self, users, provider):
         self._users = users
         self.provider = provider
-        self.leap_api_cert_file = leap_api_cert_file
 
     def add_credentials(self, username, password):
         salt = binascii.hexlify(str(random.getrandbits(128)))
@@ -73,7 +72,7 @@ class Authenticator(object):
             return False
 
     def _can_authorize_with_leap_provider(self, username, password):
-        tls_config = LeapSRPTLSConfig(ca_bundle=self.leap_api_cert_file)
+        tls_config = LeapSRPTLSConfig(ca_bundle=which_api_CA_bundle(self.provider))
         srp = LeapSecureRemotePassword(tls_config=tls_config)
 
         try:

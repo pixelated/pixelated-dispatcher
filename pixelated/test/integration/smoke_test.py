@@ -112,8 +112,9 @@ class SmokeTest(unittest.TestCase):
     def post(self, url, form_data=None, json_data=None):
         return self._method(self.ssl_request.post, url, form_data=form_data, json_data=json_data)
 
+    @patch('pixelated.manager.LeapCertificate')
     @patch('pixelated.manager.LeapProvider')
-    def test_dispatcher_run(self, leap_provider_mock):
+    def test_dispatcher_run(self, leap_provider_mock, leap_certificate_mock):
         with self._dispatcher_manager():
             self.assertSuccess(
                 self.post('https://localhost:4443/agents', json_data={'name': 'test', 'password': 'some password'}))
@@ -132,8 +133,9 @@ class SmokeTest(unittest.TestCase):
         with self._dispatcher_proxy():
             self.assertSuccess(self.get('https://localhost:12345/auth/login'))
 
+    @patch('pixelated.manager.LeapCertificate')
     @patch('pixelated.manager.LeapProvider')
-    def test_server_dispatcher_combination(self, leap_provider_mock):
+    def test_server_dispatcher_combination(self, leap_provider_mock, leap_certificate_mock):
         with self._dispatcher_manager():
             with self._dispatcher_proxy():
                 # add user
