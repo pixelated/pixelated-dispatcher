@@ -559,6 +559,22 @@ class DockerProviderTest(unittest.TestCase):
 
         self.assertRaises(Exception, DockerProvider, self._adapter, 'leap_provider', self._leap_provider_x509)
 
+    @patch('pixelated.provider.docker.docker.Client')
+    def test_that_provider_x509_ca_bundle_is_copied_to_agent(self, docker_mock):
+        user_config = self._user_config('test')
+        provider = self._create_initialized_provider(self._adapter, 'some docker url')
+        client = docker_mock.return_value
+        client.wait.return_value = 0
+
+        with NamedTemporaryFile() as ca_file:
+            with open(ca_file.name, 'w') as fd:
+                fd.write('some certificate')
+            self._leap_provider_x509.ca_bundle = ca_file.name
+
+            provider.start(user_config)
+
+            self.assertTrue(exists(join(self.root_path, 'test', 'data', 'dispatcher-leap-provider-ca.crt')))
+
     def _create_initialized_provider(self, adapter, docker_url=DockerProvider.DEFAULT_DOCKER_URL):
         provider = DockerProvider(adapter, 'leap_provider_hostname', self._leap_provider_x509, docker_url)
         provider._initializing = False

@@ -17,7 +17,7 @@ import json
 
 from leap.common.certs import get_digest
 import requests
-from .leap_certs import which_bundle
+from .leap_certs import which_bootstrap_CA_bundle
 
 from pixelated.client.dispatcher_api_client import EnforceTLSv1Adapter, VERIFY_HOSTNAME
 
@@ -84,7 +84,7 @@ class LeapProvider(object):
         try:
             cert_url = '%s/ca.crt' % self._provider_base_url()
             logger.info('Fetching ca.crt from %s using fingerprint %s' % (cert_url, self.config.assert_fingerprint))
-            response = session.get(cert_url, verify=which_bundle(self), timeout=self.config.timeout_in_s)
+            response = session.get(cert_url, verify=which_bootstrap_CA_bundle(self), timeout=self.config.timeout_in_s)
             response.raise_for_status()
 
             cert_data = response.content
@@ -107,7 +107,7 @@ class LeapProvider(object):
 
     def fetch_provider_json(self):
         url = '%s/provider.json' % self._provider_base_url()
-        response = requests.get(url, verify=which_bundle(self), timeout=self.config.timeout_in_s)
+        response = requests.get(url, verify=which_bootstrap_CA_bundle(self), timeout=self.config.timeout_in_s)
         response.raise_for_status()
 
         json_data = json.loads(response.content)
@@ -116,14 +116,14 @@ class LeapProvider(object):
     def fetch_soledad_json(self):
         service_url = "%s/%s/config/soledad-service.json" % (
             self.api_uri, self.api_version)
-        response = requests.get(service_url, verify=which_bundle(self), timeout=self.config.timeout_in_s)
+        response = requests.get(service_url, verify=which_bootstrap_CA_bundle(self), timeout=self.config.timeout_in_s)
         response.raise_for_status()
         return json.loads(response.content)
 
     def fetch_smtp_json(self):
         service_url = '%s/%s/config/smtp-service.json' % (
             self.api_uri, self.api_version)
-        response = requests.get(service_url, verify=which_bundle(self), timeout=self.config.timeout_in_s)
+        response = requests.get(service_url, verify=which_bootstrap_CA_bundle(self), timeout=self.config.timeout_in_s)
         response.raise_for_status()
         return json.loads(response.content)
 

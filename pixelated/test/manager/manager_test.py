@@ -344,7 +344,8 @@ class RESTfulServerTest(unittest.TestCase):
     @patch('pixelated.manager.Thread')
     @patch('pixelated.manager.Users')
     @patch('pixelated.manager.LeapProvider')
-    def test_that_initialize_happens_in_background_thread(self, leap_provider_mock, users_mock, thread_mock, server_mock, docker_provider_mock):
+    @patch('pixelated.manager.LeapCertificate')
+    def test_that_initialize_happens_in_background_thread(self, leap_certificate_mock, leap_provider_mock, users_mock, thread_mock, server_mock, docker_provider_mock):
         # given
         docker_provider_mock.return_value = self.mock_provider
         manager = DispatcherManager(self._root_path, None, None, None, None, provider='docker')
@@ -356,13 +357,14 @@ class RESTfulServerTest(unittest.TestCase):
         thread_mock.assert_called_with(target=self.mock_provider.initialize)
         self.assertFalse(self.mock_provider.initialize.called)
 
+    @patch('pixelated.manager.LeapCertificate')
     @patch('pixelated.manager.Authenticator')
     @patch('pixelated.manager.DockerProvider')
     @patch('pixelated.manager.RESTfulServer')
     @patch('pixelated.manager.Thread')
     @patch('pixelated.manager.Users')
     @patch('pixelated.manager.LeapProvider')
-    def test_that_tls_config_gets_passed_to_authenticator(self, leap_provider_mock, users_mock, thread_mock, server_mock, docker_provider_mock, authenticator_mock):
+    def test_that_tls_config_gets_passed_to_authenticator(self, leap_provider_mock, users_mock, thread_mock, server_mock, docker_provider_mock, authenticator_mock, leap_certificate_mock):
         # given
         manager = DispatcherManager(self._root_path, None, None, None, 'some ca bundle', leap_provider_fingerprint='some fingerprint', provider='docker')
 
@@ -370,15 +372,16 @@ class RESTfulServerTest(unittest.TestCase):
         manager.serve_forever()
 
         # then
-        authenticator_mock.assert_called_once_with(users_mock.return_value, None, 'some ca bundle', leap_provider_fingerprint='some fingerprint')
+        authenticator_mock.assert_called_once_with(users_mock.return_value, leap_provider_mock.return_value)
 
+    @patch('pixelated.manager.LeapCertificate')
     @patch('pixelated.manager.Authenticator')
     @patch('pixelated.manager.DockerProvider')
     @patch('pixelated.manager.RESTfulServer')
     @patch('pixelated.manager.Thread')
     @patch('pixelated.manager.Users')
     @patch('pixelated.manager.LeapProvider')
-    def test_that_leap_certificate_gets_downloaded_on_serve_forever(self, leap_provider_mock, users_mock, thread_mock, server_mock, docker_provider_mock, authenticator_mock):
+    def test_that_leap_certificate_gets_downloaded_on_serve_forever(self, leap_provider_mock, users_mock, thread_mock, server_mock, docker_provider_mock, authenticator_mock, leap_certificate_mock):
         # given
         cert_file = join(self._root_path, 'ca.crt')
         manager = DispatcherManager(self._root_path, None, None, None, 'some ca bundle', leap_provider_fingerprint='some fingerprint', provider='docker')
@@ -387,4 +390,4 @@ class RESTfulServerTest(unittest.TestCase):
         manager.serve_forever()
 
         # then
-        leap_provider_mock.return_value.download_certificate_to.assert_called_once_with(cert_file)
+        leap_certificate_mock.return_value.refresh_api_ca_bundle.assert_called_once_with()

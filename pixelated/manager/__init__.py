@@ -37,6 +37,7 @@ from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
 
 from pixelated.bitmask_libraries.leap_config import LeapConfig, LeapProviderX509Info
 from pixelated.bitmask_libraries.leap_provider import LeapProvider
+from pixelated.bitmask_libraries.leap_certs import LeapCertificate
 
 DEFAULT_PORT = 4443
 
@@ -276,9 +277,9 @@ class DispatcherManager(object):
 
     def serve_forever(self):
         try:
-            provider, api_cert_file = self._download_leap_certificate_to_root_path()
+            provider = self._download_api_ca_bundle()
             users = Users(self._root_path)
-            authenticator = Authenticator(users, provider, api_cert_file)
+            authenticator = Authenticator(users, provider)
             provider = self._create_provider()
 
             Thread(target=provider.initialize).start()
@@ -301,14 +302,15 @@ class DispatcherManager(object):
             self._server = None
             logger.info('Stopped server')
 
-    def _download_leap_certificate_to_root_path(self):
-        cfg = LeapConfig(ca_cert_bundle=self._leap_provider_ca, assert_fingerprint=self._leap_provider_fingerprint)
+    def _download_api_ca_bundle(self):
+        cfg = LeapConfig(leap_home=self._root_path, ca_cert_bundle=self._leap_provider_ca, assert_fingerprint=self._leap_provider_fingerprint)
         provider = LeapProvider(self._leap_provider_hostname, cfg)
+
+        LeapCertificate(provider).refresh_api_ca_bundle()
 
         cert_file = join(self._root_path, 'ca.crt')
 
-        provider.download_certificate_to(cert_file)
-        return provider, cert_file
+        return provider
 
     def _create_provider(self):
         if self._provider == 'docker':
