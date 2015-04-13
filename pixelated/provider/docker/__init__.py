@@ -218,7 +218,8 @@ class DockerProvider(BaseProvider):
         logger_container = self._docker.create_container(
             image=LOGGER_CONTAINER_NAME + ':latest',
             command='syslog://localhost:514',
-            volumes='/tmp/docker.sock'
+            volumes='/tmp/docker.sock',
+            environment={'HTTP_PORT': '51957'}
         )
 
         self._docker.start(
