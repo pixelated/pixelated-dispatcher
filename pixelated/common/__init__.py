@@ -21,6 +21,7 @@ def init_logging(name, level=logging.INFO, config_file=None):
         syslog = SysLogHandler(address='/dev/log', facility=SysLogHandler.LOG_DAEMON)
         syslog.setFormatter(formatter)
         logger.addHandler(syslog)
+        logging.getLogger('tornado').addHandler(syslog)
 
     logger.name = logger_name
     logger.info('Initialized logging')
