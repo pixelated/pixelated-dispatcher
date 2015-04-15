@@ -273,9 +273,9 @@ class AuthLogoutHandler(BaseHandler):
 
 
 class DispatcherProxy(object):
-    __slots__ = ('_port', '_client', '_bindaddr', '_ioloop', '_certfile', '_keyfile', '_server', '_banner')
+    __slots__ = ('_port', '_client', '_bindaddr', '_ioloop', '_certfile', '_keyfile', '_server', '_banner', '_debug')
 
-    def __init__(self, dispatcher_client, bindaddr='127.0.0.1', port=8080, certfile=None, keyfile=None, banner=None):
+    def __init__(self, dispatcher_client, bindaddr='127.0.0.1', port=8080, certfile=None, keyfile=None, banner=None, debug=False):
         self._port = port
         self._client = dispatcher_client
         self._bindaddr = bindaddr
@@ -284,6 +284,7 @@ class DispatcherProxy(object):
         self._banner = banner
         self._ioloop = None
         self._server = None
+        self._debug = debug
 
         AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
 
@@ -301,7 +302,7 @@ class DispatcherProxy(object):
             static_path=os.path.join(os.path.dirname(__file__), '..', 'files', "static"),
             static_url_prefix='/dispatcher_static/',  # needs to be bound to a different prefix as agent uses static
             xsrf_cookies=True,
-            debug=True)
+            debug=self._debug)
         return app
 
     @property

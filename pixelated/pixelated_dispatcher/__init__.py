@@ -135,7 +135,7 @@ def run_proxy():
     parser.add_argument('--sslkey', help='proxy HTTP server SSL key', default=None)
     parser.add_argument('--fingerprint', help='pin certificate to fingerprint', default=None)
     parser.add_argument('--disable-verifyhostname', help='disable hostname verification; if fingerprint is specified it gets precedence', dest="verify_hostname", action='store_false', default=None)
-    parser.add_argument('--debug', help='set log level to debug', default=False, action='store_true')
+    parser.add_argument('--debug', help='set log level to debug and auto reload files', default=False, action='store_true')
     parser.add_argument('--log-config', help='provide a python logging config file', default=None)
     parser.add_argument('--daemon', help='start in daemon mode and put process into background', default=False, action='store_true')
     parser.add_argument('--pidfile', help='path for pid file. By default none is created', default=None)
@@ -154,7 +154,7 @@ def run_proxy():
     client.validate_connection()
 
     dispatcher = DispatcherProxy(client, bindaddr=args.bind, keyfile=keyfile,
-                                 certfile=certfile, banner=args.banner)
+                                 certfile=certfile, banner=args.banner, debug=args.debug)
 
     if args.daemon:
         pidfile = TimeoutPIDLockFile(args.pidfile, acquire_timeout=PID_ACQUIRE_TIMEOUT_IN_S) if args.pidfile else None
