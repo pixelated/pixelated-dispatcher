@@ -35,9 +35,9 @@ class PixelatedDockerAdapter(DockerAdapter):
     def run_command(self, leap_provider_x509):
         extra_args = ""
         if leap_provider_x509.has_ca_bundle():
-            extra_args = ' --leap-cert /mnt/user/dispatcher-leap-provider-ca.crt'
+            extra_args = ' --leap-provider-cert /mnt/user/dispatcher-leap-provider-ca.crt'
         if leap_provider_x509.has_fingerprint():
-            extra_args = ' --leap-cert-fingerprint %s' % leap_provider_x509.fingerprint
+            extra_args = ' --leap-provider-cert-fingerprint %s' % leap_provider_x509.fingerprint
 
         return '/bin/bash -l -c "/usr/bin/pixelated-user-agent --home /mnt/user --host 0.0.0.0 --port 4567 --dispatcher-stdin%s"' % extra_args
 
