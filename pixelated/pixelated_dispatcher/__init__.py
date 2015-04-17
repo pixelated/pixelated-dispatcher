@@ -82,9 +82,9 @@ def run_manager():
     parser.add_argument('--daemon', help='start in daemon mode and put process into background', default=False, action='store_true')
     parser.add_argument('--pidfile', help='path for pid file. By default none is created', default=None)
     parser.add_argument('--log-config', help='Provide a python logging config file', default=None)
-    parser.add_argument('--provider', help='Specify the provider this dispatcher will connect to', default='localhost')
-    parser.add_argument('--provider-ca', dest='provider_ca', help='Specify the provider CA to use to validate connections', default=True)
-    parser.add_argument('--provider-fingerprint', dest='provider_fingerprint', help='Pin provider certifcate to fingerprint', default=None)
+    parser.add_argument('--leap-provider', help='Specify the LEAP provider this dispatcher will connect to', default='localhost')
+    parser.add_argument('--leap-provider-ca', dest='leap_provider_ca', help='Specify the LEAP provider CA to use to validate connections', default=True)
+    parser.add_argument('--leap-provider-fingerprint', dest='leap_provider_fingerprint', help='Specify the LEAP provider fingerprint to use to validade connections', default=None)
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--mailpile-virtualenv', help='Use specified virtual env for mailpile', default=None)
     group.add_argument('--auto-mailpile-virtualenv', dest='auto_venv', help='Boostrap virtualenv for mailpile', default=False, action='store_true')
@@ -110,9 +110,9 @@ def run_manager():
     log_level = logging.DEBUG if args.debug else logging.INFO
     log_config = args.log_config
 
-    provider_ca = args.provider_ca if args.provider_fingerprint is None else False
+    provider_ca = args.leap_provider_ca if args.leap_provider_fingerprint is None else False
 
-    manager = DispatcherManager(args.root_path, mailpile_bin, ssl_config, args.provider, mailpile_virtualenv=venv, provider=args.backend, leap_provider_ca=provider_ca, leap_provider_fingerprint=args.provider_fingerprint, bindaddr=args.bind)
+    manager = DispatcherManager(args.root_path, mailpile_bin, ssl_config, args.leap_provider, mailpile_virtualenv=venv, provider=args.backend, leap_provider_ca=provider_ca, leap_provider_fingerprint=args.leap_provider_fingerprint, bindaddr=args.bind)
 
     if args.daemon:
         pidfile = TimeoutPIDLockFile(args.pidfile, acquire_timeout=PID_ACQUIRE_TIMEOUT_IN_S) if args.pidfile else None
