@@ -378,7 +378,10 @@ class DockerProvider(BaseProvider):
             info = self._docker.inspect_container(container)
             pid = info['State']['Pid']
             process = Process(pid)
-            mem = process.memory_info()
+            try:
+                mem = process.memory_info()
+            except AttributeError:
+                mem = process.get_memory_info()
             usage = usage + mem.rss
             agents.append({'name': name, 'memory_usage': mem.rss})
 

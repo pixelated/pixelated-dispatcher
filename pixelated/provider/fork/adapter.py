@@ -33,7 +33,11 @@ class ForkedProcess(object):
 
     def memory_usage(self):
         p = Process(self._process.pid)
-        mem = p.memory_info()
+        try:
+            mem = p.memory_info()
+        except AttributeError:
+            mem = p.get_memory_info()
+
         return mem.rss
 
 
