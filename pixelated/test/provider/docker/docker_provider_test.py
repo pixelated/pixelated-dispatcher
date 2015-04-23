@@ -129,10 +129,13 @@ class DockerProviderTest(unittest.TestCase):
         client.pull.assert_called_with(tag='latest', repository='pixelated/pixelated-user-agent', stream=True)
 
     @patch('pixelated.provider.docker.docker.Client')
-    def test_initialize_downloads_logger_docker_image_if_not_yet_available(self, docker_mock):
+    def test_initialize_downloads_and_starts_logger_docker_image_if_not_yet_available(self, docker_mock):
         # given
         client = docker_mock.return_value
         client.images.return_value = []
+        container = {'Id': 'some id'}
+        client.create_container.return_value = container
+        expected_syslog_tag = '.user_agent'
 
         # when
         DockerProvider(self._adapter, 'leap_provider', self._leap_provider_x509, 'some docker url').initialize()
@@ -140,6 +143,15 @@ class DockerProviderTest(unittest.TestCase):
         # then
         docker_mock.assert_called_once_with(base_url='some docker url', version=DOCKER_API_VERSION)
         client.pull.assert_called_with(tag='latest', repository='pixelated/logspout', stream=True)
+        client.create_container.assert_called_once_with(
+            image='pixelated/logspout:latest',
+            command='syslog://localhost:514?append_tag=%s' % expected_syslog_tag,
+            volumes='/tmp/docker.sock',
+            environment={'HTTP_PORT': '51957'})
+        client.start.assert_called_once_with(
+            container='some id',
+            network_mode='host',
+            binds={'/var/run/docker.sock': {'bind': '/tmp/docker.sock', 'ro': False}})
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_initialize_skips_image_build_or_download_if_already_available(self, docker_mock):

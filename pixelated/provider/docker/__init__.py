@@ -208,16 +208,16 @@ class DockerProvider(BaseProvider):
                 os.kill(os.getpid(), signal.SIGTERM)
 
     def _initialize_logger_container(self):
-        LOGGER_CONTAINER_NAME = 'pixelated/logspout'
+        LOGGER_IMAGE_NAME = 'pixelated/logspout'
 
-        if not self._image_exists(LOGGER_CONTAINER_NAME):
+        if not self._image_exists(LOGGER_IMAGE_NAME):
             logger.info('Logger container not found. Downloading...')
-            self._download_image(LOGGER_CONTAINER_NAME)
+            self._download_image(LOGGER_IMAGE_NAME)
             logger.info('Finished downloading logger container')
 
         logger_container = self._docker.create_container(
-            image=LOGGER_CONTAINER_NAME + ':latest',
-            command='syslog://localhost:514',
+            image=LOGGER_IMAGE_NAME + ':latest',
+            command='syslog://localhost:514?append_tag=.user_agent',
             volumes='/tmp/docker.sock',
             environment={'HTTP_PORT': '51957'}
         )
