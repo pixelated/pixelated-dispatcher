@@ -84,7 +84,7 @@ def run_manager():
     parser.add_argument('--log-config', help='Provide a python logging config file', default=None)
     parser.add_argument('--leap-provider', '-lp', help='Specify the LEAP provider this dispatcher will connect to', default='localhost')
     parser.add_argument('--leap-provider-ca', '-lpc', dest='leap_provider_ca', help='Specify the LEAP provider CA to use to validate connections', default=True)
-    parser.add_argument('--leap-provider-fingerprint', '-lpf', dest='leap_provider_fingerprint', help='Specify the LEAP provider fingerprint to use to validade connections', default=None)
+    parser.add_argument('--leap-provider-fingerprint', '-lpf', dest='leap_provider_fingerprint', help='Specify the LEAP provider fingerprint to use to validate connections', default=None)
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--mailpile-virtualenv', help='Use specified virtual env for mailpile', default=None)
     group.add_argument('--auto-mailpile-virtualenv', dest='auto_venv', help='Boostrap virtualenv for mailpile', default=False, action='store_true')
