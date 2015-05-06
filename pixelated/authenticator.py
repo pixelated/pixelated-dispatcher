@@ -19,9 +19,10 @@ import scrypt
 
 from pixelated.exceptions import UserNotExistError
 
+from leap.auth import SRPAuth
+from leap.exceptions import SRPAuthenticationError
 from pixelated.bitmask_libraries.leap_config import LeapConfig
 from pixelated.bitmask_libraries.leap_provider import LeapProvider
-from pixelated.bitmask_libraries.leap_srp import LeapSecureRemotePassword, LeapAuthException, LeapSRPTLSConfig
 from pixelated.bitmask_libraries.leap_certs import which_api_CA_bundle
 
 from pixelated.common import logger
@@ -34,8 +35,6 @@ def str_password(password):
 class Authenticator(object):
 
     __slots__ = ('_users', 'provider')
-
-    SALT_HASH_LENGHT = 128
 
     def __init__(self, users, provider):
         self._users = users
@@ -72,12 +71,10 @@ class Authenticator(object):
             return False
 
     def _can_authorize_with_leap_provider(self, username, password):
-        tls_config = LeapSRPTLSConfig(ca_bundle=which_api_CA_bundle(self.provider))
-        srp = LeapSecureRemotePassword(tls_config=tls_config)
-
+        srp_auth = SRPAuth(self.provider.api_uri, which_api_CA_bundle(self.provider))
         try:
-            srp.authenticate(self.provider.api_uri, username, password)
+            auth = srp_auth.authenticate(username, password)
             return True
-        except LeapAuthException, e:
+        except SRPAuthenticationError, e:
             logger.error('Failure while authenticating with LEAP: %s' % e)
             return False

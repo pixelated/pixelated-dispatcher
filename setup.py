@@ -57,9 +57,9 @@ setup(
         'scrypt',
         'psutil',
         'docker-py>=0.6.0',  # same version as available in debian backports
-        'srp',
         'leap.common',
         'pycurl',
+        'leap.auth',
         'python-daemon>=1.5.5, < 2.0.0'
     ],
     test_suite='nose.collector',

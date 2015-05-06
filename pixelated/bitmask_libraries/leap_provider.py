@@ -28,7 +28,6 @@ class LeapProvider(object):
     def __init__(self, server_name, config):
         self.server_name = server_name
         self.config = config
-
         self.provider_json = self.fetch_provider_json()
 
     @property

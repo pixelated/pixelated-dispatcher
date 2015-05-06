@@ -22,7 +22,8 @@ from pixelated.users import Users, UserConfig
 from pixelated.authenticator import Authenticator
 from pixelated.bitmask_libraries.leap_config import LeapConfig
 from pixelated.bitmask_libraries.leap_provider import LeapProvider
-from pixelated.bitmask_libraries.leap_srp import LeapAuthException, LeapSRPTLSConfig
+from leap.auth import SRPAuth
+from leap.exceptions import SRPAuthenticationError
 
 
 class AuthenticatorTest(unittest.TestCase):
@@ -80,7 +81,7 @@ class AuthenticatorTest(unittest.TestCase):
         self.assertFalse(auth.authenticate('name', 'password'))
 
     @patch('pixelated.authenticator.which_api_CA_bundle')
-    @patch('pixelated.authenticator.LeapSecureRemotePassword')
+    @patch('pixelated.authenticator.SRPAuth')
     def test_authenticate_with_leap_user_not_yet_known_locally(self, srp_mock, which_api_CA_bundle_mock):
         # given
         user_config = UserConfig('name', None)
@@ -93,24 +94,24 @@ class AuthenticatorTest(unittest.TestCase):
         result = auth.authenticate('name', 'password')
 
         # then
-        srp_mock.return_value.authenticate.assert_called_once_with('/1/some/uri', 'name', 'password')
+        srp_mock.return_value.authenticate.assert_called_once_with('name', 'password')
         self.users.add.assert_called_once_with('name')
 
-        srp_mock.assert_called_once_with(tls_config=LeapSRPTLSConfig(ca_bundle='some bundle'))
-        srp_mock.return_value.authenticate.assert_called_once_with('/1/some/uri', 'name', 'password')
+        srp_mock.assert_called_once_with('/1/some/uri', 'some bundle')
+        srp_mock.return_value.authenticate.assert_called_once_with('name', 'password')
         self.users.update_config.assert_called_once_with(user_config)
         self.assertTrue(result)
 
     @patch('pixelated.authenticator.which_api_CA_bundle')
     @patch('pixelated.authenticator.LeapConfig')
     @patch('pixelated.authenticator.LeapProvider')
-    @patch('pixelated.authenticator.LeapSecureRemotePassword')
+    @patch('pixelated.authenticator.SRPAuth')
     def test_authenticate_with_leap_does_not_succed_if_login_fails(self, srp_mock, provider_mock, config_mock, which_api_CA_bundle_mock):
         which_api_CA_bundle_mock.return_value = 'some bundle'
         self.users.has_user.return_value = False
         self.users.config.side_effect = UserNotExistError
         provider_mock.return_value.api_uri = '/1/some/uri'
-        srp_mock.return_value.authenticate.side_effect = LeapAuthException
+        srp_mock.return_value.authenticate.side_effect = SRPAuthenticationError
 
         auth = Authenticator(self.users, self.provider)
 
@@ -120,7 +121,7 @@ class AuthenticatorTest(unittest.TestCase):
         self.assertFalse(result)
 
     @patch('pixelated.authenticator.which_api_CA_bundle')
-    @patch('pixelated.authenticator.LeapSecureRemotePassword')
+    @patch('pixelated.authenticator.SRPAuth')
     def test_authenticate_with_missing_user_config(self, srp_mock, which_api_CA_bundle_mock):
         # given
         user_config = UserConfig('name', None)
@@ -134,10 +135,10 @@ class AuthenticatorTest(unittest.TestCase):
         result = auth.authenticate('name', 'password')
 
         # then
-        srp_mock.return_value.authenticate.assert_called_once_with('/1/some/uri', 'name', 'password')
+        srp_mock.return_value.authenticate.assert_called_once_with('name', 'password')
         self.users.add.assert_called_once_with('name')
 
-        srp_mock.assert_called_once_with(tls_config=LeapSRPTLSConfig(ca_bundle='some bundle'))
-        srp_mock.return_value.authenticate.assert_called_once_with('/1/some/uri', 'name', 'password')
+        srp_mock.assert_called_once_with('/1/some/uri', 'some bundle')
+        srp_mock.return_value.authenticate.assert_called_once_with('name', 'password')
         self.users.update_config.assert_called_once_with(user_config)
         self.assertTrue(result)
