@@ -5,8 +5,7 @@
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  #config.vm.box = "box-cutter/debian75"
-  config.vm.box = "fbernitt/debian-testing-amd64"   # use testing as we need docker support
+  config.vm.box = "LEAP/jessie"
 
   config.vm.provision "puppet" do |puppet|
     puppet.manifests_path = "scripts/puppet"
@@ -18,6 +17,4 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.network "forwarded_port", guest: 8080, host: 8080
   config.vm.network "forwarded_port", guest: 4443, host: 4443
-
-  config.vbguest.auto_update = false
 end
