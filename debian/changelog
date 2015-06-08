@@ -1,3 +1,105 @@
+pixelated-dispatcher (0.4) UNRELEASED; urgency=medium
+
+  [ Christoph Kluenter ]
+  * manager should depend on docker
+
+  [ Gabriel Albo ]
+  * #78 Styling error message on login
+  * #78 Changing class name from warning to disclaimer
+  * #78 Removing the fixed height and adding some custom bottom padding to fix the form when we get messages
+
+  [ rafael lisboa ]
+  * download and start logger container when dispatcher-manager is initiated
+  * remove logger container setup from puppet script
+  * Revert "remove logger container setup from puppet script"
+  * Revert "download and start logger container when dispatcher-manager is initiated"
+
+  [ Alexandre Pretto Nunes ]
+  * #82 create funcional tests
+
+  [ rafael lisboa ]
+  * download and start logger container when dispatcher-manager is initiated
+  * remove /tmp binding when starting user agent containers
+  * add test coverage for logger docker container
+  * remove empty lines
+
+  [ Pixpoa pairing ]
+  * #82 make functional tests run for all 3 test users
+
+  [ Alexandre Pretto Nunes ]
+  * #82 remove files added by accident
+
+  [ rafael lisboa ]
+  * #82 try to fix the coverage report
+  * #82 try to fix coverage report
+  * #82 move behave tests out of the test folder so it doesn't mess with coverage
+  * #82 remove coveragerc file
+
+  [ Folker Bernitt ]
+  * Fix for docker.io package no longer in debian jessy.
+
+  [ rafael lisboa ]
+  * #82 - remove try functional tests from dispatcher
+
+  [ Folker Bernitt ]
+  * Added wrapper for leap x509 details.
+
+  [ rafael lisboa ]
+  * remove logger container setup from puppet script
+  * return to use try as the default provider
+  * use pixelated's version of logspout, add more when initializing docker logger :D
+  * disable virtualbox guest additions auto_update
+  * update tests with new container name for logger
+  * get rid of travis since we're using snap as the main ci
+
+  [ Victor Shyba ]
+  * For #93, supports official certs without parameters
+
+  [ Folker Bernitt ]
+  * Added clear distinction between api and bootstrap certificats
+
+  [ Christoph Kluenter ]
+  * fix _
+
+  [ Jefferson Stachelski ]
+  * Removed provider-ca parameter on puppet script to run the pixelated-dispatcher manager because the try environment are using the official certificate
+
+  [ Folker Bernitt ]
+  * Add tornado logging handler so that we might see tornado problems.
+
+  [ rafael lisboa ]
+  * specify http port for logspout to avoid port conflict
+
+  [ Folker Bernitt ]
+  * Fix: Disable auto reload for proxy if debug is not enabled.
+
+  [ Bruno Wagner ]
+  * Updated the run parameters for user agent after latest options changes
+
+  [ Jefferson Stachelski ]
+  * #91 Changed the argument names to aways use 'leap-provider' instead of just 'leap' ou 'provider'
+  * #91 Added an option to use single letters arguments
+
+  [ Bruno Wagner ]
+  * Fixed debian init provider options after the latest changes in naming
+
+  [ Folker Bernitt ]
+  * Added tag '.user_agent' to logspout syslog output.
+  * Support both, old and new version of psutil.Process.
+
+  [ Christoph Kluenter ]
+  * raise debian compat version to be able to compile under jessie
+
+  [ Christoph ]
+
+ -- Christoph Kluenter <ckluente@thoughtworks.com>  Mon, 08 Jun 2015 11:36:39 +0200
+
+pixelated-dispatcher (0.3) wheezy; urgency=medium
+
+  * Bump version because we have a new build pipeline
+
+ -- Christoph Kluenter <ckluente@thoghtworks.com>  Mon, 08 Jun 2015 11:35:44 +0200
+
 pixelated-dispatcher (0.2) wheezy; urgency=medium
 
   * use native debian format
