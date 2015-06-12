@@ -1,0 +1,34 @@
+[ req ]
+default_bits       = 4096
+default_md         = sha512
+default_keyfile    = server.key
+prompt             = no
+encrypt_key        = no
+
+# base request
+distinguished_name = req_distinguished_name
+
+# extensions
+req_extensions     = v3_req
+
+# distinguished_name
+[ req_distinguished_name ]
+countryName            = "DE"                     # C=
+stateOrProvinceName    = "Hamburg"                # ST=
+localityName           = "Hamburg"                # L=
+organizationName       = "Pixelated"              # O=
+organizationalUnitName = "---"                    # OU=
+commonName             = "localhost"              # CN=
+emailAddress           = "admin@pixelated-project.org" # CN/emailAddress=
+
+#
+[ CA_default ]
+copy_extensions = copy
+
+# req_extensions
+[ v3_req ]
+# The subject alternative name extension allows various literal values to be 
+# included in the configuration file
+# http://www.openssl.org/docs/apps/x509v3_config.html
+subjectAltName  = DNS:localhost
+
