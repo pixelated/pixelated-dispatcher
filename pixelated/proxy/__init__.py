@@ -46,6 +46,15 @@ TIMEOUT_WAIT_STEP = 0.5
 
 
 class BaseHandler(tornado.web.RequestHandler):
+
+    def prepare(self):
+        # add some security headers
+        self.set_header('Cache-Control', 'no-cache,no-store,must-revalidate,private')
+        self.set_header('Pragma', 'no-cache')
+        self.set_header('X-XSS-Protection', '1; mode=block')
+        self.set_header('X-Frame-Options', 'DENY')
+        self.set_header('X-Content-Type-Options', 'nosniff')
+
     def get_current_user(self):
         cookie = self.get_secure_cookie(COOKIE_NAME)
         if cookie:
@@ -85,10 +94,11 @@ class BaseHandler(tornado.web.RequestHandler):
             self.finish()
         else:
             self.set_status(response.code)
-            for header in ("Date", "Cache-Control", "Server", "Content-Type", "Location"):
+            for header in ("Date", "Cache-Control", 'Pragma', "Server", "Content-Type", "Location"):
                 v = response.headers.get(header)
                 if v:
                     self.set_header(header, v)
+
             if response.body:
                 self.write(response.body)
             self.finish()
@@ -131,7 +141,7 @@ class MainHandler(BaseHandler):
         pass
 
 
-class AuthLoginHandler(tornado.web.RequestHandler):
+class AuthLoginHandler(BaseHandler):
 
     def initialize(self, client, banner):
         self._client = client
@@ -272,6 +282,17 @@ class AuthLogoutHandler(BaseHandler):
         self.redirect(u'/')
 
 
+class CachingStaticFileHandler(web.StaticFileHandler):
+    def get_cache_time(self, path, modified, mime_type):
+        return 60 * 60 * 1
+
+    def set_headers(self):
+        super(CachingStaticFileHandler, self).set_headers()
+        self.set_header('X-XSS-Protection', '1; mode=block')
+        self.set_header('X-Frame-Options', 'DENY')
+        self.set_header('X-Content-Type-Options', 'nosniff')
+
+
 class DispatcherProxy(object):
     __slots__ = ('_port', '_client', '_bindaddr', '_ioloop', '_certfile', '_keyfile', '_server', '_banner', '_debug')
 
@@ -293,7 +314,7 @@ class DispatcherProxy(object):
             [
                 (r"/auth/login", AuthLoginHandler, dict(client=self._client, banner=self._banner)),
                 (r"/auth/logout", AuthLogoutHandler, dict(client=self._client)),
-                (r"/dispatcher_static/", web.StaticFileHandler),
+                (r"/dispatcher_static/", CachingStaticFileHandler),
                 (r"/.*", MainHandler, dict(client=self._client))
             ],
             cookie_secret=base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
@@ -301,6 +322,7 @@ class DispatcherProxy(object):
             template_path=os.path.join(os.path.dirname(__file__), '..', 'files', "templates"),
             static_path=os.path.join(os.path.dirname(__file__), '..', 'files', "static"),
             static_url_prefix='/dispatcher_static/',  # needs to be bound to a different prefix as agent uses static
+            static_handler_class=CachingStaticFileHandler,
             xsrf_cookies=True,
             debug=self._debug)
         return app

@@ -210,6 +210,20 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
 
         self.assertEqual(403, response.code)
 
+    def test_security_headers(self):
+        response = self._get('/some/url')
+
+        self.assertEqual('no-cache,no-store,must-revalidate,private', response.headers.get('Cache-Control'))
+        self.assertEqual('no-cache', response.headers.get('Pragma'))
+        self.assertEqual('1; mode=block', response.headers.get('X-XSS-Protection'))
+        self.assertEqual('nosniff', response.headers.get('X-Content-Type-Options'))
+        self.assertEqual('DENY', response.headers.get('X-Frame-Options'))
+
+    def test_noautocomplete_for_login(self):
+        response = self._get('/auth/login')
+
+        self.assertTrue('autocomplete="off"' in response.body)
+
     def _fetch_auth_cookie(self):
         payload = {
             'username': 'tester',
