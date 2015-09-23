@@ -315,7 +315,7 @@ class DispatcherManager(object):
     def _create_provider(self):
         if self._provider == 'docker':
             docker_host = os.environ['DOCKER_HOST'] if os.environ.get('DOCKER_HOST') else None
-            adapter = PixelatedDockerAdapter()
+            adapter = PixelatedDockerAdapter(self._leap_provider_hostname)
             return DockerProvider(adapter, self._leap_provider_hostname, LeapProviderX509Info(ca_bundle=self._leap_provider_ca, fingerprint=self._leap_provider_fingerprint), docker_host)
         else:
             adapter = MailpileAdapter(self._mailpile_bin, mailpile_virtualenv=self._mailpile_virtualenv)

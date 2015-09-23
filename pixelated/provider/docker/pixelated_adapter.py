@@ -23,8 +23,8 @@ class PixelatedDockerAdapter(DockerAdapter):
 
     PIXELATED_PORT = 4567
 
-    def __init__(self):
-        pass
+    def __init__(self, provider_hostname):
+        self.provider_hostname = provider_hostname
 
     def app_name(self):
         return 'pixelated'
@@ -48,4 +48,7 @@ class PixelatedDockerAdapter(DockerAdapter):
         return self.PIXELATED_PORT
 
     def environment(self, data_path):
-        return {'DISPATCHER_LOGOUT_URL': '/auth/logout'}
+        return {
+            'DISPATCHER_LOGOUT_URL': '/auth/logout',
+            'FEEDBACK_URL': 'https://%s/tickets' % self.provider_hostname
+        }

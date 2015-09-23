@@ -84,10 +84,11 @@ class CredentialsToDockerStdinWriterTest(unittest.TestCase):
 
 class DockerProviderTest(unittest.TestCase):
     def setUp(self):
+        self._provider_hostname = 'example.org'
         self.users = MagicMock(spec=Users)
         self._tmpdir = TempDir()
         self.root_path = self._tmpdir.name
-        self._adapter = MagicMock(wraps=PixelatedDockerAdapter())
+        self._adapter = MagicMock(wraps=PixelatedDockerAdapter(self._provider_hostname))
         self._adapter.docker_image_name.return_value = 'pixelated'
         self._leap_provider_x509 = LeapProviderX509Info()
 
@@ -269,8 +270,8 @@ class DockerProviderTest(unittest.TestCase):
 
         provider.start(self._user_config('test'))
 
-        client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --leap-home /mnt/user --host 0.0.0.0 --port 4567 --organization-mode --leap-provider-cert /mnt/user/dispatcher-leap-provider-ca.crt"', user=uid, name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'}, stdin_open=True)
-        client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/true', name='pixelated_prepare', volumes=['/mnt/user'], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout'})
+        client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --leap-home /mnt/user --host 0.0.0.0 --port 4567 --organization-mode --leap-provider-cert /mnt/user/dispatcher-leap-provider-ca.crt"', user=uid, name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout', 'FEEDBACK_URL': 'https://example.org/tickets'}, stdin_open=True)
+        client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/true', name='pixelated_prepare', volumes=['/mnt/user'], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout', 'FEEDBACK_URL': 'https://example.org/tickets'})
 
         data_path = join(self.root_path, 'test', 'data')
 
