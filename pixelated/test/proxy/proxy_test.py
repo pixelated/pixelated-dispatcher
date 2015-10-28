@@ -219,6 +219,21 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self.assertEqual('nosniff', response.headers.get('X-Content-Type-Options'))
         self.assertEqual('DENY', response.headers.get('X-Frame-Options'))
 
+    def test_strict_transport_security(self):
+        class SSLHttpRequest(tornado.httpserver.HTTPRequest):
+            @property
+            def protocol(self):
+                return 'https'
+
+            @protocol.setter
+            def protocol(self, ignored):
+                pass
+
+        with patch('tornado.httpserver.HTTPRequest', new=SSLHttpRequest) as mock_protocol:
+            response = self._get('/some/url')
+
+            self.assertEqual('max-age=31536000; includeSubDomains', response.headers.get('Strict-Transport-Security'))
+
     def test_noautocomplete_for_login(self):
         response = self._get('/auth/login')
 

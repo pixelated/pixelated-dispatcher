@@ -55,6 +55,12 @@ class BaseHandler(tornado.web.RequestHandler):
         self.set_header('X-Frame-Options', 'DENY')
         self.set_header('X-Content-Type-Options', 'nosniff')
 
+        if self._is_https():
+            self.set_header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+
+    def _is_https(self):
+        return 'https' == self.request.protocol
+
     def get_current_user(self):
         cookie = self.get_secure_cookie(COOKIE_NAME)
         if cookie:
