@@ -348,7 +348,6 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self.assertEqual(401, response.code)
         self.assertEqual('', cookies['pixelated_user'].value)
 
-
     def test_pixelated_not_available_error_raised_on_503(self):
         # given
         self.client.get_agent.side_effect = PixelatedNotAvailableHTTPError
