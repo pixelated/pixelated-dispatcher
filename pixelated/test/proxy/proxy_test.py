@@ -96,7 +96,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self._dispatcher._ioloop = self.io_loop
         return self._dispatcher.create_app()
 
-    def _method(self, method, url, payload=None, auto_xsrf=True, follow_redirects=False, **kwargs):
+    def _method(self, method, url, payload=None, auto_xsrf=True, follow_redirects=False, extra_headers={}, **kwargs):
         if auto_xsrf and method == 'POST':
             self.cookies['_xsrf'] = '2|7586b241|47c876d965112a2f547c63c95cbc44b1|1402910163'
             if payload and '_xsrf' not in payload:
@@ -108,6 +108,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         headers = {
             'Cookie': self.cookies.output(header='').strip()
         }
+        headers.update(extra_headers)
 
         self.http_client.fetch(self.get_url(url), self.stop, follow_redirects=follow_redirects, method=method, headers=headers,
                                body=payload)
@@ -129,6 +130,14 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
 
         self.assertEqual(302, response.code)
         self.assertEqual('/auth/login?next=%2F', response.headers['Location'])
+
+    def test_error_code_instead_of_redirect_for_ajax_requests(self):
+        response = self._get('/', extra_headers={'X-Requested-With': 'XMLHttpRequest'})
+        cookies = self._get_cookies(response)
+        clear_session = ''
+
+        self.assertEqual(401, response.code)
+        self.assertEqual(clear_session, cookies['pixelated_user'].value)
 
     def _get_cookies(self, response):
         cookies = Cookie.SimpleCookie()
@@ -312,6 +321,33 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self.assertEqual(302, response.code)
         self.assertEqual('/', response.headers['Location'])
         self.assertEqual('Logout+successful.', cookies['status_msg'].value)
+
+    def test_logout_on_web_request_if_agent_stopped(self):
+        self.client.get_agent_runtime.side_effect = [{'state': 'running', 'port': Server.PORT}, {'state': 'stopped', 'port': Server.PORT}]
+
+        with Server():
+            self._fetch_auth_cookie()
+            response = self._get('/')
+
+        cookies = self._get_cookies(response)
+
+        time.sleep(0.01)   # wait for background call to client.stop
+        self.assertEqual(302, response.code)
+        self.assertEqual('', cookies['pixelated_user'].value)
+
+    def test_logout_on_ajax_request_if_agent_stopped(self):
+        self.client.get_agent_runtime.side_effect = [{'state': 'running', 'port': Server.PORT}, {'state': 'stopped', 'port': Server.PORT}]
+
+        with Server():
+            self._fetch_auth_cookie()
+            response = self._get('/', extra_headers={'X-Requested-With': 'XMLHttpRequest'})
+
+        cookies = self._get_cookies(response)
+
+        time.sleep(0.01)   # wait for background call to client.stop
+        self.assertEqual(401, response.code)
+        self.assertEqual('', cookies['pixelated_user'].value)
+
 
     def test_pixelated_not_available_error_raised_on_503(self):
         # given

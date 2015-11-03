@@ -13,10 +13,12 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with Pixelated. If not, see <http://www.gnu.org/licenses/>.
+import functools
 import traceback
 import sys
 
 from tornado import web
+from tornado.web import HTTPError
 from tornado.httpclient import AsyncHTTPClient
 from tornado.httpserver import HTTPServer
 
@@ -36,7 +38,6 @@ from tornado import gen
 from pixelated.common import latest_available_ssl_version, DEFAULT_CIPHERS
 from tornado.httpclient import AsyncHTTPClient
 import threading
-from os.path import exists
 
 COOKIE_NAME = 'pixelated_user'
 
@@ -46,6 +47,9 @@ TIMEOUT_WAIT_STEP = 0.5
 
 
 class BaseHandler(tornado.web.RequestHandler):
+
+    def initialize(self, client):
+        self._client = client
 
     def prepare(self):
         # add some security headers
@@ -109,13 +113,35 @@ class BaseHandler(tornado.web.RequestHandler):
                 self.write(response.body)
             self.finish()
 
+    def logout(self):
+        if self.current_user:
+            StopServerThread(self._client, self.current_user).start()
+        logger.info('User %s logged out' % self.current_user)
+        self.clear_cookie(COOKIE_NAME)
+
+
+def _is_ajax_request(request):
+    return 'XMLHttpRequest' == request.headers.get('X-Requested-With')
+
+
+def ajax_authenticated(method):
+    """Browsers transparently handle 302 redirects. For Ajax requests therefore return 401 instead."""
+
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if not self.current_user:
+            if _is_ajax_request(self.request):
+                self.clear_cookie(COOKIE_NAME)
+                raise HTTPError(401)
+
+        return method(self, *args, **kwargs)
+    return wrapper
+
 
 class MainHandler(BaseHandler):
     __slots__ = '_client'
 
-    def initialize(self, client):
-        self._client = client
-
+    @ajax_authenticated
     @tornado.web.authenticated
     @tornado.web.asynchronous
     def get(self):
@@ -124,19 +150,26 @@ class MainHandler(BaseHandler):
             port = runtime['port']
             self.forward(port, '127.0.0.1')
         else:
-            logger.error('Agent for %s not running - redirecting user to logout' % self.current_user)
-            self.redirect(u'/auth/logout')
+            self.logout()
+            if _is_ajax_request(self.request):
+                raise HTTPError(401)
+            else:
+                logger.error('Agent for %s not running - redirecting user to logout' % self.current_user)
+                self.redirect(u'/auth/logout')
 
+    @ajax_authenticated
     @tornado.web.authenticated
     @tornado.web.asynchronous
     def post(self):
         self.get()
 
+    @ajax_authenticated
     @tornado.web.authenticated
     @tornado.web.asynchronous
     def put(self):
         self.get()
 
+    @ajax_authenticated
     @tornado.web.authenticated
     @tornado.web.asynchronous
     def delete(self):
@@ -150,7 +183,7 @@ class MainHandler(BaseHandler):
 class AuthLoginHandler(BaseHandler):
 
     def initialize(self, client, banner):
-        self._client = client
+        super(AuthLoginHandler, self).initialize(client)
         self._banner = banner
 
     def get(self):
@@ -276,14 +309,8 @@ class StopServerThread(threading.Thread):
 
 class AuthLogoutHandler(BaseHandler):
 
-    def initialize(self, client):
-        self._client = client
-
     def get(self):
-        if self.current_user:
-            StopServerThread(self._client, self.current_user).start()
-        logger.info('User %s logged out' % self.current_user)
-        self.clear_cookie(COOKIE_NAME)
+        self.logout()
         self.set_cookie('status_msg', tornado.escape.url_escape('Logout successful.'))
         self.redirect(u'/')
 
