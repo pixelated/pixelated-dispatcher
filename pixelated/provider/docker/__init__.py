@@ -42,6 +42,7 @@ __author__ = 'fbernitt'
 
 
 DOCKER_API_VERSION = '1.14'
+DOCKER_MEMORY_LIMIT = '300m'
 
 
 class CredentialsToDockerStdinWriter(object):
@@ -258,7 +259,7 @@ class DockerProvider(BaseProvider):
         if name not in cm:
             self._setup_instance(user_config, cm)
             uid = os.getuid()
-            c = self._docker.create_container(self._adapter.docker_image_name(), self._adapter.run_command(self._leap_provider_x509), user=uid, name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'), stdin_open=True)
+            c = self._docker.create_container(self._adapter.docker_image_name(), self._adapter.run_command(self._leap_provider_x509), mem_limit=DOCKER_MEMORY_LIMIT, user=uid, name=name, volumes=['/mnt/user'], ports=[self._adapter.port()], environment=self._adapter.environment('/mnt/user'), stdin_open=True )
         else:
             c = cm[name]
         data_path = self._data_path(user_config)
