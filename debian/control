@@ -38,7 +38,7 @@ Description: Pixelated-dispatcher dispatches between multiple pixelated user-age
 Package: pixelated-dispatcher-manager
 Architecture: all
 #Depends: ${misc:Depends}, ${python:Depends}
-Depends: python (>= 2.7), python (<< 2.8), python-gnupg-ng, python-bottle, python-requests (>= 2.0.0), python-urllib3, python-scrypt, leap-auth, python-psutil, python-docker, python-six (>= 1.3.0), python-daemon, python-setuptools, pixelated-dispatcher-common, python-leap-common, docker.io | lxc-docker-1.2.0
+Depends: python (>= 2.7), python (<< 2.8), python-gnupg-ng, python-bottle, python-requests (>= 2.0.0), python-urllib3, python-scrypt, leap-auth, python-psutil, python-docker, python-six (>= 1.3.0), python-daemon, python-setuptools, pixelated-dispatcher-common, python-leap-common, docker.io | lxc-docker-1.2.0 | docker-engine
 Description: Pixelated-dispatcher dispatches between multiple pixelated user-agents
  Run multiple single user web apps on a server
  .
