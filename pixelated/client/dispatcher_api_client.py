@@ -23,9 +23,9 @@ from requests.exceptions import ConnectionError
 from pixelated.common import latest_available_ssl_version
 from pixelated.common import logger
 try:
-    from urllib3.poolmanager import PoolManager
-except:
     from requests.packages.urllib3.poolmanager import PoolManager
+except:
+    from urllib3.poolmanager import PoolManager
 
 DEFAULT_TIMEOUT_IN_S = 10
 VERIFY_HOSTNAME = None
