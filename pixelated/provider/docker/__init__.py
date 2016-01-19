@@ -278,10 +278,10 @@ class DockerProvider(BaseProvider):
         self._write_credentials_to_docker_stdin(user_config)
 
     def _extra_hosts(self):
-        fqdn=socket.getfqdn()
-        domain=fqdn.split('.',1)[1]
-        docker_ip='172.17.42.1'
-        hostslist={fqdn:docker_ip,domain:docker_ip,'api.'+domain:docker_ip,'nicknym.'+ domain:docker_ip}
+        fqdn = socket.getfqdn()
+        domain = fqdn.split('.', 1)[1]
+        docker_ip = '172.17.42.1'
+        hostslist = {fqdn: docker_ip, domain: docker_ip, 'api.'+domain: docker_ip, 'nicknym.' + domain: docker_ip}
         return hostslist
 
     def _setup_instance(self, user_config, container_map):
