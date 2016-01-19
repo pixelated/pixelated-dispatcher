@@ -281,7 +281,7 @@ class DockerProvider(BaseProvider):
         fqdn = socket.getfqdn()
         domain = fqdn.split('.', 1)[1]
         docker_ip = '172.17.42.1'
-        hostslist = {fqdn: docker_ip, domain: docker_ip, 'api.'+domain: docker_ip, 'nicknym.' + domain: docker_ip}
+        hostslist = {fqdn: docker_ip, domain: docker_ip, 'api.' + domain: docker_ip, 'nicknym.' + domain: docker_ip}
         return hostslist
 
     def _setup_instance(self, user_config, container_map):
