@@ -258,6 +258,7 @@ class DockerProviderTest(unittest.TestCase):
 
     @patch('pixelated.provider.docker.docker.Client')
     def test_that_instance_can_be_started(self, docker_mock):
+        expected_extra_hosts = {'nicknym.example.tld': '172.17.42.1', 'pixelated.example.tld': '172.17.42.1', 'api.example.tld': '172.17.42.1', 'example.tld': '172.17.42.1'}
         uid = os.getuid()
         self._adapter.docker_image_name.return_value = 'pixelated/pixelated-user-agent'
         client = docker_mock.return_value
@@ -268,14 +269,16 @@ class DockerProviderTest(unittest.TestCase):
         client.wait.return_value = 0
         self._leap_provider_x509.ca_bundle = 'some ca bundle'
 
-        provider.start(self._user_config('test'))
+        with patch('pixelated.provider.docker.socket.getfqdn') as mock:
+            mock.return_value = 'pixelated.example.tld'
+            provider.start(self._user_config('test'))
 
         client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/bash -l -c "/usr/bin/pixelated-user-agent --leap-home /mnt/user --host 0.0.0.0 --port 4567 --organization-mode --leap-provider-cert /mnt/user/dispatcher-leap-provider-ca.crt"', mem_limit='300m', user=uid, name='test', volumes=['/mnt/user'], ports=[4567], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout', 'FEEDBACK_URL': 'https://example.org/tickets'}, stdin_open=True)
         client.create_container.assert_any_call('pixelated/pixelated-user-agent', '/bin/true', name='pixelated_prepare', volumes=['/mnt/user'], environment={'DISPATCHER_LOGOUT_URL': '/auth/logout', 'FEEDBACK_URL': 'https://example.org/tickets'})
 
         data_path = join(self.root_path, 'test', 'data')
 
-        client.start.assert_any_call(container, binds={data_path: {'bind': '/mnt/user', 'ro': False}}, port_bindings={4567: ('127.0.0.1', 5000)})
+        client.start.assert_any_call(container, binds={data_path: {'bind': '/mnt/user', 'ro': False}}, port_bindings={4567: ('127.0.0.1', 5000)}, extra_hosts=expected_extra_hosts)
         client.start.assert_any_call(prepare_pixelated_container, binds={data_path: {'bind': '/mnt/user', 'ro': False}})
 
     @patch('pixelated.provider.docker.docker.Client')

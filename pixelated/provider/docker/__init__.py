@@ -272,16 +272,17 @@ class DockerProvider(BaseProvider):
         self._docker.start(
             c,
             binds={data_path: {'bind': '/mnt/user', 'ro': False}},
-            extra_hosts=_extra_hosts(),
+            extra_hosts=self._extra_hosts(),
             port_bindings={self._adapter.port(): ('127.0.0.1', port)})
 
         self._write_credentials_to_docker_stdin(user_config)
 
     def _extra_hosts(self):
         fqdn = socket.getfqdn()
-        domain = fqdn.split('.', 1)[1]
+        domain = fqdn.split('.', 1)[1] if '.' in fqdn else fqdn
         docker_ip = '172.17.42.1'
         hostslist = {fqdn: docker_ip, domain: docker_ip, 'api.' + domain: docker_ip, 'nicknym.' + domain: docker_ip}
+        print hostslist
         return hostslist
 
     def _setup_instance(self, user_config, container_map):
