@@ -59,8 +59,14 @@ class BaseHandler(tornado.web.RequestHandler):
         self.set_header('X-Frame-Options', 'DENY')
         self.set_header('X-Content-Type-Options', 'nosniff')
 
+        self._add_header_if_is_download_attachment()
+
         if self._is_https():
             self.set_header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+
+    def _add_header_if_is_download_attachment(self):
+        if self.request.arguments.get('filename'):
+            self.add_header('Content-Disposition', 'attachment; filename=' + self.request.arguments.get('filename')[0])
 
     def _is_https(self):
         return 'https' == self.request.protocol
@@ -148,7 +154,6 @@ class MainHandler(BaseHandler):
         runtime = self._client.get_agent_runtime(self.current_user)
         if runtime['state'] == 'running':
             port = runtime['port']
-            self._add_header_if_is_download_attachment()
             self.forward(port, '127.0.0.1')
         else:
             self.logout()
@@ -179,10 +184,6 @@ class MainHandler(BaseHandler):
     def check_xsrf_cookie(self):
         # agent should do it after user has logged in
         pass
-
-    def _add_header_if_is_download_attachment(self):
-        if self.request.arguments.get('filename'):
-            self.add_header('Content-Disposition', 'attachment; filename=' + self.request.arguments.get('filename')[0])
 
 
 class AuthLoginHandler(BaseHandler):
