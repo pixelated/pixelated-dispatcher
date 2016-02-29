@@ -110,7 +110,7 @@ class BaseHandler(tornado.web.RequestHandler):
             self.finish()
         else:
             self.set_status(response.code)
-            for header in ("Date", "Cache-Control", 'Pragma', "Server", "Content-Type", "Location"):
+            for header in ("Date", "Cache-Control", 'Pragma', "Server", "Content-Type", "Location", "Set-Cookie"):
                 v = response.headers.get(header)
                 if v:
                     self.set_header(header, v)
