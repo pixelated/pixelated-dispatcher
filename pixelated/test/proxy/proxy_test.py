@@ -322,6 +322,11 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self.assertEqual('/', response.headers['Location'])
         self.assertEqual('Logout+successful.', cookies['status_msg'].value)
 
+    def test_logout_is_forbidden_when_csrf_invalid_login(self):
+        response = self._post('/auth/logout')
+
+        self.assertEqual(403, response.code)
+
     def test_logout_on_web_request_if_agent_stopped(self):
         self.client.get_agent_runtime.side_effect = [{'state': 'running', 'port': Server.PORT}, {'state': 'stopped', 'port': Server.PORT}]
 

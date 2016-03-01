@@ -315,10 +315,20 @@ class StopServerThread(threading.Thread):
 
 class AuthLogoutHandler(BaseHandler):
 
-    def get(self):
+    def get(self):  # keep it for the tests
         self.logout()
         self.set_cookie('status_msg', tornado.escape.url_escape('Logout successful.'))
         self.redirect(u'/')
+
+    def post(self):
+        if self._is_csrf_valid():
+            return self.get()
+        raise HTTPError(403, "Invalid csrf token.")
+
+    def _is_csrf_valid(self):
+        xsrf_cookie = self.get_cookie('XSRF-TOKEN')
+        xsrf_form_input = self.get_argument('csrftoken', "")
+        return xsrf_cookie == xsrf_form_input
 
 
 class CachingStaticFileHandler(web.StaticFileHandler):
