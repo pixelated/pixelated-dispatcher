@@ -207,18 +207,6 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         cookies = self._get_cookies(response)
         self.assertTrue('pixelated_user' in cookies)
 
-    def test_missing_xsrf_token_cookie(self):
-        self.client.get_agent.return_value = {}
-        payload = {
-            'username': 'tester',
-            'password': 'test',
-            '_xsrf': '2|7586b241|47c876d965112a2f547c63c95cbc44b1|1402910163'
-        }
-
-        response = self._post('/auth/login', payload=payload, auto_xsrf=False)
-
-        self.assertEqual(403, response.code)
-
     def test_security_headers(self):
         response = self._get('/some/url')
 

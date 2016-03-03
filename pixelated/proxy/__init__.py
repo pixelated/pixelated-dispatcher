@@ -372,7 +372,7 @@ class DispatcherProxy(object):
             static_path=os.path.join(os.path.dirname(__file__), '..', 'files', "static"),
             static_url_prefix='/dispatcher_static/',  # needs to be bound to a different prefix as agent uses static
             static_handler_class=CachingStaticFileHandler,
-            xsrf_cookies=True,
+            xsrf_cookies=False,
             debug=self._debug)
         return app
 
