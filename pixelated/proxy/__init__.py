@@ -56,7 +56,7 @@ class BaseHandler(tornado.web.RequestHandler):
         self.set_header('Cache-Control', 'no-cache,no-store,must-revalidate,private')
         self.set_header('Pragma', 'no-cache')
         self.set_header('X-XSS-Protection', '1; mode=block')
-        self.set_header('X-Frame-Options', 'DENY')
+        self.set_header('X-Frame-Options', 'SAMEORIGIN')
         self.set_header('X-Content-Type-Options', 'nosniff')
 
         self._add_header_if_is_download_attachment()
