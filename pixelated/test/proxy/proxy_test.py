@@ -214,7 +214,7 @@ class DispatcherProxyTest(AsyncHTTPTestCase):
         self.assertEqual('no-cache', response.headers.get('Pragma'))
         self.assertEqual('1; mode=block', response.headers.get('X-XSS-Protection'))
         self.assertEqual('nosniff', response.headers.get('X-Content-Type-Options'))
-        self.assertEqual('DENY', response.headers.get('X-Frame-Options'))
+        self.assertEqual('SAMEORIGIN', response.headers.get('X-Frame-Options'))
 
     def test_strict_transport_security(self):
         class SSLHttpRequest(tornado.httpserver.HTTPRequest):
