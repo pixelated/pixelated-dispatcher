@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 if [ "$1" = "purge" ] ; then
-        rm -rf /var/lib/pixelated
+        rm -rf /var/lib/pixelated/dispatcher
 fi
 
 
